@@ -102,3 +102,31 @@ confiar num item em outra versão, reproduza o caso mínimo.
 - O id de nó dado por `gui.set_id` aparece como `name`; o `id` da Bridge é de snapshot e muda com
   a cena. Busque por `name_exact` e clique pelo `id` recém-lido.
 - `/screenshot` é assíncrono (`pending`); espere `/screenshot/status?capture_id=N`.
+
+## API HTTP do editor (1.13.2)
+
+- Sem projeto aberto (tela de boas-vindas) o editor não sobe servidor HTTP: nenhuma porta
+  escuta. Medido em 2026-10-10.
+- Partida rodada pelo editor (Ctrl+B) não grava o console do motor em arquivo: o
+  `editor2.<data>.log` só tem o log do editor. As linhas do jogo saem por `GET /console`
+  (`{"lines": [...]}`).
+- Um segundo `/opt/Defold/Defold` com o editor já aberto repassa o projeto à instância existente e
+  sai; as linhas de `Shutdown` no terminal não querem dizer que o editor fechou.
+- Desde a 1.13.2 cada comando tem caminho próprio e o build devolve o resultado na resposta;
+  `/command/build` é alias obsoleto de `run`. Confira no `/openapi.json` antes de usar.
+- `.internal/editor.port` e `.internal/editor.token` nascem quando o projeto abre e somem quando
+  ele fecha. Medido em 2026-10-10.
+- `POST /command/run` devolve o build na própria resposta: `{"success", "issues", "target":
+  {"url"}}`. `issues` traz o lint do editor (pegou um `Need check nil` que o `luals_check`
+  do projeto não pegou) e `target.url` é o engine service do jogo lançado.
+- O `run` só aceita `focus`. Com `focus=false` o editor acrescenta
+  `--config=display.focus_on_show=0`: o jogo abre sem foco, e jogo que pausa ao perder o foco
+  deixa o robô parado depois do primeiro toque. Para o robô jogar, `focus=true` (rouba o foco
+  do autor).
+- `--config` chega ao jogo pela preferência `run/engine-arguments`, **uma por linha**
+  (`"--config=a=1\n--config=b=2"`). Com o jogo já aberto, um novo `run` reinicia o mesmo
+  processo pelo engine service e os argumentos novos **não** se aplicam: feche o jogo antes.
+- `POST /command/debugger-stop` responde `403` quando o debugger não está ligado; não serve
+  para fechar o jogo.
+- O console é zerado a cada `run`: leia `/console` depois do `run`, não guarde índice de linha
+  de antes.

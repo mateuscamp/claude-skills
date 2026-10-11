@@ -1,6 +1,6 @@
 ---
 name: ai-first-defold
-description: Boas práticas AI-first para qualquer jogo em Defold quando quem escreve o código é um agente - como o código deve ser escrito (domínio em Lua puro sem go/gui/msg/sys, um binding de entrada só, gui.pick_node, um dono por animação, RNG próprio com semente, fatos em log estruturado, Lua 5.1 portátil, ids de GUI estáveis) e o ciclo de verificação que o agente fecha sozinho (suíte sem engine em LuaJIT e Lua 5.x, fitness function da fronteira do domínio, LuaLS com as anotações oficiais extraídas do jar do editor, build headless pelo bob que confere SEVERE e o bundle, motor rodando com robô e --exigir por linha de log, hook Stop do Claude Code, Automation Bridge num build separado). Use sempre que o projeto for Defold - ao começar um jogo novo, ao chegar num projeto existente, ao auditar se ele segue as boas práticas, e quando o assunto for bob, game.project, teste headless, smoke, "compilou mas não funciona", "passou no desktop e quebrou no celular", toque contando duas vezes, animação que não termina, LuaLS, anotações, xvfb, Automation Bridge, extensão nativa ou build server. Complementa a skill jogos-ai-first (método e governança).
+description: Boas práticas AI-first para qualquer jogo em Defold quando quem escreve o código é um agente - como o código deve ser escrito (domínio em Lua puro sem go/gui/msg/sys, um binding de entrada só, gui.pick_node, um dono por animação, RNG próprio com semente, fatos em log estruturado, Lua 5.1 portátil, ids de GUI estáveis) e o ciclo de verificação que o agente fecha sozinho (suíte sem engine em LuaJIT e Lua 5.x, fitness function da fronteira do domínio, LuaLS com as anotações oficiais extraídas do jar do editor, build headless pelo bob que confere SEVERE e o bundle, motor rodando com robô e --exigir por linha de log, hook Stop do Claude Code, Automation Bridge num build separado, API HTTP do editor descoberta pelo /openapi.json). Use sempre que o projeto for Defold - ao começar um jogo novo, ao chegar num projeto existente, ao auditar se ele segue as boas práticas, e quando o assunto for bob, game.project, teste headless, smoke, "compilou mas não funciona", "passou no desktop e quebrou no celular", toque contando duas vezes, animação que não termina, LuaLS, anotações, xvfb, Automation Bridge, extensão nativa, build server, API do editor, openapi.json, console do editor ou MCP para Defold. Complementa a skill jogos-ai-first (método e governança).
 ---
 
 # AI-first em Defold
@@ -21,7 +21,7 @@ Arquivos desta skill:
 - `assets/AGENTS-defold.md`: a seção Defold do `AGENTS.md` do projeto, pronta para adaptar. É
   **a lista das boas práticas de código**; leia-a inteira antes de escrever código Defold.
 - `references/armadilhas.md`: os comportamentos medidos do bob, da entrada, das mensagens, da GUI,
-  do LuaLS e da Automation Bridge. Leia antes de afirmar qualquer coisa sobre eles.
+  do LuaLS, da Automation Bridge e da API HTTP do editor. Leia antes de afirmar qualquer coisa sobre eles.
 - `scripts/`: `portao.sh`, `plataforma.sh`, `smoke.py`, `smoketest.ini`, `luals_check.sh`,
   `run_tests.sh`, `run.lua`, `test_fronteira.lua`, `hook_portao.sh`, `bridge.ini`,
   `bridge_build.sh`, `prova_bridge_exemplo.py`.
@@ -63,6 +63,7 @@ Confira e **meça**; não responda pela leitura do código.
 | Hook | `.claude/settings.json` roda o `--rapido` no `Stop`? |
 | Proveniência | `CREDITS.md` cobre todo arquivo de `assets/`? geradores têm `--check`? |
 | Bridge | dependência no `game.project` (portão com rede) ou num `--settings` separado? |
+| API do editor | algum script ou doc fixa endpoint em vez de ler `/openapi.json`? o portão depende do editor aberto? |
 
 ## 2. Instalar o portão e o hook
 
@@ -120,6 +121,33 @@ ao aparelho. Ela é extensão **nativa** e compila no servidor de build da Defol
 - `cp $S/bridge.ini $S/bridge_build.sh tools/` e adapte `prova_bridge_exemplo.py` (ids, fatos,
   chaves). Dê `gui.set_id` estável aos nós que a prova procura.
 - Toque é sessão de ponteiro, não `/input/click`; leia o efeito no jogo, não o recibo.
+
+## 5. API HTTP do editor (quando o editor está aberto)
+
+É o caminho oficial da Defold para agentes falarem com o **editor** (manuais
+<https://defold.com/manuals/ai-agents> e <https://defold.com/manuals/editor-http-api>). O jogo
+rodando é outra coisa: engine service ou Bridge. MCP é opcional e não há servidor oficial.
+
+- **Descubra, não decore.** O editor serve `/openapi.json` (OpenAPI 3.0.3) e ele é a fonte da
+  verdade das operações. Leia antes de chamar; não copie lista de endpoints para script nem doc.
+- **Porta:** `.internal/editor.port` na raiz do projeto **que o editor abriu** (numa worktree,
+  o editor costuma estar no checkout principal: é esse código que ele compila). O servidor só
+  existe com projeto aberto; na tela de boas-vindas não há porta nem arquivo. Releia a cada
+  reinício do editor.
+- **Partida com robô pelo editor:** o `run` não aceita argumento; as chaves `--config` vão na
+  preferência `run/engine-arguments`, **uma por linha**, e só valem num processo novo (com o
+  jogo aberto, o `run` reinicia o mesmo motor sem argumento). Guarde o valor antes, restaure
+  depois, e encerre só o jogo que você lançou. Detalhes em `references/armadilhas.md`.
+- **Usos que valem a pena:** `/console` e `/console/stream` (as linhas `<PROJETO> <FATO>` de uma
+  partida rodada pelo editor só existem ali), `/ref?q=` para conferir API da versão instalada,
+  `/preview/{path}` para olhar GUI e coleção em PNG, e os comandos (`compile`, `hot-reload`...)
+  quando o autor está com o editor aberto.
+- **Resposta:** confira o status HTTP **e** o campo `success`; `202` é só aceite. Espera com
+  limite; `503` repete poucas vezes.
+- **Privilégio:** `/eval` executa Lua no editor e pede o token de `.internal/editor.token` — use
+  só com pedido explícito, e o token nunca entra em prompt, log ou relatório.
+- **Não é portão.** A API é experimental, muda entre versões e depende do editor aberto. O
+  portão continua sendo bob + motor headless; a API é para o ciclo interativo com o autor.
 
 ## Convivência
 
