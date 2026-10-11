@@ -15,6 +15,10 @@ Claude Code (quando não há CLAUDE.md) e pelo Codex; mantenha nele só regra do
   prova**: peça ausente não emite erro. A prova é a linha de log que o portão exige.
 - Execute o bundle a partir da pasta dele (o motor carrega `build/` relativo ao diretório atual)
   e uma instância por vez (disputam porta). Encerre só o processo que você abriu, por PID.
+- Com o editor aberto no projeto, fale com ele pela API HTTP: porta em `.internal/editor.port`,
+  operações lidas do `/openapi.json` (não decoradas), log do jogo rodado pelo editor em
+  `/console`. É experimental e não substitui o portão. `/eval` só com pedido explícito; o
+  `.internal/editor.token` nunca vai para prompt nem log.
 
 ### Organização
 
