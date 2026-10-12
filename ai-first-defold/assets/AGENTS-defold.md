@@ -48,7 +48,9 @@ Claude Code (quando não há CLAUDE.md) e pelo Codex; mantenha nele só regra do
   Objeto que posta com atraso carrega a época da montagem; quem recebe compara.
 - **Observabilidade:** cada fato verificável sai numa linha `print("<PROJETO> <FATO> k=v ...")`
   com campos em ordem estável, de dentro do galho que comprova o fato (ex.: depois de o
-  `pick_node` acertar). Toda borda de toque também vira fato.
+  `pick_node` acertar). Toda borda de toque também vira fato. Sem robô, a mesma linha vai também
+  para o arquivo da partida (`fact_log.lua`), junto com os erros de Lua, e o
+  `project.write_log_file = 1` guarda o log inteiro do motor: o console do editor some ao fechar.
 - Texto de tela vem de uma tabela de idiomas; fonte com `extra_characters` gerado dessa tabela.
 - Nó de GUI criado em código que alguém de fora precisa achar ganha `gui.set_id` estável.
 

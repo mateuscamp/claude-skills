@@ -1,6 +1,6 @@
 ---
 name: ai-first-godot
-description: Boas práticas AI-first para qualquer jogo em Godot 4 quando quem escreve o código é um agente - como o código deve ser escrito (domínio em RefCounted sem engine, um adaptador de entrada, um dono por animação, RNG com semente, eventos em log JSON, tipagem, registros como classes, regras de .tscn e --import), o modelo de AGENTS.md, e o ciclo de verificação que o agente fecha sozinho (portão que importa, compila todos os scripts, roda os specs e lê o log em vez de confiar no código de saída; hook Stop do Claude Code; warnings estritos; fitness function da fronteira do domínio). Use sempre que o projeto for Godot - ao começar um jogo novo, ao chegar num projeto existente, ao auditar se ele segue as boas práticas, e quando o assunto for teste headless, CI, hook, "passou mas tinha erro no log", "o Godot travou no teste", warnings, tipagem, Dictionary, `--check-only`, `--script`, xvfb, "resources still in use at exit" ou saves de teste em user://. Complementa a skill jogos-ai-first (método e governança).
+description: Boas práticas AI-first para qualquer jogo em Godot 4 quando quem escreve o código é um agente - como o código deve ser escrito (domínio em RefCounted sem engine, um adaptador de entrada, um dono por animação, RNG com semente, eventos em log JSON, tipagem, registros como classes, regras de .tscn e --import), o modelo de AGENTS.md, e o ciclo de verificação que o agente fecha sozinho (portão que importa, compila todos os scripts, roda os specs e lê o log em vez de confiar no código de saída; hook Stop do Claude Code; warnings estritos; fitness function da fronteira do domínio; log da partida em arquivo). Use sempre que o projeto for Godot - ao começar um jogo novo, ao chegar num projeto existente, ao auditar se ele segue as boas práticas, e quando o assunto for teste headless, CI, hook, "passou mas tinha erro no log", "o Godot travou no teste", warnings, tipagem, Dictionary, `--check-only`, `--script`, xvfb, "resources still in use at exit", saves de teste em user://, log em arquivo, user://logs, godot.log, --log-file ou "o log sumiu". Complementa a skill jogos-ai-first (método e governança).
 ---
 
 # AI-first em Godot
@@ -50,6 +50,7 @@ Confira e **meça**; não responda pela leitura do código.
 | RNG com semente | `RandomNumberGenerator` num lugar só; `randi`/`randf` globais no código de jogo |
 | Eventos verificáveis | os testes leem eventos JSON ou texto da tela? |
 | Verificação lê o log | os comandos do README/CI só olham o código de saída? |
+| Log em arquivo | `debug/file_logging` desligado no `project.godot`? comando avulso (captura, robô) grava no `user://logs` do autor? |
 | Compilação total | algo carrega todos os `.gd`, ou só o que os specs usam? |
 | Specs fora da lista | `tests/*_spec.gd` que o README ou o CI não rodam |
 | Hook | `.claude/settings.json` roda verificação no `Stop`? |
@@ -111,6 +112,22 @@ Os cinco warnings que valem como erro (`project.godot`, seção `[debug]`, valor
   dentro de uma margem. Eventos que viram log JSON podem continuar `Dictionary`.
 - Ligue pasta a pasta: `gdscript/warnings/directory_rules` exclui as pastas ainda sujas (`0`
   exclui). Só funciona com pasta, não com arquivo.
+
+## 5. Log da partida em arquivo
+
+O autor joga pelo editor, fecha, e pede "olhe o log". O console do editor já era; o arquivo não.
+
+- **Já vem ligado no desktop.** `debug/file_logging/enable_file_logging.pc = true`: cada
+  execução grava `user://logs/godot.log` (no Linux, `~/.local/share/godot/app_userdata/<nome>/
+  logs/`) com prints, `push_error` e o backtrace de GDScript. A anterior vira
+  `godot<data>.log`, e ficam `max_log_files` (5). Não desligue; para playtest, suba o limite.
+- **Os eventos JSON já estão lá**, porque são `print`: o leitor de playtest lê o `godot.log` (ou
+  os rotacionados) em vez de pedir ao autor que copie o console.
+- **Teste e robô não podem empurrar os logs do autor para fora da rotação.** O `portao.sh` da
+  skill já roda cada execução com `XDG_DATA_HOME` próprio. Comando avulso (captura, robô fora
+  do portão) leva `--log-file <caminho em ~/.cache>`, que grava ali e não toca no `user://logs`.
+- Mobile não tem a variante `.pc` (não medido aqui): ligue `enable_file_logging` se o playtest for no aparelho e
+  puxe o arquivo pelo `adb`.
 
 ## Convivência
 

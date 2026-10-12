@@ -1,6 +1,6 @@
 ---
 name: ai-first-defold
-description: Boas práticas AI-first para qualquer jogo em Defold quando quem escreve o código é um agente - como o código deve ser escrito (domínio em Lua puro sem go/gui/msg/sys, um binding de entrada só, gui.pick_node, um dono por animação, RNG próprio com semente, fatos em log estruturado, Lua 5.1 portátil, ids de GUI estáveis) e o ciclo de verificação que o agente fecha sozinho (suíte sem engine em LuaJIT e Lua 5.x, fitness function da fronteira do domínio, LuaLS com as anotações oficiais extraídas do jar do editor, build headless pelo bob que confere SEVERE e o bundle, motor rodando com robô e --exigir por linha de log, hook Stop do Claude Code, Automation Bridge num build separado, API HTTP do editor descoberta pelo /openapi.json). Use sempre que o projeto for Defold - ao começar um jogo novo, ao chegar num projeto existente, ao auditar se ele segue as boas práticas, e quando o assunto for bob, game.project, teste headless, smoke, "compilou mas não funciona", "passou no desktop e quebrou no celular", toque contando duas vezes, animação que não termina, LuaLS, anotações, xvfb, Automation Bridge, extensão nativa, build server, API do editor, openapi.json, console do editor ou MCP para Defold. Complementa a skill jogos-ai-first (método e governança).
+description: Boas práticas AI-first para qualquer jogo em Defold quando quem escreve o código é um agente - como o código deve ser escrito (domínio em Lua puro sem go/gui/msg/sys, um binding de entrada só, gui.pick_node, um dono por animação, RNG próprio com semente, fatos em log estruturado, Lua 5.1 portátil, ids de GUI estáveis) e o ciclo de verificação que o agente fecha sozinho (suíte sem engine em LuaJIT e Lua 5.x, fitness function da fronteira do domínio, LuaLS com as anotações oficiais extraídas do jar do editor, build headless pelo bob que confere SEVERE e o bundle, motor rodando com robô e --exigir por linha de log, hook Stop do Claude Code, Automation Bridge num build separado, API HTTP do editor descoberta pelo /openapi.json, log da partida em arquivo). Use sempre que o projeto for Defold - ao começar um jogo novo, ao chegar num projeto existente, ao auditar se ele segue as boas práticas, e quando o assunto for bob, game.project, teste headless, smoke, "compilou mas não funciona", "passou no desktop e quebrou no celular", toque contando duas vezes, animação que não termina, LuaLS, anotações, xvfb, Automation Bridge, extensão nativa, build server, API do editor, openapi.json, console do editor, log em arquivo, log.txt, write_log_file, "o log sumiu" ou MCP para Defold. Complementa a skill jogos-ai-first (método e governança).
 ---
 
 # AI-first em Defold
@@ -13,8 +13,8 @@ skill dá duas coisas: **como escrever** o projeto para que esses erros não nas
 verificar** para que os que nascerem virem reprovação antes de o agente dizer "terminei".
 
 O método geral (contrato, posse, determinismo, ADR, fitness function, risco) está na skill
-**jogos-ai-first**. Aqui fica só o que é do Defold. A referência viva é o Mineboom
-(`~/defold/mineboom`, D23–D27 no `IMPLEMENTATION_PLAN.md`); as armadilhas pagas antes estão no
+**jogos-ai-first**. Aqui fica só o que é do Defold. A referência viva é o CampCrawler
+(ex-Mineboom, `~/defold/campcrawler`, D23–D27 no `IMPLEMENTATION_PLAN.md`); as armadilhas pagas antes estão no
 BomberBoom (`~/defold/bomberboom-df/docs/PEGADINHAS.md`).
 
 Arquivos desta skill:
@@ -24,7 +24,8 @@ Arquivos desta skill:
   do LuaLS, da Automation Bridge e da API HTTP do editor. Leia antes de afirmar qualquer coisa sobre eles.
 - `scripts/`: `portao.sh`, `plataforma.sh`, `smoke.py`, `smoketest.ini`, `luals_check.sh`,
   `run_tests.sh`, `run.lua`, `test_fronteira.lua`, `hook_portao.sh`, `bridge.ini`,
-  `bridge_build.sh`, `prova_bridge_exemplo.py`.
+  `bridge_build.sh`, `prova_bridge_exemplo.py`, `editor.py` (prova pela API do editor) e
+  `fact_log.lua` (fato formatado e arquivo da partida).
 
 ## Por onde começar
 
@@ -64,6 +65,7 @@ Confira e **meça**; não responda pela leitura do código.
 | Proveniência | `CREDITS.md` cobre todo arquivo de `assets/`? geradores têm `--check`? |
 | Bridge | dependência no `game.project` (portão com rede) ou num `--settings` separado? |
 | API do editor | algum script ou doc fixa endpoint em vez de ler `/openapi.json`? o portão depende do editor aberto? |
+| Log em arquivo | a partida que o autor joga deixa arquivo com os fatos e os erros de Lua? `project.write_log_file` ligado? |
 
 ## 2. Instalar o portão e o hook
 
@@ -139,15 +141,37 @@ rodando é outra coisa: engine service ou Bridge. MCP é opcional e não há ser
   jogo aberto, o `run` reinicia o mesmo motor sem argumento). Guarde o valor antes, restaure
   depois, e encerre só o jogo que você lançou. Detalhes em `references/armadilhas.md`.
 - **Usos que valem a pena:** `/console` e `/console/stream` (as linhas `<PROJETO> <FATO>` de uma
-  partida rodada pelo editor só existem ali), `/ref?q=` para conferir API da versão instalada,
+  partida rodada pelo editor só existem ali, **até o editor fechar**: por isso a seção 6), `/ref?q=` para conferir API da versão instalada,
   `/preview/{path}` para olhar GUI e coleção em PNG, e os comandos (`compile`, `hot-reload`...)
   quando o autor está com o editor aberto.
+- **Console parado trava quem espera cabeçalho.** O `/console/stream` não manda nem o status HTTP
+  até chegar uma linha nova: abra a conexão dentro da thread que lê e conte o prazo desde o
+  início, senão a janela de leitura nunca começa (`scripts/editor.py`).
 - **Resposta:** confira o status HTTP **e** o campo `success`; `202` é só aceite. Espera com
   limite; `503` repete poucas vezes.
 - **Privilégio:** `/eval` executa Lua no editor e pede o token de `.internal/editor.token` — use
   só com pedido explícito, e o token nunca entra em prompt, log ou relatório.
 - **Não é portão.** A API é experimental, muda entre versões e depende do editor aberto. O
   portão continua sendo bob + motor headless; a API é para o ciclo interativo com o autor.
+
+## 6. Log da partida em arquivo
+
+O console do editor some quando ele fecha, e o autor costuma pedir "olhe o log" depois. Duas
+camadas, as duas de graça:
+
+- **`project.write_log_file = 1`** no `game.project` (0 nunca, 1 só build debug, 2 sempre; o
+  antigo `write_log` está obsoleto). O motor grava **tudo** — motor, erros com traceback e
+  prints — num `log.txt` **no diretório de trabalho dele** (a pasta do executável no bundle), e
+  o regrava a cada abertura. Ignore `/log.txt` no git.
+- **Arquivo por partida** (`scripts/fact_log.lua`): o `log()` da cena formata a linha e, sem
+  robô, grava também em `sys.get_save_file(app, "partida-<data>.log")`, com `flush` por linha
+  para sobreviver a processo morto. `sys.set_error_handler` copia o erro de Lua com traceback
+  para o mesmo arquivo; o motor continua imprimindo `ERROR:SCRIPT` no console. A primeira linha
+  diz onde o arquivo está (`<PROJETO> ARQUIVO caminho=...`, ou `erro=` sem parar o jogo).
+- **Robô não grava**, senão cada portão deixa centenas de arquivos. A passada sem robô do portão
+  exige a linha `ARQUIVO` sem `erro=` e apaga o arquivo que criou (`find -newer` com marca).
+- Um leitor do arquivo em tabela (por partida, por mapa, médias por modo) fecha o ciclo com o
+  autor; no CampCrawler é `tools/resumo_playtest.py --partidas`.
 
 ## Convivência
 
