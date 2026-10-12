@@ -81,6 +81,17 @@ Regra: **todo comando Godot leva `timeout` e tem o log lido** procurando
   cliques, toque que chega duas vezes (como toque e como mouse emulado:
   `input_devices/pointing/emulate_mouse_from_touch=false`).
 
+## Log em arquivo (4.7.2)
+
+- `debug/file_logging/enable_file_logging` é `false`, mas `enable_file_logging.pc` é `true`: no
+  desktop todo processo grava `user://logs/godot.log`, inclusive `--headless --script`. Medido
+  em 2026-10-11.
+- Rotação: o mais novo é sempre `godot.log`; os anteriores viram `godot<AAAA-MM-DD>T<hh.mm.ss>.log`,
+  até `max_log_files` (5). Cinco execuções de teste no mesmo `user://` apagam o playtest de ontem.
+- `--log-file <arquivo>` grava ali **em vez de** `user://logs`: nada é criado na pasta do
+  projeto do usuário. Caminho absoluto ou relativo à pasta do projeto.
+- `push_error` chega ao arquivo com `at:` e o `GDScript backtrace`.
+
 ## Screenshot e display
 
 - Com `--headless`, `get_image()` devolve null, `--write-movie` trava e a janela tem 64×64.

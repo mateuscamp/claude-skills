@@ -34,7 +34,9 @@ Claude Code (quando não há CLAUDE.md) e pelo Codex; mantenha nele só regra do
 - **Sorteio:** um `RandomNumberGenerator` com semente; `--semente=N` como argumento de usuário
   fixa a partida, e a semente usada sai no log.
 - **Observabilidade:** eventos verificáveis saem como uma linha `print(JSON.stringify({...}))`
-  com a chave `evento`; teste e ferramenta leem esses eventos, não o texto da tela.
+  com a chave `evento`; teste e ferramenta leem esses eventos, não o texto da tela. O
+  `user://logs/godot.log` (ligado por padrão no desktop) guarda a partida do autor depois que o
+  editor fecha; comando automatizado fora do portão usa `--log-file` em `~/.cache/<projeto>/`.
 - Texto para o jogador passa por `tr()` e pela tabela de traduções no mesmo trabalho.
 
 ### Cena e arquivos

@@ -42,7 +42,7 @@ confiar num item em outra versão, reproduza o caso mínimo.
   `tools/luals/` (o `luals_check.sh` o põe em `workspace.library`), **só** com o que uma passada
   do portão exercita no motor, citando a linha de log que prova; linha sem esse respaldo é API
   inventada que o LuaLS passa a aceitar. Modelos: `~/defold/boomlitude/ferramentas/luals/` e
-  `~/defold/mineboom/tools/luals/`.
+  `~/defold/campcrawler/tools/luals/`.
 
 ## Entrada
 
@@ -103,13 +103,29 @@ confiar num item em outra versão, reproduza o caso mínimo.
   a cena. Busque por `name_exact` e clique pelo `id` recém-lido.
 - `/screenshot` é assíncrono (`pending`); espere `/screenshot/status?capture_id=N`.
 
+## Log em arquivo (1.13.2)
+
+- `project.write_log` está marcado obsoleto no `meta.properties` do bob; o atual é
+  `project.write_log_file` (0 Never, 1 Debug, 2 Always). `minimum_log_level` padrão é 1 (USER
+  DEBUG), que já inclui `print`.
+- No Linux o motor anuncia `Writing log to: ./log.txt` e grava **no cwd**, não na pasta de save
+  (que ele cria vazia, com o `title` do projeto). Cada abertura regrava o arquivo. Medido em
+  2026-10-11 com bundle debug.
+- `sys.get_save_file("app", "x")` no Linux dá `~/.local/share/app/x` e cria a pasta.
+- `sys.set_error_handler` recebe `(source, message, traceback)` e **não** suprime o
+  `ERROR:SCRIPT` do motor no console: o handler só precisa copiar, não imprimir de novo.
+- `io.open` e `os.date` funcionam no script de cena; ficam fora do domínio, que não tem relógio.
+
 ## API HTTP do editor (1.13.2)
 
 - Sem projeto aberto (tela de boas-vindas) o editor não sobe servidor HTTP: nenhuma porta
   escuta. Medido em 2026-10-10.
-- Partida rodada pelo editor (Ctrl+B) não grava o console do motor em arquivo: o
-  `editor2.<data>.log` só tem o log do editor. As linhas do jogo saem por `GET /console`
-  (`{"lines": [...]}`).
+- Partida rodada pelo editor (Ctrl+B) não grava o console do motor em arquivo **a menos que**
+  `project.write_log_file` esteja ligado: o `editor2.<data>.log` só tem o log do editor. As
+  linhas do jogo saem por `GET /console` (`{"lines": [...]}`) e somem quando o editor fecha.
+- `GET /console/stream` com o console parado não manda nem o cabeçalho HTTP até a primeira linha
+  nova (conferido com `curl -i`). Um `urlopen` antes da janela de leitura bloqueia até o timeout
+  de socket e sai com `TimeoutError`. Medido em 2026-10-11, editor aberto sem jogo rodando.
 - Um segundo `/opt/Defold/Defold` com o editor já aberto repassa o projeto à instância existente e
   sai; as linhas de `Shutdown` no terminal não querem dizer que o editor fechou.
 - Desde a 1.13.2 cada comando tem caminho próprio e o build devolve o resultado na resposta;
