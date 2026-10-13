@@ -1,7 +1,10 @@
 <!--
 Modelo da skill ai-first-defold para a seção Defold do AGENTS.md de um projeto.
 Copie, troque o que está entre <>, e apague o que não se aplica. O AGENTS.md é lido pelo
-Claude Code (quando não há CLAUDE.md) e pelo Codex; mantenha nele só regra do projeto, curta
+Codex e pelo Claude Code (v2.1.277 ou mais nova), e pode ser o único arquivo de instruções do
+projeto. Mas o Claude Code o ignora em silêncio se houver CLAUDE.md ou CLAUDE.local.md na pasta
+do projeto ou acima dela, inclusive no checkout principal que contém as worktrees: escolha um
+dos dois, ou ponha `@AGENTS.md` no topo do CLAUDE.md. Mantenha nele só regra do projeto, curta
 (o manual oficial de agentes da Defold pede o mesmo).
 -->
 
