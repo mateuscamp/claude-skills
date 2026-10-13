@@ -7,18 +7,26 @@ Claude Code (quando não há CLAUDE.md) e pelo Codex; mantenha nele só regra do
 
 ## Defold
 
-- Versão fixada: **Defold <1.13.2>**, pelo bob do editor instalado (`bob.jar` de 370 bytes +
+- Versão fixada: **Defold <1.14.0>**, pelo bob do editor instalado (`bob.jar` de 370 bytes +
   link `defold-editor.jar`, da máquina, nunca do repositório). Não use API de outra versão; na
-  dúvida, consulte <https://defold.com/llms.txt> e as anotações que o `tools/luals_check.sh`
-  extrai do jar, não a memória.
+  dúvida, consulte <https://defold.com/llms.txt>, o `/ref` do editor aberto e as anotações que o
+  `tools/luals_check.sh` extrai do jar, não a memória. O editor se atualiza sozinho: o JDK entra
+  no PATH por `$(command ls -d /opt/Defold/packages/jdk-* | head -1)/bin`, e seguir a versão nova
+  é decisão <do autor>.
 - Rode `tools/portao.sh` antes de dizer que terminou. **Não use o código de saída do motor como
   prova**: peça ausente não emite erro. A prova é a linha de log que o portão exige.
 - Execute o bundle a partir da pasta dele (o motor carrega `build/` relativo ao diretório atual)
   e uma instância por vez (disputam porta). Encerre só o processo que você abriu, por PID.
 - Com o editor aberto no projeto, fale com ele pela API HTTP: porta em `.internal/editor.port`,
   operações lidas do `/openapi.json` (não decoradas), log do jogo rodado pelo editor em
-  `/console`. É experimental e não substitui o portão. `/eval` só com pedido explícito; o
-  `.internal/editor.token` nunca vai para prompt nem log.
+  `/console`; `POST /command/compile` compila sem rodar. É experimental e não substitui o
+  portão. `/eval` só com pedido explícito; o `.internal/editor.token` nunca vai para prompt nem
+  log.
+- A prova pela Automation Bridge (`tools/bridge.sh`) fica fora do portão porque compila no
+  servidor de build da Defold: rode-a em <toda frente que mexe em entrada, layout ou tela nova> e
+  diga no relatório final se rodou. O jogo roda mudo em toda prova (`ALSOFT_DRIVERS=null`).
+- Pede aprovação antes: apagar, mudar dependência ou extensão nativa, configuração de release,
+  assinatura, publicação e serviço externo.
 
 ### Organização
 

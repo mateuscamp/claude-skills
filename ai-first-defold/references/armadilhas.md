@@ -2,8 +2,10 @@
 
 Medido no Defold 1.13.2 (Linux x86_64, sem GPU): no Mineboom (2026-10-09/10), no BomberBoom
 (`~/defold/bomberboom-df/docs/PEGADINHAS.md`, onde cada uma tem o sintoma inteiro) ou no
-relatório "Godot AI-first comparado a Defold" (2026-10-09, marcado [relatório]). Antes de
-confiar num item em outra versão, reproduza o caso mínimo.
+relatório "Godot AI-first comparado a Defold" (2026-10-09, marcado [relatório]). O que foi
+conferido de novo na **1.14.0** (CampCrawler, 2026-10-13) leva [1.14.0]; o que vem só da
+documentação oficial, sem medição nossa, leva [doc]. Antes de confiar num item em outra
+versão, reproduza o caso mínimo.
 
 ## Build e ferramenta
 
@@ -11,6 +13,7 @@ confiar num item em outra versão, reproduza o caso mínimo.
 |---|---|---|
 | bob com erro de settings | sinaliza `SEVERE`, não só `ERROR`, e **deixa o bundle anterior no lugar** | grep por `ERROR\|SEVERE\|Could not parse` **e** conferir se o executável existe |
 | Editor atualizou | o link `defold-editor.jar` do wrapper aponta para um sha que não existe; a JVM falha **no idioma do sistema, sem ERROR** | `ln -sfn /opt/Defold/packages/defold-<engine_sha1>.jar ~/defold/bob/defold-editor.jar` (o sha está em `/opt/Defold/config`) |
+| Editor atualizou (JDK) [1.14.0] | o editor **se atualiza sozinho** (1.13.2 → 1.14.0 em 2026-10-12, sem ninguém pedir) e a pasta `/opt/Defold/packages/jdk-*` muda de nome; o `java` do sistema no PATH dá `UnsupportedClassVersionError` | `export PATH=$(command ls -d /opt/Defold/packages/jdk-* \| head -1)/bin:$PATH` no comando do AGENTS.md, nunca o caminho fixo; refaça também o link da linha acima e decida com o autor se a versão fixada acompanha |
 | Executável rodado da raiz do projeto | carrega `build/default/` relativo ao cwd e roda **build velho** | cwd = pasta do executável |
 | Headless sem vsync de hardware | vsync por software às vezes espera para sempre: o motor monta a cena e **não avança**, sem erro | `[display] vsync = 0` num `--settings` só do portão (o `.ini` do bob não aceita comentário) |
 | Duas instâncias | disputam portas de log/profiler; `pkill` volta antes de matar e no Linux nem casa (nome truncado em 15) | uma por vez, mate por PID |
@@ -86,8 +89,35 @@ confiar num item em outra versão, reproduza o caso mínimo.
   bits. Gerador próprio com estado: LCG de 32 bits com multiplicador < 2^21 fica exato em double
   em Lua 5.1, LuaJIT e 5.4+.
 
-## Automation Bridge 2.5.0
+## Automation Bridge 2.5.0 (API v2)
 
+- [1.14.0] A 2.5.0 ainda era a última tag em 2026-10-13 (`gh api repos/defold/extension-automation-bridge/tags`).
+  No CampCrawler as três provas passaram com ela no 1.14.0: dois toques reais em `cell_4_4`
+  (turno 0 → 1), layout em 10 tamanhos de janela, e rajada de toques mais recompensa tocada.
+- Base: `http://127.0.0.1:<porta do engine service>/automation-bridge/v2`. A porta sai na linha
+  `INFO:ENGINE: Engine service started on port <port>` do motor (e no `target.url` do
+  `run` do editor). O manual de referência fica em `automation_bridge/README.md` do repositório.
+- [doc] Comece pelo `GET /health`: `capabilities`, `capability_versions`, `native_version`,
+  `api_version_min/max`. Rota sem suporte responde `501 unsupported_capability`; negocie a
+  versão (ex.: `input.key>=2` para `hold`) em vez de supor.
+- [doc] A entrada tem dono: `PUT /input/configure?client_id=&session_id=&lease=&device=`
+  (`auto`, `mouse` ou `touch`; `touch` só em iOS, Android e Switch, e um gesto nunca injeta os
+  dois). Fila FIFO com recibo: `/input/status`, `/input/pending`, `/input/cancel`, `/input/flush`;
+  lease vencido solta o ponteiro sozinho. Há `drag`, `drag_path`, `key` (texto ou `{KEY_...}`,
+  `hold`, `modifiers`) e `wheel`.
+- [doc] **Canal da aplicação**, opcional e só debug: `[automation_bridge] application_api = 1`
+  (no `--settings` da Bridge, nunca no `game.project`). O jogo publica estado com
+  `automation_bridge.publish(nome, tabela)` (`GET /state`, `GET /state/wait?after_revision=N`),
+  emite eventos com `emit` (`GET /events?cursor=N` com long-poll; cursor velho volta
+  `overflow: true`, nunca avança calado), registra comandos nomeados com `command` (`POST
+  /commands`; não há eval), confirma o que fez com um toque com `acknowledge_input(input_id,
+  {accepted, reason})`, liga nó a chave de localização com `annotate` e documenta tudo com
+  `describe` (`GET /application/catalog`). Nomes com prefixo do projeto (`jogo.estado`).
+  - O módulo `automation_bridge` **não existe** em release nem no headless do portão: a cena
+    só chama atrás de `if automation_bridge then`, e o domínio nunca chama.
+  - Serve para a prova esperar estado e saber se o jogo aceitou o toque, em vez de ler log. O
+    portão headless continua lendo log: a Bridge não roda nele.
+- [doc] Gravação de vídeo nativa só em macOS e Windows; captura de GPU (Metal) só em macOS.
 - Extensão **nativa**: o build compila no servidor da Defold (`build.defold.com`) ou num Extender
   local. No `game.project`, todo portão passaria a depender de rede — ponha a dependência num
   `--settings` separado (`scripts/bridge.ini`).
@@ -144,5 +174,29 @@ confiar num item em outra versão, reproduza o caso mínimo.
   processo pelo engine service e os argumentos novos **não** se aplicam: feche o jogo antes.
 - `POST /command/debugger-stop` responde `403` quando o debugger não está ligado; não serve
   para fechar o jogo.
+- [doc] Comandos que **bloqueiam** e devolvem o resultado (1.13.2+): `compile`, `run`,
+  `clean-build`, `build-html5`, `debugger-start` e `hot-reload`. Códigos: `200` feito, `202`
+  aceito e seguindo (não prova nada: espere o efeito, com prazo), `403` fora do estado, `404`
+  indisponível, `422` build ou validação falhou, `500` erro do editor. Cada item de `issues` pode
+  ter `message`, `severity`, `resource` e `range`, e há item só com `message`.
+- [doc] `POST /command/compile` compila **sem rodar** o jogo: com o editor aberto, é a conferência
+  mais barata e traz o lint do editor. `clean-build` só quando build comum se comporta
+  diferente a cada vez. `build-html5` serve o jogo em `http://127.0.0.1:<porta-do-editor>/html5/`;
+  build pronto não é jogo carregado no navegador.
+- [doc] `GET /preview/{path}` (sem barra inicial; `width` e `height` de 1 a 4096; desde a 1.13.1)
+  devolve PNG da cena **como o editor a vê**: não mostra objeto criado em runtime, pós-processamento
+  nem diferença de plataforma. Para isso, screenshot do jogo (captura sob Xvfb ou Bridge).
+- [doc] `/prefs/{path}` (GET lê, POST grava JSON) é preferência do usuário, não `game.project`:
+  guarde o valor e restaure, como no `run/engine-arguments`.
+- [doc] `/eval`: `Authorization: Bearer <conteúdo de .internal/editor.token>`, corpo `text/plain`;
+  `401` token, `422` Lua inválido, `503` ambiente não pronto (repita poucas vezes). Só API do
+  editor (`editor.get`, `editor.transact`, `editor.can_*`), nunca `go.*`.
+- [doc] Rotas de editor script (`get_http_server_routes`) **não** passam pelo token: cuide da
+  segurança delas. Ganchos de ciclo de vida moram num único `hooks.editor_script` na raiz
+  (`on_build_started` que dá erro **para** o build do editor), mas são só do editor: regra que
+  importa vai num script que o portão e o CI também rodam.
+- [doc] `/ref?q=` busca na documentação da versão instalada: espaço é E, `|` é OU, filtros
+  `environment` (`editor`, `runtime`) e `language`. Ao abrir o editor, espere o
+  `.internal/editor.port` e repita `/openapi.json` até vir documento válido.
 - O console é zerado a cada `run`: leia `/console` depois do `run`, não guarde índice de linha
   de antes.
