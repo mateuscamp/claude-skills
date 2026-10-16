@@ -17,8 +17,9 @@ prioridade sobre a descrição do autor, inclusive quando o autor é outro agent
 
 Esta é uma adaptação das regras de `pr-audit`, `iss-audit` e
 `github-resolution` descritas no artigo de Fabio Akita. Não é a reprodução dos
-arquivos originais. A origem e as decisões desta versão estão em `ORIGEM.md`;
-a execução do procedimento não depende da leitura desse documento.
+arquivos originais. A primeira versão, de 22/09/2026, está em
+`~/Documentos/Skills/code-audit-skill.md`, que acompanha esta; a regra de TDD
+entrou em 2026-10-16, a pedido do autor.
 
 ## 1. Escolher o modo e respeitar a autorização
 
