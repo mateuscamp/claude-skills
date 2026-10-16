@@ -151,8 +151,14 @@ Teste primeiro (TDD). Cobertura segue risco: TDD não é um teste por função.
   (o PR pode repetir). O portão e o hook Stop só cobram o verde; o vermelho é você quem vê e
   registra.
 - Ao criar ou mudar um verificador, prove que ele reprova: plante o defeito, rode, restaure.
+- O `AGENTS.md` fica abaixo dos 32.768 bytes que o Codex lê (o resto ele corta calado), e
+  `tests/test_agents_md.lua` reprova acima disso.
 - **Lição volta para a skill** (quando o projeto usa as skills ai-first): armadilha do Defold
   resolvida no projeto vira lição na skill `ai-first-defold` (com a versão medida, ou `[doc]`);
   lição de jogo que não é do motor vai também para a `ai-first-godot`. Na mesma frente do
-  conserto, conferindo antes se já está lá.
+  conserto, conferindo antes se já está lá. A lição entra num ramo numa worktree fora do `/tmp`
+  (`git -C ~/.claude/skills fetch`, depois `git -C ~/.claude/skills worktree add
+  ~/.cache/claude-skills-wt/<ramo> -b <ramo> origin/main`), nunca trocando o ramo de
+  `~/.claude/skills`, que toda sessão carrega e fica no `main`; push e PR esperam o
+  sim <do autor>.
 - Dependência nova, extensão nativa, serviço externo, signing e publicação pedem aprovação.
