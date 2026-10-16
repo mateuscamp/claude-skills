@@ -1,7 +1,8 @@
 # Armadilhas do Godot 4.7 que o agente não vê
 
-Tudo aqui foi medido no Godot 4.7.2 (Linux): no flipper-boom (2026-10-09) ou no relatório
-"Godot AI-first comparado a Defold" (2026-10-09, marcado como [relatório]). Antes de confiar
+Medido no Godot 4.7.2 (Linux): no flipper-boom (2026-10-09) ou no relatório "Godot AI-first
+comparado a Defold" (2026-10-09, marcado como [relatório]). O que foi conferido de novo leva
+[versão]; o que vem só da documentação oficial, sem medição nossa, leva [doc]. Antes de confiar
 num item em outra versão, reproduza o caso mínimo.
 
 Esta lista cresce com o uso: armadilha de conceito do Godot em que um projeto caiu e que ele
@@ -110,6 +111,18 @@ Regra: **todo comando Godot leva `timeout` e tem o log lido** procurando
 
 - INF e NaN não existem em JSON: no Godot 4.7.2, JSON.stringify escreve INF como 1e99999 sem aviso (a volta pelo parse dá 'Exponent too high'; o Python lê inf e regrava Infinity, que é JSON inválido) e NaN como null, com aviso só na primeira vez. Registro com sentinela INF ou NaN omite a chave no retrato de log. Um spec reprova número não finito no log e confere que cada retrato volta do JSON.parse_string (medido no flipper-boom, 2026-10-13).
 
+## Texto que quebra (4.7.2)
+
+Medido em 2026-10-16 num projeto mínimo, `Label` com a fonte padrão do tema e largura 120:
+
+- Sem `autowrap_mode` o texto não quebra: o `Label` ignora o `size` e cresce na largura (586 px,
+  uma linha), passando da borda.
+- Com `AUTOWRAP_WORD_SMART`: 7 linhas e 179 px de altura. O vizinho posto à mão logo abaixo da
+  altura de uma linha (`y = 123`) fica por baixo; num `VBoxContainer` ele desce sozinho (`y = 183`).
+- A altura que vale é a do `Label` depois de um quadro (`size.y`). `Font.get_multiline_string_size`
+  dá 161: não conta o `line_spacing` do tema (3 px entre linhas).
+- Depois de trocar texto, `font_size`, fonte, autowrap ou largura de um Label, chame `update_minimum_size()` antes de `get_combined_minimum_size()`. Sem isso o Label devolve a medida anterior até o próximo desenho: deu caixa de 108 para texto de 149 e de 75 para 111, e depois da correção 117 para 105 e 123 para 111 (4.7.2, medido no flipper-boom, 2026-10-12). O Button nunca fica menor que o texto mais as margens do stylebox: ele cresce e sai do lugar sem erro. Para caber num retângulo fixo, escolha a maior letra que cabe na largura útil (`size` menos as margens do stylebox, por `Font.get_string_size`) ou ligue o autowrap, e atribua o `size` por último. O spec troca textos em sequência e refaz a medida, senão lê o mesmo número velho que o código.
+
 ## Screenshot e display
 
 - Com `--headless`, `get_image()` devolve null, `--write-movie` trava e a janela tem 64×64.
@@ -131,10 +144,6 @@ Regra: **todo comando Godot leva `timeout` e tem o log lido** procurando
 
 - Com `emulate_mouse_from_touch=false` (o ajuste que esta skill manda ligar), o Button responde ao toque, mas o HSlider não: toque e arrasto injetados deixaram o slider em 0,5, e o clique na mesma posição o levou a 0,24 (4.7.2, medido no flipper-boom, 2026-10-02 e reproduzido em 2026-10-16). Todo Control nativo que só lê mouse ganha um `gui_input` que converte InputEventScreenTouch/ScreenDrag em valor e chama `accept_event()`. O spec exercita cada tipo de Control interativo por toque injetado (`push_input`), não por clique.
 - A roda do mouse chega como InputEventMouseButton com `pressed=true` (WHEEL_UP é o índice 4), como os botões direito e do meio. Todo clique que aciona algo confere `event.button_index == MOUSE_BUTTON_LEFT`, não só `pressed`: aqui o erro apareceu duas vezes, primeiro pulando a queda e depois disparando a ultimate (4.7.2, medido no flipper-boom, 2026-10-09 e 2026-10-12). O spec de cada zona clicável empurra WHEEL_UP/DOWN, RIGHT e MIDDLE por `root.push_input` e confere que nada muda.
-
-## Texto e Control (4.7.2)
-
-- Depois de trocar texto, `font_size`, fonte, autowrap ou largura de um Label, chame `update_minimum_size()` antes de `get_combined_minimum_size()`. Sem isso o Label devolve a medida anterior até o próximo desenho: deu caixa de 108 para texto de 149 e de 75 para 111, e depois da correção 117 para 105 e 123 para 111 (4.7.2, medido no flipper-boom, 2026-10-12). O Button nunca fica menor que o texto mais as margens do stylebox: ele cresce e sai do lugar sem erro. Para caber num retângulo fixo, escolha a maior letra que cabe na largura útil (`size` menos as margens do stylebox, por `Font.get_string_size`) ou ligue o autowrap, e atribua o `size` por último. O spec troca textos em sequência e refaz a medida, senão lê o mesmo número velho que o código.
 
 ## Cena e árvore (4.7.2)
 
