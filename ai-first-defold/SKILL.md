@@ -1,6 +1,6 @@
 ---
 name: ai-first-defold
-description: Boas práticas AI-first para qualquer jogo em Defold quando quem escreve o código é um agente - como o código deve ser escrito (domínio em Lua puro sem go/gui/msg/sys, um binding de entrada só, gui.pick_node, um dono por animação, RNG próprio com semente, fatos em log estruturado, Lua 5.1 portátil, ids de GUI estáveis) e o ciclo de verificação que o agente fecha sozinho (suíte sem engine em LuaJIT e Lua 5.x, fitness function da fronteira do domínio, LuaLS com as anotações oficiais extraídas do jar do editor, build headless pelo bob que confere SEVERE e o bundle, motor rodando com robô e --exigir por linha de log, hook Stop do Claude Code, Automation Bridge num build separado (API v2: /health, entrada com dono, canal da aplicação publish/emit/command), API HTTP do editor descoberta pelo /openapi.json (comandos que bloqueiam, /command/compile, /preview), log da partida em arquivo, o que o manual oficial de agentes da Defold pede). Use sempre que o projeto for Defold - ao começar um jogo novo, ao chegar num projeto existente, ao auditar se ele segue as boas práticas, e quando o assunto for bob, game.project, teste headless, smoke, "compilou mas não funciona", "passou no desktop e quebrou no celular", toque contando duas vezes, animação que não termina, LuaLS, anotações, xvfb, Automation Bridge, extensão nativa, build server, API do editor, openapi.json, console do editor, log em arquivo, log.txt, write_log_file, "o log sumiu" ou MCP para Defold. Complementa a skill jogos-ai-first (método e governança).
+description: Boas práticas AI-first para jogo em Defold escrito por agente - como escrever o código (domínio em Lua puro, um binding de entrada, gui.pick_node, um dono por animação, RNG com semente, fatos em log, Lua 5.1 portátil) e o ciclo de verificação que o agente fecha sozinho (teste visto falhar antes, suíte sem engine em LuaJIT e Lua 5.x, LuaLS, build pelo bob, motor com robô e --exigir, hook Stop, Automation Bridge, API do editor, log da partida em arquivo). Use sempre que o projeto for Defold - jogo novo, projeto existente, auditoria - e quando o assunto for bob, game.project, teste headless, smoke, TDD, teste antes, teste de regressão, bug que voltou, "compilou mas não funciona", "passou no desktop e quebrou no celular", toque contando duas vezes, animação que não termina, LuaLS, xvfb, Automation Bridge, extensão nativa, API do editor, openapi.json, console do editor, log em arquivo, log.txt, write_log_file, "o log sumiu" ou MCP para Defold. Complementa a skill jogos-ai-first (método e governança).
 ---
 
 # AI-first em Defold
@@ -13,7 +13,8 @@ skill dá duas coisas: **como escrever** o projeto para que esses erros não nas
 verificar** para que os que nascerem virem reprovação antes de o agente dizer "terminei".
 
 O método geral (contrato, posse, determinismo, ADR, fitness function, risco) está na skill
-**jogos-ai-first**. Aqui fica só o que é do Defold. A referência viva é o CampCrawler
+**jogos-ai-first**. Aqui fica o que é do motor e as lições de jogo dos projetos irmãos, na forma
+do motor. A referência viva é o CampCrawler
 (ex-Mineboom, `~/defold/campcrawler`, D23–D27 no `IMPLEMENTATION_PLAN.md`); as armadilhas pagas antes estão no
 BomberBoom (`~/defold/bomberboom-df/docs/PEGADINHAS.md`).
 
@@ -36,8 +37,11 @@ Arquivos desta skill:
    versão nova é decisão do autor (ver `references/armadilhas.md`). No `input/game.input_binding`, **só**
    `MOUSE_BUTTON_LEFT → touch`, sem `TOUCH_MULTI`.
 2. Instale o portão, o teste de fronteira e o hook (seção 2) antes da primeira mecânica.
-3. Domínio em `modules/` com teste; a cena só aplica eventos. Cada peça nova da cena emite um
-   fato no log e ganha `--exigir` numa passada do portão.
+3. Teste primeiro, visto falhar pelo motivo certo (o comportamento ausente): regra nova ou
+   que muda em `modules/` começa por um teste da suíte; peça nova da cena, pelo `--exigir` do
+   fato que ela vai emitir numa passada do portão. Só então o código, e a cena só aplica
+   eventos. A regra inteira (bug, teste existente, exceções, evidência) está em "Testes e
+   prova" no `assets/AGENTS-defold.md`.
 
 **Projeto existente**
 1. Audite medindo (seção 1) e mostre ao usuário a tabela: o que existe, onde, e o número medido.
@@ -45,6 +49,9 @@ Arquivos desta skill:
 3. O que a auditoria apontar (entrada, animação, RNG, domínio misturado à cena) vira etapas
    pequenas, cada uma com o portão verde. Mudança de contrato entre domínio, cena e testes pede
    ADR antes.
+4. Cada etapa que muda comportamento (entrada, animação, RNG) entra pelo teste vermelho, como
+   toda funcionalidade e correção; a que só reorganiza código é a exceção de refatoração de
+   "Testes e prova".
 
 ## 1. Auditar
 
@@ -64,10 +71,18 @@ Confira e **meça**; não responda pela leitura do código.
 | LuaLS | rode `scripts/luals_check.sh` e conte os problemas |
 | Suíte em dois Luas | `luajit` e `lua` rodam os testes? teste que não carrega reprova? |
 | Hook | `.claude/settings.json` roda o `--rapido` no `Stop`? |
+| Teste no commit | `git log --stat` de correções e mecânicas (abaixo) |
+| Vermelho na base | numa worktree do commit anterior, o teste falha pelo motivo certo? (abaixo) |
+| Teste mudado | `git log -p -- tests/ tools/`: troca tem porquê? outro teste cobre o antigo? |
 | Proveniência | `CREDITS.md` cobre todo arquivo de `assets/`? geradores têm `--check`? |
 | Bridge | dependência no `game.project` (portão com rede) ou num `--settings` separado? |
 | API do editor | algum script ou doc fixa endpoint em vez de ler `/openapi.json`? o portão depende do editor aberto? |
 | Log em arquivo | a partida que o autor joga deixa arquivo com os fatos e os erros de Lua? `project.write_log_file` ligado? |
+
+No `git log --stat`, correções: teste no mesmo commit? mecânicas: teste antes ou junto? Para o
+vermelho na base, ponha o teste do commit numa worktree do commit anterior e rode a suíte ou a
+passada dele: ele tem de reprovar pela asserção ou pela linha ausente. O que chama função nova
+falha ao carregar na base: aí vale o esqueleto ou a leitura das asserções.
 
 ## 2. Instalar o portão e o hook
 
@@ -82,14 +97,23 @@ chmod +x tools/*.sh
 
 - `tests/test_fronteira.lua`: ajuste `PASTAS` e, se preciso, `PERMITIDOS` (exceção exata, com
   motivo). Teste novo entra sozinho: `tests/test_*.lua`, cada um devolvendo `{ {"nome", fn}, ... }`.
-- `tools/portao.sh`, bloco `AJUSTE`: `geradores` (os `--check`) e `passadas` (cada uma com
-  `--config=<projeto>.<chave>=...` e os `--exigir` do que ela precisa produzir).
+- `tools/portao.sh`, bloco `AJUSTE`: `geradores` (os `--check` e teste de ferramenta que não é
+  Lua) e `passadas` (cada uma com `--config=<projeto>.<chave>=...` e os `--exigir` do que ela
+  precisa produzir).
 - `tools/luals_check.sh`: `LUALS_IGNORAR` para pastas que não são código do jogo; API que o
   motor tem e a anotação não, num `---@meta` em `tools/luals/` (ver `references/armadilhas.md`).
 - O jogo precisa de um robô opt-in (`<projeto>.autoplay = 1` no `game.project`, lido com
   `sys.get_config_int`; nenhuma chave da seção pode ser prefixo de outra, porque o
   `--config` casa por prefixo) que toca **pelo mesmo ponto de entrada do toque**, e de linhas
   `print("<PROJETO> <FATO> k=v")` emitidas de dentro do galho que comprova o fato.
+- Robô que trapaceia (lê o tabuleiro autoritativo) ainda pode não acabar: repete para sempre a
+  ordem que o jogo recusa ou persegue um inimigo que só foge. Todo jogador automático tem trava
+  de passos por mapa: no simulador ela vira resultado contado (`travadas`, na linha de resumo),
+  no teste da suíte vira falha com a semente, e no motor o `timeout` da passada reprova pela
+  linha ausente. O conserto é o robô não escolher alvo que a regra recusa ou que nunca se
+  alcança. CampCrawler: o robô da cena tocava a saída trancada para sempre, e a rota passou a
+  evitá-la (D47, `main/robot_route.lua`); o do simulador perseguiria o ladrão que, sem a chave
+  achada, só foge, e ele saiu da lista de alvos (D53, `tools/simula_bosque.lua`).
 - Hook: registre em `.claude/settings.json` do projeto (o JSON está no topo do
   `hook_portao.sh`). Ele roda o `--rapido` só quando Lua, script ou recurso mudou desde a última
   aprovação, e na segunda parada seguida deixa a sessão terminar.
@@ -105,13 +129,36 @@ chmod +x tools/*.sh
 
 ## 3. Consertar o que o portão acha
 
+- **O conserto entra pelo vermelho**, como em "Testes e prova" do `assets/AGENTS-defold.md`. A
+  reprovação estável do portão já é esse vermelho; a que vem por sorte pede antes o teste
+  determinístico. Teste antigo que reprova o código novo só muda pela regra de lá (CampCrawler,
+  D53: a asserção invertida para a regra nova escondeu um defeito no objetivo `exit`, achado só
+  na auditoria).
 - Build "OK" rodando código velho: o bob falhou com `SEVERE`; confira o bundle, não o log.
 - Motor sobe e não avança no headless: `vsync = 0` no `smoketest.ini`.
 - Exigência que falha só às vezes: a passada depende de sorte (o robô precisa vencer algo).
   Troque por um atalho de início validado — nunca afrouxe a exigência.
+- Passada presa a uma semente que quebra depois de mudar o gerador (tabuleiro maior, terreno
+  novo): a frente mudou o consumo do sorteio e a semente já não dá o caso. Não afrouxe o
+  `--exigir` para a semente velha passar. Busque outra semente no domínio, sem motor (um laço
+  de sementes com o robô da suíte que para na primeira em que o fato acontece), confirme na
+  passada e diga no comentário o que aquela semente dá. O `--exigir` cobra o fato com célula e
+  turno em faixa (`celula=[0-8],([0-9]|10)`, `turno=[0-9]+`), não a casa daquela semente;
+  quando a grade cresce, a faixa acompanha a grade nova, com o porquê no commit, como em
+  "Testes e prova".
+  Frente nova sorteia numa trilha própria (`rng.derive_seed(base, SAL)`): desligada, toda
+  semente segue igual, e uma impressão digital dos mapas na suíte prova isso. CampCrawler,
+  passada 16: semente 4 → 11 na D54 e 11 → 14 na D55; `tests/test_map_fingerprint.lua` (D50).
 - Texto de prova que some: o fato saiu antes da apresentação, ou fora do galho que o comprova.
-- Painel que anuncia o resultado antes da animação: a apresentação tem de perguntar "ainda
-  apresentando?" antes de "o domínio já decidiu?".
+- Painel que anuncia o resultado antes da animação: a tela leu o estado vivo do domínio, que já
+  decidiu no aceite da ordem. Perguntar "ainda apresentando?" antes de "o domínio já decidiu?"
+  só esconde o que é novo; quando o domínio **troca** um valor (o soldado caído vira o recruta,
+  a reserva esvazia), o antigo já não está lá para mostrar. A cena guarda o que já mostrou
+  (cada campo que a tela exibe) e só o avança no evento que a fila entrega, como manda "a cena
+  só aplica eventos"; no repouso sem evento (começo do mapa, entre duas escolhas) sincroniza
+  com o domínio de uma vez. Campo lido do domínio ao lado de campo lido do que já se mostrou
+  vaza o futuro (CampCrawler, D56, auditoria A2: vida e nível vinham do `shown_soldiers`,
+  desenho e regra não; `main/enemy_fight.lua`).
 - Lista completa com sintoma e causa: `references/armadilhas.md`.
 
 ## 4. Automation Bridge (prova pela entrada real e no aparelho)
@@ -197,7 +244,24 @@ camadas, as duas de graça:
 - Um leitor do arquivo em tabela (por partida, por mapa, médias por modo) fecha o ciclo com o
   autor; no CampCrawler é `tools/resumo_playtest.py --partidas`.
 
-## 7. O que o manual oficial de agentes pede
+## 7. Simulador de balanço sem engine
+
+O domínio puro e o robô da suíte jogam centenas de runs em segundos e tabelam por mapa:
+vitória, nível, quedas por causa, uso de cada recurso, runs travadas.
+
+- As chaves vêm do `game.project`, como o jogo sai, e `chave=valor` troca uma para comparar
+  modos. A configuração se monta pela mesma função da cena, não por cópia; o que a cena lê pelo
+  `sys` do motor, que o simulador sem engine não tem, vira cópia anotada no código com a origem.
+  No CampCrawler ainda é cópia: a regra da poção, em `config_for` de `tools/simula_bosque.lua`,
+  com o comentário "como `main/scene_config.lua`".
+- Ele mede o que o robô faz como o jogador (luta, progressão, recursos), não o risco que o robô
+  trapaceiro evita: esse fica com o playtest, e o cabeçalho diz isso.
+- É ferramenta como as outras, com entrada validada e teste na suíte. CampCrawler
+  (`tools/simula_bosque.lua`): 100 runs em 1,8 s; sem teste, a auditoria achou cinco defeitos
+  nele e no resumo do playtest (B1–B6), a cópia da regra da poção entre eles, e a
+  pós-auditoria mais dois.
+
+## 8. O que o manual oficial de agentes pede
 
 <https://defold.com/manuals/ai-agents> e <https://defold.com/manuals/automation> (lidos em
 2026-10-13). A Defold não depende de modelo nem de protocolo; agente usa as mesmas interfaces

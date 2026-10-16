@@ -130,7 +130,59 @@ do projeto. No modelo SemVer descrito no artigo, uma quebra exige major, não
 patch. Se a política aplicável não estiver clara, registre a dúvida; não invente
 uma versão nem faça bump silencioso.
 
-### 4.3 Verificação executável
+### 4.3 Testes que provam a mudança
+
+Cobertura segue risco: TDD não é um teste por função. Funcionalidade nova ou
+regra que muda deve chegar com o teste que prova o comportamento, e correção de
+bug com o teste de regressão que reproduz o defeito, na camada que as convenções
+do projeto (seção 2) indicam para aquele código: suíte de unidade, teste de
+integração, de interface ou de cena, teste da ferramenta rodado pela suíte ou
+pelo portão do projeto (o comando de checagem ou o CI que bloqueia a entrega).
+A falta de um deles é achado, com gravidade justificada pelo risco do código
+alterado, nunca atribuída automaticamente. O teste novo ou de regressão fica
+para sempre num verificador que o projeto roda: na suíte, numa verificação do
+portão ou, quando o portão não o mede, na prova que o projeto define para isso
+(o parágrafo sobre teste existente alterado diz quando ele pode sair). Fora
+deles, como script avulso, caso pulado ou marcado como falha esperada, o teste
+conta como ausente; o de regressão em commit separado da correção é achado. A
+evidência também fica no commit: ele diz o comando, o vermelho de antes e o
+verde de depois (o PR pode repetir).
+
+Exceções legítimas, quando o commit as declara (o PR pode repetir; a declaração
+só no PR não fica no histórico e é achado). Cada declaração é uma alegação a
+conferir (4.1), e exceção não declarada não dispensa o teste:
+
+- refatoração sem mudança de comportamento: os verificadores que existem (suíte
+  e portão) são a rede, e onde eles não cobrem o trecho um teste de
+  caracterização vem antes; refatoração que muda comportamento não é exceção;
+- o que só uma pessoa julga olhando ou usando (legibilidade, sensação tátil,
+  arte): o julgamento fica com captura de tela ou uso no dispositivo real, e o
+  PR diz que ali não há teste automático; o caminho do código novo continua
+  alcançado pelo verificador do projeto, quando ele alcança a interface, e, se
+  não estiver, é achado;
+- defeito que não se reproduz em teste automático (visto só em produção, no
+  dispositivo real ou numa gravação), dizendo como foi visto e o que se tentou
+  para reproduzir; o caminho do código novo continua alcançado pelo verificador
+  do projeto, quando ele alcança a interface, e, se não estiver, é achado;
+- o teste que não deu para ver falhar antes porque o comportamento já existia:
+  o autor o escreve mesmo assim, vê-o reprovar plantando o defeito (ou
+  revertendo o código), restaura e diz isso. A existência anterior se confirma
+  por outro meio (reprodução ou leitura do código), não pelo próprio teste
+  passando na base. A exceção não vale para correção de bug nem para
+  comportamento novo que o PR alega: aí, teste que passa na base não reproduz o
+  defeito nem prova a mudança, e é achado.
+
+Teste existente alterado (asserção invertida ou afrouxada, expectativa trocada,
+caso apagado ou pulado) merece exame próprio. Quando a regra muda, trocar a
+expectativa é o vermelho da regra nova, feito antes do código. Mesmo assim,
+exija a justificativa no commit (a do PR sozinha não fica no histórico) e, onde
+a expectativa antiga ainda vale (outros modos e configurações, a chave que volta
+à regra anterior), outro teste que continue a afirmá-la; se ela não vale mais em
+modo nenhum, o commit diz isso. A falta da justificativa, desse teste ou dessa
+declaração é achado: a asserção invertida já escondeu o defeito do modo que ela
+protegia (CampCrawler 01a5524, corrigido em e7c6c50).
+
+### 4.4 Verificação executável
 
 Quando for seguro e permitido, execute verificações pertinentes ao comportamento
 alterado e às regressões plausíveis. Inspecione o que os testes realmente afirmam.
@@ -139,6 +191,25 @@ Use os comandos do projeto após o gate de segurança, sem presumir uma ferramen
 Sempre que necessário, compare o resultado na base e na versão revisada. Registre
 comando, snapshot, ambiente relevante, resultado e limitações. Distingua falha do
 produto de falha de infraestrutura. Não diga que executou algo que apenas leu.
+
+Em especial, a auditoria confere o vermelho: rode o teste novo ou alterado numa
+cópia descartável da base, no ambiente da seção 3, com esse teste aplicado,
+nunca no workspace do usuário (seção 1), e registre esse snapshot. Na base, o
+teste deve falhar pela asserção, pelo comportamento ausente ou pelo defeito,
+não por ambiente ou carregamento. Se ele chama API que só existe na versão
+revisada, acrescente à cópia só as assinaturas ou o esqueleto que o PR traz,
+para o teste carregar e falhar pela asserção; se não der, registre em
+Verificações "vermelho não visto; prova só por leitura". Teste que passa na base
+não prova a mudança e, em correção de bug ou comportamento novo, é achado
+(4.3). Se o PR declarou que o comportamento já existia, confirme isso por
+reprodução ou leitura do código, não pelo teste passando na base, e veja o teste
+reprovar plantando o defeito ou revertendo o código numa cópia descartável
+(seção 3), nunca no workspace do usuário.
+
+O comando, o vermelho e o verde que o commit ou o PR alegam entram no registro
+de alegações; a falta deles vai para Verificações. De teste existente alterado,
+rode também o teste antigo no código revisado, nos modos que ele cobria: cada
+reprovação precisa ser explicada pela mudança.
 
 ## 5. Auditar issue
 
@@ -167,8 +238,12 @@ Conclua como **reproduzido**, **não reproduzido nas condições testadas** ou
 **inconclusivo**, explicando a evidência. Não reproduzir não equivale a demonstrar
 que o problema não existe. Uma conclusão estática deve ser identificada como tal.
 
-Proponha a menor correção coerente com o defeito demonstrado e o teste que
-verificaria essa correção. A proposta continua sem autorização para execução.
+Proponha a menor correção coerente com o defeito demonstrado e o teste de
+regressão que a verificaria, na camada da 4.3. Esse teste precisa falhar no
+código atual como pede a 4.4; se a reprodução já é automática, ela é o rascunho
+dele, e o relatório diz se ela falhou. Se o defeito cai numa exceção da 4.3,
+diga qual, como ele foi visto e o que se tentou para reproduzir. A proposta
+continua sem autorização para execução.
 
 ## 6. Resolver somente o que foi aprovado
 
@@ -176,22 +251,35 @@ Confirme o conjunto autorizado de tickets ou achados. Se não houver auditoria
 suficiente, faça-a primeiro. Uma autorização para corrigir não transforma uma
 hipótese em defeito comprovado. Trabalhe em um ticket por vez.
 
-1. Escreva o teste de regressão antes da correção. Demonstre que falha pelo
-   defeito investigado, não por erro de ambiente, e registre a versão testada.
-   Se não puder demonstrar isso, relate o impedimento e peça decisão explícita
-   antes de seguir por uma exceção; não declare a regressão coberta.
+1. Escreva o teste de regressão antes da correção, na camada da 4.3, também
+   para defeito de apresentação ou de ferramenta, num verificador que o projeto
+   roda, onde ele fica para sempre (a 4.3 diz quando pode sair). Demonstre que
+   falha como pede a 4.4 e registre a versão testada. Quando a correção muda um
+   contrato com aprovação de escopo, trocar a expectativa do teste existente é
+   esse vermelho, feito aqui, com a justificativa no commit, ou no relatório
+   quando não houver commit, e o caso antigo tratado como pede a 4.3. Se o
+   achado aprovado é a falta de teste, escreva-o mesmo assim e veja-o reprovar
+   plantando o defeito ou revertendo a mudança numa cópia descartável (seção 3),
+   nunca no workspace do usuário; descarte a cópia e diga isso. Se não puder
+   demonstrar a falha, ou se o defeito cai numa exceção da 4.3, relate o
+   impedimento e peça decisão explícita antes de seguir sem o vermelho; não
+   declare a regressão coberta. Aqui a exceção pede essa decisão de propósito,
+   e não só a declaração da 4.3: a resolução autorizada é mais estrita.
 2. Implemente a menor correção completa e coerente com as convenções do projeto.
    Não acrescente abstrações especulativas, TODOs para encobrir incompletude ou
    refatorações alheias ao ticket. Preserve mudanças preexistentes do usuário.
 3. Execute o teste de regressão e as verificações pertinentes. Não enfraqueça
-   assertions, ignore testes ou troque a expectativa apenas para obter verde.
-   Mudança legítima de contrato exige justificativa e aprovação de escopo.
+   asserções, não apague nem pule testes e não troque a expectativa apenas para
+   obter verde: a troca legítima é a do passo 1, feita antes da correção.
 4. Revise o diff resultante, incluindo efeitos colaterais. Se mais de três tickets
    forem resolvidos na sessão, faça post-audit de todo o intervalo acumulado antes
    de qualquer push. Mudanças posteriores ao teste invalidam a alegação de que
    aquele resultado cobre o novo snapshot até a verificação pertinente ser refeita.
-5. Entregue as correções e evidências. Commit, push ou merge só acontecem dentro
-   das permissões concedidas e sem ignorar proteções do repositório.
+5. Entregue as correções e evidências: o commit e o relatório dizem o comando
+   do teste, o resultado dele antes da correção (vermelho) e depois (verde) e as
+   exceções declaradas; sem commit, o relatório. Teste e correção vão juntos,
+   no mesmo commit quando houver commit. Commit, push ou merge só acontecem
+   dentro das permissões concedidas e sem ignorar proteções do repositório.
 6. Só feche uma issue, quando autorizado, após confirmar que a correção está
    mergeada e que o CI exigido está verde no SHA exato integrado que contém a
    correção. Resultado de outro SHA, CI pendente ou pulado não satisfaz esse gate.
@@ -229,7 +317,9 @@ Preencha apenas com alegações reais do caso; não trate a tabela como quota.
 
 Liste o que foi executado, em qual snapshot, e o resultado. Separe verificações
 não executadas, bloqueadas e malsucedidas, explicando por quê. Não confunda teste
-local com CI, nem CI de outro commit com CI do código revisado.
+local com CI, nem CI de outro commit com CI do código revisado. Para teste de
+funcionalidade ou de regressão, registre o resultado antes da mudança (vermelho)
+e depois dela (verde), ou por que o vermelho não pôde ser visto.
 
 ### Decisões e pendências
 
