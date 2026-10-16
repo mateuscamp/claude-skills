@@ -20,6 +20,18 @@ versão, reproduza o caso mínimo.
 | bob pega 16 de 21 erros plantados [relatório] | passam: id duplicado de game object e de nó, chave errada no `game.project`, animação de sprite inexistente, `goto` | linter próprio, LuaLS, e passada que **executa** o caminho |
 | `--config=secao.chave=valor` com uma chave que é prefixo de outra | a busca casa por **prefixo**: `--config=p.autoplay=1` antes de `--config=p.autoplay_reward=0` faz `sys.get_config_int("p.autoplay_reward")` devolver 1, sem erro; invertendo a ordem dos argumentos, volta a 0 (Mineboom, 2026-10-10) | nenhuma chave da seção pode ser prefixo de outra; um teste lê o `game.project` e as ferramentas e reprova |
 | Saída do motor redirecionada para arquivo | fica em buffer até o processo sair: quem lê o log com o jogo rodando vê arquivo vazio | `stdbuf -oL -eL` ao lançar |
+| Cache HTTP do motor com índice velho [1.14.0] | o motor abre o cache da máquina ao subir, mesmo sem `http.request`; com o `index` velho, um `WARNING:DLIB: Unable to remove` por entrada reprova o smoke (item abaixo) | `[network] http_cache_enabled = 0` no `smoketest.ini` do portão |
+
+- Cache HTTP [1.14.0]: `network.http_cache_enabled` vem 1 no `meta.properties`, então o motor
+  abre o cache da máquina mesmo em jogo sem rede. No CampCrawler (2026-10-15, portão da D52) o
+  `index` de 10/out apontava para arquivos que já não existiam, e o smoke, que reprova
+  `Unable to`, falhou com 57 "problemas" sem defeito no jogo. A causa foi inferida na sessão:
+  mover o `index` para fora, sem apagar, limpou o portão. O `=0` foi medido em 2026-10-16 por
+  `--config`, com HOME vazio: o motor nem cria a pasta (`~/.local/share/Defold/http-cache`);
+  que ele cale também o índice velho segue disso, sem medição com o índice. No
+  `scripts/smoketest.ini` a mesma chave entra no bundle pelo bob e vale para todas as passadas
+  de uma vez, em vez de um `--config` repetido em cada uma; é melhor que pôr o aviso no
+  `IGNORE` do smoke.
 
 ## Verificação estática
 
@@ -38,7 +50,7 @@ versão, reproduza o caso mínimo.
 - Anotação mais estrita que o motor: `gui.is_enabled(node)` acusa parâmetro faltando (o
   `recursive` é opcional no motor); o mesmo com `sys.get_sys_info()` e o `options` de
   `go.set`/`go.get` (o texto diz "(optional)", a assinatura não). Passe o argumento explícito
-  (`false`, `{}`) em vez de criar exceção.
+  (`true` antes de `pick_node`, ver Entrada; `{}`) em vez de criar exceção.
 - Anotação que **falta** no 1.13.2: não há o módulo `camera` (`camera.screen_to_world`,
   `camera.world_to_screen`) nem as versões tipadas `sys.get_config_string`/`sys.get_config_int`
   — só `sys.get_config`. O motor tem as três. Remédio: um arquivo `---@meta` do projeto em
@@ -57,6 +69,13 @@ versão, reproduza o caso mínimo.
 - `gui.get_screen_position` e `gui.pick_node` **discordam** quando a janela não tem a resolução do
   projeto: toque sintetizado a partir da posição de um nó acerta **outro nó**, sem erro. No
   headless a janela é a do projeto e os dois coincidem.
+- [1.14.0] `gui.pick_node` **não olha se o nó está ligado**: o nó desligado com
+  `gui.set_enabled(no, false)` continua acertável, e o filho de pai desligado também. O toque
+  atravessa o cartão ou a aba que sumiu e acerta o que não se vê, sem erro. Pergunte antes:
+  `gui.is_enabled(no, true) and gui.pick_node(no, x, y)`. Com `false` o `is_enabled` só olha o
+  próprio nó, e o filho de pai desligado responde `true` (medido em 2026-10-16). O CampCrawler
+  desliga cada nó e usa `false` (`main/hud_view.lua`, `main/squad_view.lua`). Quem desliga o
+  grupo pelo pai precisa do `true`.
 
 ## Mensagens, objetos e GUI
 
@@ -68,10 +87,43 @@ versão, reproduza o caso mínimo.
 - `euler` e `position` são do **game object**, não do componente: `go.animate("#sprite", "euler.z")`
   estoura no `init` e o erro aparece longe, no primeiro uso do id nil.
 - `gui.cancel_animations` é plural; o singular compila e estoura quando o caminho roda.
-- `gui.set_parent` sem o terceiro argumento preserva o transform local.
+- `gui.set_parent(no, pai)` sem o terceiro argumento (ou com `false`) preserva o transform
+  **local**. Com `true` (`keep_scene_transform`) preserva a posição **na tela** e compensa o
+  transform que o pai tem **naquele momento**. [1.14.0] Pai em (100, 0) com escala 0,5: o filho
+  em (400, 400) adotado com `true` fica com local (600, 800) e não encolhe com o pai. Com
+  `false`, fica com local (400, 400) e tela (300, 200).
+- [1.14.0] Para caber mais na mesma caixa (tabuleiro 9x11 onde cabia o 9x9, CampCrawler D54),
+  escale um raiz próprio do grupo em vez de recalcular posições. Adote os filhos com esse raiz
+  na identidade (todos no `init`, antes do primeiro `gui.set_scale` dele): assim a coordenada de
+  projeto continua sendo a posição local deles. Daí em diante `gui.get_position` é local, e o
+  ponto em coordenada de projeto (espaço do pai do raiz) é `origem + escala * local` (é por ele
+  que o robô toca, `board_view.touch_point`). O `gui.pick_node` já conta a escala do pai, então
+  a entrada não muda.
 - Na GUI criada em código, a **ordem de criação é a ordem de desenho**: crie em sequência, não
   dentro de um construtor de tabela.
+- [1.14.0] Texto que quebra muda de altura, e o vizinho em posição fixa fica por baixo: a linha
+  de regras do painel quebrou em duas num idioma e cobriu o estado (CampCrawler D56). Meça e
+  desça o vizinho pela altura medida (`main/hud_view.lua`, `place_hint`):
+  `resource.get_text_metrics(gui.get_font_resource(gui.get_font(no)), gui.get_text(no),
+  { width = gui.get_size(no).x, line_break = true }).height * gui.get_scale(no).y`. A métrica
+  é da fonte, sem a escala do nó. Sem `line_break = true` o `width` é ignorado e volta a altura
+  de uma linha (medido com a `default.font` dos builtins: 16,3 sem quebra, 65,2 com
+  `width = 120` e quebra). Título que não cabe nem assim se resolve no texto: o da tela do
+  camponês passou por baixo do botão de idioma e foi encurtado nos dez idiomas.
+- `gui.get_text_metrics_from_node` não existe mais: o LuaLS acusou no 1.13.2, e no 1.14.0 ela é
+  `nil`. Ela vem da memória de versão antiga; quem a substitui é a chamada de cima.
 - Limite de mensagem: 2 KiB. Tetos de instâncias, sprites e nós no `game.project`/`.gui`.
+- [1.14.0] Passar do `max_nodes` do `.gui` imprime `ERROR:GUI: Could not create the node since
+  the buffer is full (N).`, e o `gui.new_*_node` **levanta** `Out of nodes (max N)`: o resto da
+  função não roda. O `gui.delete_node` só devolve a vaga no fim do quadro, então apagar e criar
+  no mesmo quadro também estoura (medido em 2026-10-16 com `max_nodes: 16`).
+- [1.14.0] Para ver a folga sem contar à mão, conte com uma sonda por pai e emita o total num
+  fato: `gui.new_box_node`, `gui.set_parent(sonda, pai, false)`, `gui.get_index(sonda)`
+  (quantos irmãos vieram antes) e `gui.delete_node`. A sonda só vê filhos diretos: todo pai novo
+  entra na lista, senão o total cai calado (CampCrawler D54: de 997 para 91 quando as células
+  passaram para o `board_root`). Ela ocupa vaga até o fim do quadro. Com o fato `NOS` à vista,
+  o 9x11 (99 células com 10 camadas mais o HUD, ≈1180) subiu o `max_nodes` de 1024 para 2048
+  antes de estourar.
 
 ## Animação
 
@@ -81,6 +133,16 @@ versão, reproduza o caso mínimo.
   cintilar. Arredonde a posição ao pixel da arte.
 - Fonte distance-field com CJK inteiro é enorme: gere `extra_characters` a partir dos textos e
   reprove fonte desatualizada no portão (glifo ausente vira quadrado sem log).
+
+## Lua: LuaJIT do motor e Lua 5.x da suíte
+
+- `/` devolve float no Lua 5.3+: `3*2/2` é `3` no LuaJIT e `3.0` no Lua 5.4 e 5.5. O `==`
+  continua verdadeiro, então só muda o que vira texto (`tostring`, `..`, `%s`), e `%d` com valor
+  fracionário estoura no 5.3+. O motor (LuaJIT) nunca mostraria: só a suíte no Lua 5.x pega. No
+  CampCrawler (D52, `squad.level_threshold`), a soma `base * passos + passos * (passos - 1) / 2`
+  saiu `"2.0,5.0,9.0,14.0,20.0"`, e o teste que compara texto reprovou só no Lua 5.5. Remédio:
+  `math.floor` em toda divisão cujo resultado é inteiro (medido em 2026-10-16: LuaJIT 2.1, Lua
+  5.4 e 5.5).
 
 ## Sorteio
 

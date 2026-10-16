@@ -1,7 +1,8 @@
 # Armadilhas do Godot 4.7 que o agente não vê
 
-Tudo aqui foi medido no Godot 4.7.2 (Linux): no flipper-boom (2026-10-09) ou no relatório
-"Godot AI-first comparado a Defold" (2026-10-09, marcado como [relatório]). Antes de confiar
+Medido no Godot 4.7.2 (Linux): no flipper-boom (2026-10-09) ou no relatório "Godot AI-first
+comparado a Defold" (2026-10-09, marcado como [relatório]). O que foi conferido de novo leva
+[versão]; o que vem só da documentação oficial, sem medição nossa, leva [doc]. Antes de confiar
 num item em outra versão, reproduza o caso mínimo.
 
 ## Códigos de saída mentem
@@ -91,6 +92,17 @@ Regra: **todo comando Godot leva `timeout` e tem o log lido** procurando
 - `--log-file <arquivo>` grava ali **em vez de** `user://logs`: nada é criado na pasta do
   projeto do usuário. Caminho absoluto ou relativo à pasta do projeto.
 - `push_error` chega ao arquivo com `at:` e o `GDScript backtrace`.
+
+## Texto que quebra (4.7.2)
+
+Medido em 2026-10-16 num projeto mínimo, `Label` com a fonte padrão do tema e largura 120:
+
+- Sem `autowrap_mode` o texto não quebra: o `Label` ignora o `size` e cresce na largura (586 px,
+  uma linha), passando da borda.
+- Com `AUTOWRAP_WORD_SMART`: 7 linhas e 179 px de altura. O vizinho posto à mão logo abaixo da
+  altura de uma linha (`y = 123`) fica por baixo; num `VBoxContainer` ele desce sozinho (`y = 183`).
+- A altura que vale é a do `Label` depois de um quadro (`size.y`). `Font.get_multiline_string_size`
+  dá 161: não conta o `line_spacing` do tema (3 px entre linhas).
 
 ## Screenshot e display
 

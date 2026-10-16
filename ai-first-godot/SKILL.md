@@ -1,6 +1,6 @@
 ---
 name: ai-first-godot
-description: Boas práticas AI-first para qualquer jogo em Godot 4 quando quem escreve o código é um agente - como o código deve ser escrito (domínio em RefCounted sem engine, um adaptador de entrada, um dono por animação, RNG com semente, eventos em log JSON, tipagem, registros como classes, regras de .tscn e --import), o modelo de AGENTS.md, e o ciclo de verificação que o agente fecha sozinho (portão que importa, compila todos os scripts, roda os specs e lê o log em vez de confiar no código de saída; hook Stop do Claude Code; warnings estritos; fitness function da fronteira do domínio; log da partida em arquivo). Use sempre que o projeto for Godot - ao começar um jogo novo, ao chegar num projeto existente, ao auditar se ele segue as boas práticas, e quando o assunto for teste headless, CI, hook, "passou mas tinha erro no log", "o Godot travou no teste", warnings, tipagem, Dictionary, `--check-only`, `--script`, xvfb, "resources still in use at exit", saves de teste em user://, log em arquivo, user://logs, godot.log, --log-file ou "o log sumiu". Complementa a skill jogos-ai-first (método e governança).
+description: Boas práticas AI-first para jogo em Godot 4 escrito por agente - como escrever o código (domínio em RefCounted sem engine, um adaptador de entrada, um dono por animação, RNG com semente, eventos em log JSON, tipagem, registros em classe, .tscn e --import), o modelo de AGENTS.md e o ciclo de verificação que o agente fecha sozinho (spec visto falhar antes do código, regressão no commit da correção; portão que importa, compila tudo, roda os specs e lê o log, não o código de saída; hook Stop; warnings estritos; fronteira do domínio; log da partida em arquivo). Use sempre que o projeto for Godot (jogo novo, projeto existente, auditoria) e quando o assunto for teste headless, CI, hook, "passou mas tinha erro no log", "o Godot travou no teste", TDD, teste antes, teste de regressão, warnings, tipagem, Dictionary, `--check-only`, `--script`, xvfb, "resources still in use at exit", saves em user://, log em arquivo, godot.log, --log-file ou "o log sumiu". Complementa a skill jogos-ai-first (método e governança).
 ---
 
 # AI-first em Godot
@@ -12,11 +12,13 @@ duas coisas: **como escrever** o projeto para que esses erros não nasçam, e **
 para que os que nascerem virem reprovação antes de o agente dizer "terminei".
 
 O método geral (contrato, posse, determinismo, ADR, fitness function, risco) está na skill
-**jogos-ai-first**. Aqui fica só o que é do Godot.
+**jogos-ai-first**. Aqui fica o que é do motor e as lições de jogo dos projetos irmãos, na forma do
+motor.
 
 Arquivos desta skill:
 - `assets/AGENTS-godot.md`: a seção Godot do `AGENTS.md` do projeto, pronta para adaptar. É
-  **a lista das boas práticas de código**; leia-a inteira antes de escrever código Godot.
+  **a lista das boas práticas de código e de teste**; leia-a inteira antes de escrever código
+  Godot.
 - `references/armadilhas.md`: os comportamentos medidos da CLI e da engine, com números. Leia
   antes de afirmar qualquer coisa sobre código de saída, compilação, warnings ou `.tscn`.
 - `scripts/`: `portao.sh`, `compilar_tudo.gd`, `hook_portao.sh`, `fronteira_spec.gd`.
@@ -29,13 +31,16 @@ Arquivos desta skill:
    `input_devices/pointing/emulate_mouse_from_touch=false` (jogo de toque) e os warnings estritos
    da seção 4 **desde o primeiro script**, quando custam zero.
 2. Instale o portão e o hook (seção 2) e o `fronteira_spec.gd`, antes da primeira mecânica.
-3. Siga o `AGENTS.md`. Cada mecânica nova vem com spec e com eventos JSON que o spec lê.
+3. Siga o `AGENTS.md`. Cada mecânica nova começa pelo spec, visto falhar antes do código, com
+   os eventos JSON que ele lê; cada bug, pelo spec que o reproduz.
 
 **Projeto existente**
 1. Audite medindo (seção 1) e mostre ao usuário a tabela: o que existe, onde, e o número medido.
 2. Instale o portão e o hook primeiro: são baratos e protegem todo o resto.
 3. O que a auditoria apontar no código (entrada, animação, RNG, tipagem) vira etapas pequenas,
    cada uma com o portão verde. Mudança de contrato entre domínio, cena e testes pede ADR antes.
+4. Cada etapa que muda comportamento (entrada, animação, RNG) entra pelo spec vermelho, como toda
+   mecânica e correção; a que só reorganiza é a exceção de refatoração da seção Testes do modelo.
 
 ## 1. Auditar
 
@@ -47,12 +52,13 @@ Confira e **meça**; não responda pela leitura do código.
 | Domínio sem engine | regras em `RefCounted`? rode `fronteira_spec.gd` ajustado às pastas |
 | Um só adaptador de entrada | `emulate_mouse_from_touch=false`; `grep -rl InputEvent` aponta um arquivo só? |
 | Um dono por propriedade animada | contar `create_tween`/`tween_property`/`AnimationPlayer` e quem os guarda |
-| RNG com semente | `RandomNumberGenerator` num lugar só; `randi`/`randf` globais no código de jogo |
+| RNG com semente | todo `RandomNumberGenerator` deriva da semente? `randi`/`randf` globais? |
 | Eventos verificáveis | os testes leem eventos JSON ou texto da tela? |
 | Verificação lê o log | os comandos do README/CI só olham o código de saída? |
 | Log em arquivo | `debug/file_logging` desligado no `project.godot`? comando avulso (captura, robô) grava no `user://logs` do autor? |
 | Compilação total | algo carrega todos os `.gd`, ou só o que os specs usam? |
 | Specs fora da lista | `tests/*_spec.gd` que o README ou o CI não rodam |
+| Teste antes | correções: teste no mesmo commit? mecânicas: teste antes ou junto? (abaixo) |
 | Hook | `.claude/settings.json` roda verificação no `Stop`? |
 | Warnings estritos | ligar numa **cópia** e contar por pasta e por tipo (abaixo) |
 | Registros em `Dictionary` | `Array[Dictionary]` de entidades no domínio, e quantas chaves cada um tem |
@@ -61,6 +67,15 @@ Confira e **meça**; não responda pela leitura do código.
 Contar warnings sem tocar no projeto: `rsync` para `~/.cache/<projeto>-auditoria` (sem `.git` e
 `.godot`), acrescente `[debug]` com os cinco warnings em `=2`, rode `--import` duas vezes e o
 `compilar_tudo.gd`, e agrupe as linhas `Warning treated as error` pelo `res://` da linha seguinte.
+
+Vermelho na base, depois de instalar o portão (seção 2): numa cópia em `~/.cache`
+(`git archive <base>`), com o `portao.sh` e o `compilar_tudo.gd` da skill ajustados como no
+projeto, ponha o spec do commit e rode; ele tem de dar `FALHOU` pela asserção. Se o spec não
+compila na base (o que chama função nova falha ao carregar: o `compilar_tudo` reprova e os specs
+nem rodam), anote "não medível"; aí vale o esqueleto ou a leitura das asserções. Asserção
+afrouxada, invertida ou trocada, caso apagado ou pulado: o commit diz por quê, e outro spec cobre
+o caso antigo onde a expectativa antiga ainda vale (se ela não vale mais em modo nenhum, o commit
+diz isso)?
 
 ## 2. Instalar o portão e o hook
 
@@ -88,14 +103,31 @@ cp $S/portao.sh $S/hook_portao.sh tools/ && chmod +x tools/portao.sh tools/hook_
 Depois rode o portão completo **cinco vezes seguidas**: falha intermitente aparece aí, e costuma
 ser áudio preso ou estado sobrando em `user://`.
 
+Dali em diante, cada spec novo é visto falhar antes do código que ele cobra: pela asserção
+(`FALHOU` só com a mensagem dela), não por `SCRIPT ERROR`, compilação nem `TRAVOU`. A regra
+inteira está em `assets/AGENTS-godot.md`, seção Testes.
+
 ## 3. Consertar o que o portão acha
 
+- **O conserto entra pelo spec vermelho**, como na seção Testes do `assets/AGENTS-godot.md`. A
+  reprovação estável do portão já é esse vermelho; a que vem por sorte pede antes o spec
+  determinístico. Spec antigo que reprova o código novo só muda pela regra de lá.
 - `resources still in use at exit`: `queue_free()` na cena e `await create_timer(0.3).timeout`
   antes do `quit()`. `--verbose` mostra qual recurso ficou.
 - Spec que reprova na segunda execução: depende do `user://` limpo. Apague no início os arquivos
   que ele usa, atrás da trava que recusa `user://` fora de `/tmp` e `~/.cache`.
 - `Cannot find member` numa classe recém-usada: confira se a `class_name` é a que você pensa;
   cena e domínio costumam ter nomes parecidos.
+- Spec preso a uma semente que quebra depois de mudar o gerador (grade maior, terreno novo): o
+  sorteio passou a consumir outra sequência e a semente já não dá o caso. Não troque a prova do
+  evento por uma mais fraca; sai só a dependência da semente (casa exata, grade de antes), e o
+  commit diz isso. Ache outra semente com um laço no domínio (o jogador automático dos specs,
+  parando na primeira em que o evento acontece), fixe-a e diga no comentário o que ela dá. O
+  spec confere o evento pelo sentido (`evento` e as chaves que provam), com célula e turno em
+  faixa. Frente nova sorteia num `RandomNumberGenerator` próprio, com semente derivada da
+  semente da partida e um sal da frente: desligada, toda semente segue igual, e um spec de
+  impressão digital dos mapas prova isso (CampCrawler, em Defold: a passada do ogro trocou de
+  semente na D54 e na D55).
 
 ## 4. Tipagem
 
@@ -128,6 +160,18 @@ O autor joga pelo editor, fecha, e pede "olhe o log". O console do editor já er
   do portão) leva `--log-file <caminho em ~/.cache>`, que grava ali e não toca no `user://logs`.
 - Mobile não tem a variante `.pc` (não medido aqui): ligue `enable_file_logging` se o playtest for no aparelho e
   puxe o arquivo pelo `adb`.
+
+## 6. Ferramentas de balanço
+
+**Simulador de balanço sem engine.** O domínio em `RefCounted` e o jogador automático dos specs
+jogam centenas de runs em segundos (`extends SceneTree` com `--headless --script`) e tabelam por
+fase: vitória, nível, quedas por causa, uso de cada recurso, runs travadas. A configuração sai do
+`project.godot` pela mesma função do jogo, com `chave=valor` para comparar modos. Mede o que o
+robô faz como o jogador, não o risco que o robô que sabe as respostas evita: esse fica com o
+playtest, e o cabeçalho diz isso. É ferramenta como as outras, com entrada validada, spec que a
+roda (`OS.execute`) e `--log-file` em `~/.cache` (seção 5), para não empurrar o playtest do autor
+para fora da rotação. No CampCrawler (Defold), 100 runs em 1,8 s; sem teste, cinco defeitos dele
+e do resumo do playtest só saíram na auditoria.
 
 ## Convivência
 
