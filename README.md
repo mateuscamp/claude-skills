@@ -23,7 +23,8 @@ O `.gitignore` é lista de permissão: skill nova só entra acrescentando a linh
   no reboot):
 
   ```sh
-  git -C ~/.claude/skills worktree add ~/.cache/claude-skills-wt/<ramo> -b <ramo> main
+  git -C ~/.claude/skills fetch
+  git -C ~/.claude/skills worktree add ~/.cache/claude-skills-wt/<ramo> -b <ramo> origin/main
   ```
 
 - Commit na worktree; push e PR esperam o sim do autor. Depois do merge:
@@ -39,7 +40,8 @@ Gera as cópias de `~/Documentos/Skills` a partir do `main`, só com a bibliotec
 
 - `<skill>.zip` e `<skill>.skill/<skill>/` para cada pasta com `SKILL.md`, e o
   `code-audit-skill.md`;
-- o que difere vai antes para `<nome>.antigo`; nenhuma outra entrada de Documentos é tocada.
+- o que difere vai antes para `<nome>.antigo`, e o `<nome>.antigo` que já existia sai (mesmo
+  feito à mão); nenhuma outra entrada de Documentos é tocada.
 
 ```sh
 ~/.claude/skills/distribuir.py           # depois de cada merge no main

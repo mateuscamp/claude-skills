@@ -149,7 +149,8 @@ Teste primeiro (TDD). Cobertura segue risco: TDD não é um teste por função.
   resolvida no projeto vira lição na skill `ai-first-defold` (com a versão medida, ou `[doc]`);
   lição de jogo que não é do motor vai também para a `ai-first-godot`. Na mesma frente do
   conserto, conferindo antes se já está lá. A lição entra num ramo numa worktree fora do `/tmp`
-  (`git -C ~/.claude/skills worktree add ~/.cache/claude-skills-wt/<ramo> -b <ramo> main`), nunca
-  trocando o ramo de `~/.claude/skills`, que toda sessão carrega e fica no `main`; push e PR
-  esperam o sim <do autor>.
+  (`git -C ~/.claude/skills fetch`, depois `git -C ~/.claude/skills worktree add
+  ~/.cache/claude-skills-wt/<ramo> -b <ramo> origin/main`), nunca trocando o ramo de
+  `~/.claude/skills`, que toda sessão carrega e fica no `main`; push e PR esperam o
+  sim <do autor>.
 - Dependência nova, extensão nativa, serviço externo, signing e publicação pedem aprovação.

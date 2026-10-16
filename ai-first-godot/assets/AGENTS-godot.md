@@ -130,10 +130,10 @@ por função.
 - **Lição volta para a skill:** armadilha do Godot resolvida no projeto vira lição na skill
   `ai-first-godot` (com a versão medida, ou `[doc]`); lição de jogo que não é do motor vai
   também para a `ai-first-defold`. Na mesma frente do conserto, conferindo antes se já está lá.
-  A lição entra num ramo numa worktree fora do `/tmp` (`git -C ~/.claude/skills worktree add
-  ~/.cache/claude-skills-wt/<ramo> -b <ramo> main`), nunca trocando o ramo de
-  `~/.claude/skills`, que toda sessão carrega e fica no `main`; push e PR esperam o sim <do
-  autor>.
+  A lição entra num ramo numa worktree fora do `/tmp` (`git -C ~/.claude/skills fetch`, depois
+  `git -C ~/.claude/skills worktree add ~/.cache/claude-skills-wt/<ramo> -b <ramo> origin/main`),
+  nunca trocando o ramo de `~/.claude/skills`, que toda sessão carrega e fica no `main`; push
+  e PR esperam o sim <do autor>.
 - Spec mora em `tests/<nome>_spec.gd` e entra sozinho no portão, sem lista. O glob não é
   recursivo: spec em subpasta ou sem o sufixo `_spec.gd` nunca roda.
 - Spec que grava em `user://` apaga no início os arquivos que usa e recusa um `user://` fora de

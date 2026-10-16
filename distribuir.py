@@ -8,8 +8,8 @@ Skill é toda pasta de primeiro nível do ref que tem `SKILL.md`. Sem opção, g
 - `<skill>.skill/<skill>/`, de `git archive --prefix=<skill>/ <ref>:<skill> | tar -x`;
 - `code-audit-skill.md`, cópia do `SKILL.md` da code-audit.
 
-Antes de trocar o que difere, guarda o anterior em `<nome>.antigo` (o `.antigo` mais velho sai).
-Não toca em nenhuma outra entrada do destino nem apaga o que não gera.
+Antes de trocar o que difere, guarda o anterior em `<nome>.antigo`; um `<nome>.antigo` que já
+exista sai, feito por este script ou à mão. Não toca em nenhuma outra entrada do destino.
 
 `--check` só lê e sai com 1 listando cada problema:
 
