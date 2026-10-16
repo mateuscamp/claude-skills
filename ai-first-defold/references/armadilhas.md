@@ -62,6 +62,25 @@ jogo", igual nas duas skills (ai-first-defold e ai-first-godot).
   do portão exercita no motor, citando a linha de log que prova; linha sem esse respaldo é API
   inventada que o LuaLS passa a aceitar. Modelos: `~/defold/boomlitude/ferramentas/luals/` e
   `~/defold/campcrawler/tools/luals/`.
+- [1.14.0] **O LuaLS só cobra campo de tabela que tem classe.** Sem anotação, `a.kidn` no lugar
+  de `a.kind` passa limpo, venha a tabela de um construtor de outro módulo ou de um literal no
+  mesmo arquivo; com `---@class` e sem `---@return` no construtor, passa também. Com os dois, o
+  mesmo acesso reprova como `undefined-field` (erro no `scripts/luals_check.sh`). No CampCrawler
+  (2026-10-16), quatro acessos errados plantados passaram com exit 0 sem a anotação e
+  reprovaram os quatro com ela, inclusive `outcome.events[1].kidn`, que chega pelo
+  `---@field events Event[]`. Num caso mínimo, a classe incompleta e a velha não falham igual:
+  - campo que o construtor monta e a classe não declara: `inject-field` onde a variante o
+    acrescenta (`e.enemy = enemy`) e `undefined-field` em quem o lê; no literal do `return`,
+    sem leitor, passa;
+  - campo que a classe declara e nada monta: passa, e quem o lê recebe sempre nil. O
+    `missing-fields` só olha literal com `---@type`, não o `return` sob `---@return`.
+
+  Por isso a anotação anda com um teste da suíte que a prende ao construtor (CampCrawler,
+  `tests/test_type_annotations.lua`). Ele monta instâncias reais, inclusive pelas variantes que
+  preenchem o campo opcional, porque o `pairs` não vê campo nil. Compara as chaves com os
+  `---@field` do bloco nos dois sentidos e exige o `---@return` em cada construtor. Comece pelas
+  tabelas que cruzam módulos (evento, configuração, resultado de ação); tabela de outra forma,
+  mesmo devolvida pelo mesmo módulo, é outra classe.
 
 ## Entrada
 
