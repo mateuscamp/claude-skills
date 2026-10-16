@@ -3,6 +3,7 @@
 /*
 !/.gitignore
 !/README.md
+!/distribuir.py
 !/ai-first-defold/
 !/ai-first-godot/
 !/code-audit/
