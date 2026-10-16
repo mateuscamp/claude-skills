@@ -47,12 +47,14 @@ dos dois, ou ponha `@AGENTS.md` no topo do CLAUDE.md. Mantenha nele só regra do
   exclusivo do LuaJIT na regra.
 - Tabela que cruza módulos tem forma documentada no construtor; enumeração é string constante do
   módulo, validada na fronteira. Erro de contrato é `error()` com o valor recebido e o esperado.
-- **Tipos:** essa forma é um `---@class` com um `---@field` por campo, e todo construtor que a
-  devolve leva `---@return <Classe>` logo acima (sem ele o LuaLS não liga quem chama à classe).
-  O `tools/luals_check.sh` trata `undefined-field` como erro. Um teste da suíte monta instâncias
-  pelos construtores reais e reprova campo montado sem `---@field`, `---@field` que nada monta e
-  construtor sem `---@return`: a anotação velha o LuaLS aceita calado (ver
-  `references/armadilhas.md` da skill `ai-first-defold`, Verificação estática).
+- **Tipos:** comece pequeno, pelas tabelas que cruzam módulos (evento, configuração, resultado
+  de ação): cada uma vira um `---@class` com um `---@field` por campo, e o construtor dela leva
+  `---@return <Classe>` logo acima (sem ele o LuaLS não liga quem chama à classe). As outras
+  ganham anotação quando passarem a cruzar módulos ou forem mexidas. O `tools/luals_check.sh`
+  trata `undefined-field` como erro. Um teste da suíte monta instâncias pelos construtores
+  anotados e reprova campo montado sem `---@field`, `---@field` que nada monta e construtor sem
+  `---@return`: a anotação velha o LuaLS aceita calado (ver `references/armadilhas.md` da skill
+  `ai-first-defold`, Verificação estática).
 - **Entrada:** um só binding por gesto. Ligue `MOUSE_BUTTON_LEFT` a `touch` e **não** ligue
   `TOUCH_MULTI` à mesma ação: no celular o primeiro dedo já chega como mouse, e os dois juntos
   disparam cada toque duas vezes. Um único `on_input` traduz o gesto numa ação de domínio.
