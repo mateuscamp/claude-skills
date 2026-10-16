@@ -79,8 +79,9 @@ jogo", igual nas duas skills (ai-first-defold e ai-first-godot).
   `tests/test_type_annotations.lua`). Ele monta instâncias reais, inclusive pelas variantes que
   preenchem o campo opcional, porque o `pairs` não vê campo nil. Compara as chaves com os
   `---@field` do bloco nos dois sentidos e exige o `---@return` em cada construtor. Comece pelas
-  tabelas que cruzam módulos (evento, configuração, resultado de ação); tabela de outra forma,
-  mesmo devolvida pelo mesmo módulo, é outra classe.
+  tabelas que cruzam módulos (evento, configuração, resultado de ação) e anote as outras quando
+  passarem a cruzar ou forem mexidas; tabela de outra forma, mesmo devolvida pelo mesmo módulo, é
+  outra classe.
 
 ## Entrada
 
