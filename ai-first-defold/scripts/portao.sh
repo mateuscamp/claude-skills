@@ -14,8 +14,10 @@ cd "$ROOT"
 # ---- AJUSTE ------------------------------------------------------------------
 OUTDIR=${PORTAO_OUT:-${XDG_CACHE_HOME:-$HOME/.cache}/$(basename "$ROOT")-headless}
 # Geradores com modo --check (fontes, tiles, ...): reprovam asset desatualizado.
+# E o teste de ferramenta que não é Lua, como o do próprio smoke.py.
 geradores() {
   : # python3 tools/gen_fonts.py --check
+  python3 tools/test_smoke.py
 }
 # As passadas do motor. Cada uma exige o que a peça alterada PRECISA produzir:
 # peça ausente não emite erro, então "não deu erro" não prova nada.
@@ -23,6 +25,13 @@ passadas() {
   APP=$1
   python3 tools/smoke.py "$APP" 6 --config=<projeto>.autoplay=1 \
     --exigir '^DEBUG:SCRIPT: <PROJETO> INICIO '
+  # Passada de recusa: chave com valor errado não deixa o jogo começar. O erro no init
+  # de um .gui_script sai com a linha do GAMESYS (1.14.0); --erro-esperado perdoa só
+  # as duas e o traceback, e cobra que apareçam com o recebido.
+  # python3 tools/smoke.py "$APP" 4 --config=<projeto>.autoplay=1 --config=<projeto>.seed=abc \
+  #   --erro-esperado '^ERROR:SCRIPT: .*<projeto>\.seed inválido: recebido "abc"' \
+  #   --erro-esperado '^ERROR:GAMESYS: Error when initializing gui component' \
+  #   --recusar '<PROJETO> INICIO '
 }
 # ------------------------------------------------------------------------------
 
