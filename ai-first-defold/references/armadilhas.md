@@ -77,8 +77,11 @@ jogo", igual nas duas skills (ai-first-defold e ai-first-godot).
 
   Por isso a anotação anda com um teste da suíte que a prende ao construtor (CampCrawler,
   `tests/test_type_annotations.lua`). Ele monta instâncias reais, inclusive pelas variantes que
-  preenchem o campo opcional, porque o `pairs` não vê campo nil. Compara as chaves com os
-  `---@field` do bloco nos dois sentidos e exige o `---@return` em cada construtor. Comece pelas
+  preenchem o campo opcional, porque o `pairs` não vê campo nil, e uma instância por caminho de
+  retorno do construtor. Em cada instância, todo campo sem `?` tem valor e toda chave está num
+  `---@field`; só o `---@field` que nada monta se confere na união das instâncias. Exige o
+  `---@return` em cada construtor. Conferir tudo pela união deixou passar três mutações no
+  CampCrawler (campo ausente numa instância, chave nova num retorno que o teste não montava). Comece pelas
   tabelas que cruzam módulos (evento, configuração, resultado de ação) e anote as outras quando
   passarem a cruzar ou forem mexidas; tabela de outra forma, mesmo devolvida pelo mesmo módulo, é
   outra classe.
@@ -299,6 +302,8 @@ flipper-boom (Godot 4.7.2), mas a lição não depende da engine.
 - Spec não conta por contador compartilhado, como id global, número de nós ou tamanho de lista: ele anda por outros motivos, e o teste passa sem o comportamento. Aqui `_proximo_id` andava com inimigos, gemas, ataques e o chefe (medido no flipper-boom, 2026-10-12). Conte o evento ou o campo que só a ação testada altera e veja o spec falhar com a ação desligada.
 - Para cada mudança, liste os caminhos de código que produzem o mesmo efeito (cada mesa, cada tipo de desenho, cada gatilho: evento de tamanho, timer, giro) e confira que algum spec passa por cada um. Spec que mede uma variante fica verde enquanto as outras quebram: aqui 3 das 4 mesas desenhavam o inimigo por um caminho sem spec (medido no flipper-boom, 2026-10-12). Faça grep pelo construtor ou pelo galho e procure-o nos specs.
 - Argumento de semente que não é inteiro positivo (`abc`, `0`, `1.5`, `O1`) nunca cai calado no sorteio: a partida 'repetida' não se repetiria. O jogo registra `semente_invalida` no log com aviso e sorteia; a ferramenta de teste recusa o argumento e sai com erro (medido no flipper-boom, 2026-10-09). Uma mutação que aceita a semente inválida faz o spec falhar.
+- Fato de log que prova o que a tela mostra sai lido do nó (o texto dele, a posição dele) e leva ao lado o valor que o domínio escolheu; o portão exige os dois iguais, com referência da regex (`canto=(-?1,-?1) ... esperado=\1`, no `re` do Python). Uma classe de valores plausíveis não prova o lugar certo: no CampCrawler, `canto=-?1,-?1` aceitou a contagem do alcance desenhada sempre no canto errado, e só com o `esperado` a passada reprovou (medido, 2026-10-16). Plante o defeito que a regex aceitaria e veja a passada cair.
+- Teste de forma (os campos de um registro, de um evento, de um resultado) confere cada instância, não a união das chaves de várias: na união, um campo que falta numa instância só e um caminho de retorno que nenhum teste monta passam calados. Monte uma instância por caminho de retorno e exija em cada uma os campos obrigatórios; só 'declarado e nunca montado' se confere na união. No CampCrawler, três mutações passaram pela união e reprovaram por instância (2026-10-16).
 
 ### Prova, oráculo e medição
 
