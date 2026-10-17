@@ -147,4 +147,5 @@ por função.
   persegue um inimigo que só foge, e o laço sem limite vira `TRAVOU` no portão ou simulador que
   não termina. A trava vira resultado: no spec, falha com a semente; no simulador, run contada
   como travada. Ação recusada troca de alvo em vez de se repetir (CampCrawler, em Defold: a
-  saída trancada e o ladrão que só foge, D47 e D53).
+  saída trancada e o ladrão que só foge, D47 e D53), e o portão que exige o fim da run também
+  recusa a linha da recusa (lá, o robô que perde de propósito voltou 28 vezes à mina marcada).
