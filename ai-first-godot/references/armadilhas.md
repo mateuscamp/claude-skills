@@ -169,6 +169,7 @@ flipper-boom (Godot 4.7.2), mas a lição não depende da engine.
 - Argumento de semente que não é inteiro positivo (`abc`, `0`, `1.5`, `O1`) nunca cai calado no sorteio: a partida 'repetida' não se repetiria. O jogo registra `semente_invalida` no log com aviso e sorteia; a ferramenta de teste recusa o argumento e sai com erro (medido no flipper-boom, 2026-10-09). Uma mutação que aceita a semente inválida faz o spec falhar.
 - Fato de log que prova o que a tela mostra sai lido do nó (o texto dele, a posição dele) e leva ao lado o valor que o domínio escolheu; o portão exige os dois iguais, com referência da regex (`canto=(-?1,-?1) ... esperado=\1`, no `re` do Python). Uma classe de valores plausíveis não prova o lugar certo: no CampCrawler, `canto=-?1,-?1` aceitou a contagem do alcance desenhada sempre no canto errado, e só com o `esperado` a passada reprovou (medido, 2026-10-16). Plante o defeito que a regex aceitaria e veja a passada cair.
 - Teste de forma (os campos de um registro, de um evento, de um resultado) confere cada instância, não a união das chaves de várias: na união, um campo que falta numa instância só e um caminho de retorno que nenhum teste monta passam calados. Monte uma instância por caminho de retorno e exija em cada uma os campos obrigatórios; só 'declarado e nunca montado' se confere na união. No CampCrawler, três mutações passaram pela união e reprovaram por instância (2026-10-16).
+- Validação repetida em duas camadas esconde a de cima: a camada de baixo recusa o mesmo valor com a mesma mensagem, e tirar a checagem de cima deixa a suíte verde. Teste a camada de cima pela diferença que só ela produz e prove tirando cada checagem, uma por vez: no CampCrawler, sem a checagem da bancada, o pedido ruim feito durante a apresentação saía como 'ocupado' em vez de estourar, e só um caso feito nesse estado o pegou (2026-10-17).
 
 ### Prova, oráculo e medição
 
@@ -209,6 +210,7 @@ flipper-boom (Godot 4.7.2), mas a lição não depende da engine.
 ### Log da partida
 
 - Antes de um teste no aparelho, o log da partida traz uma linha por segundo de jogo com o tempo de jogo, o relógio do app e o FPS, mais os eventos de pausa e de ciclo de vida do app (perdeu o foco, pausou, retomou). Sem isso, a diferença entre relógio e jogo não separa pausa, saída do app e lentidão: aqui 392 s de relógio viraram 245 s de jogo, e ~2 min ficaram sem explicação (medido no flipper-boom, 2026-10-09).
+- Atalho de teste que começa run nova (bancada, sala de testes, ir ao mapa N) deixa no log uma linha própria, e a ferramenta que agrupa runs a usa como fronteira, como faz com a abertura do jogo. Sem ela, o resumo do playtest juntou numa run só três runs da bancada na mesma semente, cada uma no mapa seguinte da outra, e as mostrou como uma run abandonada de vários mapas (CampCrawler, 2026-10-17). A ação recusada não é fronteira. Um teste da ferramenta com um log de exemplo, chamado pelo portão, prende isso.
 
 ### Instruções e skills do agente
 
