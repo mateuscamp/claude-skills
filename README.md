@@ -4,8 +4,8 @@ Skills próprias, carregadas de `~/.claude/skills/`.
 
 - `ai-first-defold`: boas práticas AI-first e portão de verificação para jogos em Defold.
 - `ai-first-godot`: o mesmo para Godot 4.
-- `ai-first-lua`: o mesmo para jogo em Lua com LÖVE (em construção; por ora só
-  `references/gerais-de-jogo.md`, sem `SKILL.md`).
+- `ai-first-lua`: o mesmo para jogo em Lua com LÖVE (12.0 main, lido no fonte; nada medido no
+  LÖVE ainda).
 - `code-audit`: auditoria de PRs, diffs e issues com evidência verificável.
 
 O `.gitignore` é lista de permissão: skill nova, e arquivo novo da raiz, só entram acrescentando
@@ -110,5 +110,5 @@ cópia.
 - Um link por skill, nunca a pasta inteira: o link de `~/.agents/skills` para `~/.claude/skills`
   arrasta o `synced/` do app e duplica skills.
 - Skill nova ganha o link junto com o `SKILL.md`; o `--check` cobra o link de toda pasta com
-  `SKILL.md`. Pasta sem ele (a `ai-first-lua`, por ora) não é skill para o `distribuir.py` nem
-  para o Codex, e fica sem link.
+  `SKILL.md`. Pasta sem ele não é skill para o `distribuir.py` nem para o Codex, e fica sem
+  link.
