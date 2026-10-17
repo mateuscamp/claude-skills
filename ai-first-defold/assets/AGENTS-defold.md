@@ -116,7 +116,10 @@ Teste primeiro (TDD). Cobertura segue risco: TDD não é um teste por função.
     ausente, não por build quebrado ou erro de Lua. Se o robô não chega lá, dê a ele um atalho
     de início validado (andar, upgrade), não uma exceção no portão. Defeito que é linha a mais:
     um fato emitido uma vez, ao fim do trecho, carrega a contagem, e o `--exigir` casa nela
-    com âncora (`' n=1$'`);
+    com âncora (`' n=1$'`); o que não pode sair (modo desligado) se cobra com `--recusar`;
+  - chave de configuração → um teste da suíte do módulo que a lê, com um `sys` de mentira que
+    imita o motor medido, e, para uma amostra de chaves, uma passada de recusa: valor errado,
+    `--erro-esperado` com o erro que diz o recebido e `--recusar` do fato de início;
   - layout e o que só a entrada real reproduz (toque duplo no aparelho) → prova da Bridge,
     como acima; a causa que é texto (o binding, uma chave) ganha também teste na suíte;
   - ferramenta de `tools/` → teste que alguém roda: em Lua, `tests/test_*.lua` na suíte; o
@@ -126,13 +129,13 @@ Teste primeiro (TDD). Cobertura segue risco: TDD não é um teste por função.
   numa passada ou verificação do portão ou, se só a Bridge o mede, na prova da Bridge, no mesmo
   commit da correção. Vale para todo bug reproduzível, não só o determinístico; no domínio, com
   semente e sequência de ações.
-- **Teste existente** (asserção da suíte, `--exigir` de passada): se a regra muda, trocar a
-  expectativa dele é o vermelho dela e vem antes do código. Mesmo nesse caso, e para inverter,
-  afrouxar, apagar ou pular o caso para o código novo passar: só com justificativa no commit
-  (a do PR sozinha não fica no histórico) e com o caso antigo coberto por outro teste onde a
-  expectativa antiga ainda vale, se houver (outro modo, a chave que volta à regra anterior); se
-  ela não vale mais em modo nenhum, o commit diz isso. A asserção invertida esconde o defeito do
-  modo que ela protegia.
+- **Teste existente** (asserção da suíte, `--exigir`, `--recusar` ou `--erro-esperado` de
+  passada): se a regra muda, trocar a expectativa dele é o vermelho dela e vem antes do código.
+  Mesmo nesse caso, e para inverter, afrouxar, apagar ou pular o caso para o código novo
+  passar: só com justificativa no commit (a do PR sozinha não fica no histórico) e com o caso
+  antigo coberto por outro teste onde a expectativa antiga ainda vale, se houver (outro modo, a
+  chave que volta à regra anterior); se ela não vale mais em modo nenhum, o commit diz isso. A
+  asserção invertida esconde o defeito do modo que ela protegia.
 - **Exceções**, sempre declaradas no relatório e no commit. Exceção é uma alegação, não um
   passe: refatoração que muda comportamento não é exceção.
   - refatoração sem mudança de comportamento: os verificadores que existem (suíte e passadas do
