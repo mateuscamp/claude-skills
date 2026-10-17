@@ -117,7 +117,9 @@ chmod +x tools/*.sh
   linha ausente. O conserto é o robô não escolher alvo que a regra recusa ou que nunca se
   alcança. CampCrawler: o robô da cena tocava a saída trancada para sempre, e a rota passou a
   evitá-la (D47, `main/robot_route.lua`); o do simulador perseguiria o ladrão que, sem a chave
-  achada, só foge, e ele saiu da lista de alvos (D53, `tools/simula_bosque.lua`).
+  achada, só foge, e ele saiu da lista de alvos (D53, `tools/simula_bosque.lua`). A passada
+  que exige o fim da run também recusa a linha da recusa (`--recusar 'motivo=known_mine'`): o
+  robô que perde de propósito voltava à mina marcada, recusado 28 vezes (D60).
 - Hook: registre em `.claude/settings.json` do projeto (o JSON está no topo do
   `hook_portao.sh`). Ele roda o `--rapido` só quando Lua, script ou recurso mudou desde a última
   aprovação, e na segunda parada seguida deixa a sessão terminar.
