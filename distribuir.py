@@ -11,17 +11,24 @@ Skill é toda pasta de primeiro nível do ref que tem `SKILL.md`. Sem opção, g
 Antes de trocar o que difere, guarda o anterior em `<nome>.antigo`; um `<nome>.antigo` que já
 exista sai, feito por este script ou à mão. Não toca em nenhuma outra entrada do destino.
 
+`--copiar-gerais` só regrava, na árvore de trabalho de `--repo`, a cópia
+`<skill>/references/gerais-de-jogo.md` de cada skill de GENERAL_LESSONS_SKILLS a partir da fonte
+`gerais-de-jogo.md` da raiz (cada skill sai num zip próprio, então a cópia mora dentro dela).
+Recusa o checkout que está no ref: a lição entra numa worktree em ramo próprio.
+
 `--check` só lê e sai com 1 listando cada problema:
 
 - cópia do destino diferente do ref (zip por conteúdo dos membros, pasta pela árvore, `.md` pelo
   conteúdo), ou ausente;
+- cópia das Gerais de jogo ausente ou diferente da fonte, as duas lidas no ref;
 - checkout de `--repo` fora do ref ou com mudança local, ou o ref atrás de `origin/<ref>` (só
   refs locais, sem rede);
 - skill sem symlink `<links>/<skill>` que resolva para `<repo>/<skill>` (o Codex acha a skill por
   esse link; a pasta inteira como link arrasta o `synced/` do app e duplica skills);
 - descrição do `SKILL.md` acima de 1.024 caracteres (o Codex 0.163.0 corta ali, calado).
 
-Uso: rode depois de cada merge no main; rode `--check` antes de subir um zip no claude.ai.
+Uso: rode depois de cada merge no main; rode `--check` antes de subir um zip no claude.ai; rode
+`--repo <worktree> --copiar-gerais` depois de editar o `gerais-de-jogo.md`, antes do commit.
 """
 
 import argparse
@@ -39,6 +46,11 @@ CODEX_DESCRIPTION_MAX = 1024
 # Skill que também sai como .md solto no destino, com o nome que o documento de origem tinha.
 LOOSE_MARKDOWN = {"code-audit": "code-audit-skill.md"}
 BACKUP_SUFFIX = ".antigo"
+# Lições de jogo que valem em qualquer engine: uma fonte na raiz e uma cópia igual em cada skill
+# de motor. A lista é explícita: skill de motor nova entra acrescentando o nome aqui.
+GENERAL_LESSONS_SOURCE = "gerais-de-jogo.md"
+GENERAL_LESSONS_COPY = "references/gerais-de-jogo.md"
+GENERAL_LESSONS_SKILLS = ("ai-first-defold", "ai-first-godot", "ai-first-lua")
 
 
 def git(repo, *args, check=True):
@@ -131,6 +143,21 @@ def compare_file(path, content):
         return "ausente"
     with open(path, "rb") as handle:
         return None if handle.read() == content else "conteúdo diferente"
+
+
+def ref_blob(repo, ref, path):
+    """Conteúdo do arquivo `path` no ref, ou None se o ref não o tem como arquivo."""
+    result = git(repo, "cat-file", "blob", f"{ref}:{path}", check=False)
+    return result.stdout if result.returncode == 0 else None
+
+
+def first_differing_line(expected, actual):
+    """Número (a partir de 1) da primeira linha em que dois conteúdos diferem."""
+    expected_lines, actual_lines = expected.split(b"\n"), actual.split(b"\n")
+    for number, (wanted, found) in enumerate(zip(expected_lines, actual_lines), start=1):
+        if wanted != found:
+            return number
+    return min(len(expected_lines), len(actual_lines)) + 1
 
 
 # --- descrição no frontmatter YAML -------------------------------------------------------------
@@ -286,6 +313,24 @@ def check_copies(repo, ref, skills, destination):
     return problems
 
 
+def check_general_lessons(repo, ref):
+    """Cópia das Gerais ausente ou diferente da fonte; fonte e cópias lidas no ref, não na árvore."""
+    source = ref_blob(repo, ref, GENERAL_LESSONS_SOURCE)
+    if source is None:
+        return [f"{GENERAL_LESSONS_SOURCE} não existe no {ref}: é a fonte das cópias de "
+                f"{', '.join(GENERAL_LESSONS_SKILLS)}"]
+    problems = []
+    for skill in GENERAL_LESSONS_SKILLS:
+        path = f"{skill}/{GENERAL_LESSONS_COPY}"
+        copy = ref_blob(repo, ref, path)
+        if copy == source:
+            continue
+        why = "não existe" if copy is None else f"difere a partir da linha {first_differing_line(source, copy)}"
+        problems.append(f"{path} no {ref} {why}; a fonte é {GENERAL_LESSONS_SOURCE}: regrave com "
+                        f"`distribuir.py --repo <worktree> --copiar-gerais` e faça commit")
+    return problems
+
+
 def check_checkout(repo, ref):
     problems = []
     branch = git(repo, "symbolic-ref", "-q", "--short", "HEAD", check=False).stdout.decode().strip()
@@ -352,6 +397,7 @@ def check_descriptions(repo, ref, skills):
 
 def run_check(args, skills):
     problems = check_copies(args.repo, args.ref, skills, args.destino)
+    problems += check_general_lessons(args.repo, args.ref)
     problems += check_checkout(args.repo, args.ref)
     remote_problems, note = check_remote(args.repo, args.ref)
     problems += remote_problems
@@ -452,6 +498,46 @@ def run_generate(args, skills):
     return 0
 
 
+# --- cópias das Gerais de jogo -----------------------------------------------------------------
+
+def general_lessons_source(args):
+    """Conteúdo da fonte das Gerais na árvore de trabalho; sai com erro antes de escrever qualquer
+    cópia se o checkout está no ref, se a fonte falta ou se falta a pasta de alguma skill."""
+    branch = git(args.repo, "symbolic-ref", "-q", "--short", "HEAD", check=False).stdout.decode().strip()
+    if branch == args.ref:
+        # A pasta que toda sessão carrega fica no main e sem mudança local (README).
+        sys.exit(f"erro: --copiar-gerais escreve na árvore de trabalho de {args.repo}, que está no "
+                 f"{args.ref}; a lição entra numa worktree em ramo próprio: passe --repo <worktree>")
+    source = os.path.join(args.repo, GENERAL_LESSONS_SOURCE)
+    if not os.path.isfile(source):
+        sys.exit(f"erro: a fonte {source} não existe; esperado {GENERAL_LESSONS_SOURCE} na raiz de --repo")
+    missing = [s for s in GENERAL_LESSONS_SKILLS if not os.path.isdir(os.path.join(args.repo, s))]
+    if missing:
+        sys.exit(f"erro: sem a pasta da skill {', '.join(missing)} em {args.repo}; esperado uma pasta "
+                 f"para cada nome de GENERAL_LESSONS_SKILLS ({', '.join(GENERAL_LESSONS_SKILLS)})")
+    with open(source, "rb") as handle:
+        return handle.read()
+
+
+def run_copy_general(args):
+    """Regrava, na árvore de trabalho de --repo, as cópias das Gerais a partir da fonte dela."""
+    content = general_lessons_source(args)
+    written = 0
+    for skill in GENERAL_LESSONS_SKILLS:
+        target = os.path.join(args.repo, skill, GENERAL_LESSONS_COPY)
+        if compare_file(target, content) is None:
+            print(f"igual: {target}")
+            continue
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        with open(target, "wb") as handle:
+            handle.write(content)
+        print(f"escrito: {target}")
+        written += 1
+    if written:
+        print("nota: só a árvore de trabalho mudou; o --check confere o commit")
+    return 0
+
+
 def refuse_destination(repo, destination):
     """O destino não pode ser o repositório, ficar dentro dele nem acima dele."""
     repo_real, destination_real = os.path.realpath(repo), os.path.realpath(destination)
@@ -467,7 +553,11 @@ def parse_args(argv):
     parser.add_argument("--ref", default="main", help="ref que é a fonte (padrão: main)")
     parser.add_argument("--destino", default="~/Documentos/Skills", help="pasta dos zips e cópias")
     parser.add_argument("--links", default="~/.agents/skills", help="pasta dos symlinks do Codex")
-    parser.add_argument("--check", action="store_true", help="só confere; sai com 1 se houver problema")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true", help="só confere; sai com 1 se houver problema")
+    mode.add_argument("--copiar-gerais", action="store_true",
+                      help=f"só regrava <skill>/{GENERAL_LESSONS_COPY} a partir do "
+                           f"{GENERAL_LESSONS_SOURCE} da árvore de trabalho de --repo")
     args = parser.parse_args(argv)
     for name in ("repo", "destino", "links"):
         setattr(args, name, os.path.abspath(os.path.expanduser(getattr(args, name))))
@@ -476,6 +566,8 @@ def parse_args(argv):
 
 def main(argv):
     args = parse_args(argv)
+    if args.copiar_gerais:
+        return run_copy_general(args)
     resolved = git(args.repo, "rev-parse", "--verify", "--quiet", f"{args.ref}^{{commit}}", check=False)
     if resolved.returncode:
         detail = resolved.stderr.decode(errors="replace").strip()

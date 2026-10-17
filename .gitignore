@@ -4,6 +4,8 @@
 !/.gitignore
 !/README.md
 !/distribuir.py
+!/gerais-de-jogo.md
 !/ai-first-defold/
 !/ai-first-godot/
+!/ai-first-lua/
 !/code-audit/

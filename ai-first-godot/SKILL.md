@@ -21,6 +21,9 @@ Arquivos desta skill:
   Godot.
 - `references/armadilhas.md`: os comportamentos medidos da CLI e da engine, com números. Leia
   antes de afirmar qualquer coisa sobre código de saída, compilação, warnings ou `.tscn`.
+- `references/gerais-de-jogo.md`: as lições de jogo que valem em qualquer engine (testes, prova,
+  ferramentas, entrada, captura, log, instruções do agente). É cópia: a fonte é o
+  `gerais-de-jogo.md` da raiz do repositório das skills.
 - `scripts/`: `portao.sh`, `compilar_tudo.gd`, `hook_portao.sh`, `fronteira_spec.gd`.
 
 ## Por onde começar
