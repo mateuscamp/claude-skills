@@ -79,10 +79,12 @@ def main():
     # "build/default/" relativo ao cwd e acabaria rodando um build antigo.
     sink = tempfile.TemporaryFile()
     try:
+        # Mudo: o portão roda enquanto o autor usa a máquina. O OpenAL do sistema
+        # com o driver nulo engole o som sem mexer na configuração do jogo.
         proc = subprocess.Popen([exe] + config,
                                 cwd=os.path.dirname(os.path.abspath(exe)),
                                 stdout=sink, stderr=subprocess.STDOUT,
-                                start_new_session=True)
+                                start_new_session=True, env=dict(os.environ, ALSOFT_DRIVERS="null"))
         deadline = time.time() + seconds
         try:
             while time.time() < deadline and proc.poll() is None:
