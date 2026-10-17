@@ -23,10 +23,10 @@ Arquivos desta skill:
   **a lista das boas práticas de código**; leia-a inteira antes de escrever código Defold.
 - `references/armadilhas.md`: os comportamentos medidos do bob, da entrada, das mensagens, da GUI,
   do LuaLS, da Automation Bridge e da API HTTP do editor. Leia antes de afirmar qualquer coisa sobre eles.
-- `scripts/`: `portao.sh`, `plataforma.sh`, `smoke.py`, `smoketest.ini`, `luals_check.sh`,
-  `run_tests.sh`, `run.lua`, `test_fronteira.lua`, `hook_portao.sh`, `bridge.ini`,
-  `bridge_build.sh`, `prova_bridge_exemplo.py`, `editor.py` (prova pela API do editor) e
-  `fact_log.lua` (fato formatado e arquivo da partida).
+- `scripts/`: `portao.sh`, `plataforma.sh`, `smoke.py` (com o teste dele, `test_smoke.py`),
+  `smoketest.ini`, `luals_check.sh`, `run_tests.sh`, `run.lua`, `test_fronteira.lua`,
+  `hook_portao.sh`, `bridge.ini`, `bridge_build.sh`, `prova_bridge_exemplo.py`, `editor.py`
+  (prova pela API do editor) e `fact_log.lua` (fato formatado e arquivo da partida).
 
 ## Por onde começar
 
@@ -91,20 +91,24 @@ S=~/.claude/skills/ai-first-defold/scripts
 mkdir -p tests tools
 cp $S/run.lua $S/test_fronteira.lua tests/
 cp $S/run_tests.sh . && chmod +x run_tests.sh
-cp $S/portao.sh $S/plataforma.sh $S/smoke.py $S/smoketest.ini $S/luals_check.sh $S/hook_portao.sh tools/
+cp $S/portao.sh $S/plataforma.sh $S/smoke.py $S/test_smoke.py $S/smoketest.ini $S/luals_check.sh $S/hook_portao.sh tools/
 chmod +x tools/*.sh
 ```
 
 - `tests/test_fronteira.lua`: ajuste `PASTAS` e, se preciso, `PERMITIDOS` (exceção exata, com
   motivo). Teste novo entra sozinho: `tests/test_*.lua`, cada um devolvendo `{ {"nome", fn}, ... }`.
 - `tools/portao.sh`, bloco `AJUSTE`: `geradores` (os `--check` e teste de ferramenta que não é
-  Lua) e `passadas` (cada uma com `--config=<projeto>.<chave>=...` e os `--exigir` do que ela
-  precisa produzir).
+  Lua; o `test_smoke.py` já está lá) e `passadas` (cada uma com `--config=<projeto>.<chave>=...`,
+  os `--exigir` do que ela precisa produzir e os `--recusar` do que não pode sair). A
+  **passada de recusa** dá a uma chave um valor errado e cobra com `--erro-esperado` o erro que
+  diz o recebido: valor que cai calado num padrão é o caso perigoso (`references/armadilhas.md`,
+  `sys.get_config_int` e "Gerais de jogo").
 - `tools/luals_check.sh`: `LUALS_IGNORAR` para pastas que não são código do jogo; API que o
   motor tem e a anotação não, num `---@meta` em `tools/luals/` (ver `references/armadilhas.md`).
 - O jogo precisa de um robô opt-in (`<projeto>.autoplay = 1` no `game.project`, lido com
-  `sys.get_config_int`; nenhuma chave da seção pode ser prefixo de outra, porque o
-  `--config` casa por prefixo) que toca **pelo mesmo ponto de entrada do toque**, e de linhas
+  `sys.get_config_string` e validado, porque o `sys.get_config_int` devolve 0 calado para o que
+  não é inteiro; nenhuma chave da seção pode ser prefixo de outra, porque o `--config` casa
+  por prefixo) que toca **pelo mesmo ponto de entrada do toque**, e de linhas
   `print("<PROJETO> <FATO> k=v")` emitidas de dentro do galho que comprova o fato.
 - Robô que trapaceia (lê o tabuleiro autoritativo) ainda pode não acabar: repete para sempre a
   ordem que o jogo recusa ou persegue um inimigo que só foge. Todo jogador automático tem trava
