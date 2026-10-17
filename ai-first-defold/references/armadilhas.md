@@ -23,6 +23,7 @@ jogo", igual nas duas skills (ai-first-defold e ai-first-godot).
 | Duas instâncias | disputam portas de log/profiler; `pkill` volta antes de matar e no Linux nem casa (nome truncado em 15) | uma por vez, mate por PID |
 | bob pega 16 de 21 erros plantados [relatório] | passam: id duplicado de game object e de nó, chave errada no `game.project`, animação de sprite inexistente, `goto` | linter próprio, LuaLS, e passada que **executa** o caminho |
 | `--config=secao.chave=valor` com uma chave que é prefixo de outra | a busca casa por **prefixo**: `--config=p.autoplay=1` antes de `--config=p.autoplay_reward=0` faz `sys.get_config_int("p.autoplay_reward")` devolver 1, sem erro; invertendo a ordem dos argumentos, volta a 0 (Mineboom, 2026-10-10) | nenhuma chave da seção pode ser prefixo de outra; um teste lê o `game.project` e as ferramentas e reprova |
+| `sys.get_config_int` com valor que não é inteiro [1.14.0] | devolve **0** para `"abc"`, `"1.5"`, `"O1"`, `"7x"` e `"0x10"`, só com um `WARNING:DLIB: Unable to convert 'abc' to int` no console do motor; inteiro grande estoura os 32 bits calado (`99999999999` vira 1215752191) | ler com `sys.get_config_string` e validar em código puro, com o recebido no erro; provar com uma passada de recusa (`smoke.py --erro-esperado`, item abaixo) |
 | Saída do motor redirecionada para arquivo | fica em buffer até o processo sair: quem lê o log com o jogo rodando vê arquivo vazio | `stdbuf -oL -eL` ao lançar |
 | Cache HTTP do motor com índice velho [1.14.0] | o motor abre o cache da máquina ao subir, mesmo sem `http.request`; com o `index` velho, um `WARNING:DLIB: Unable to remove` por entrada reprova o smoke (item abaixo) | `[network] http_cache_enabled = 0` no `smoketest.ini` do portão |
 
@@ -36,6 +37,22 @@ jogo", igual nas duas skills (ai-first-defold e ai-first-godot).
   `scripts/smoketest.ini` a mesma chave entra no bundle pelo bob e vale para todas as passadas
   de uma vez, em vez de um `--config` repetido em cada uma; é melhor que pôr o aviso no
   `IGNORE` do smoke.
+- Chave inteira que vira 0 [1.14.0]: no CampCrawler (2026-10-17, bundle headless) a semente
+  era lida com `sys.get_config_int`, e `seed=abc` e `seed=1.5` viravam a semente 1 com o robô e
+  uma sorteada pelo relógio sem ele (37965 e 37970); `seed=7` funcionava. A partida "repetida"
+  não se repetia, e nada parava: o aviso do motor só sai no console (o arquivo da partida do
+  `fact_log.lua` não o guarda), e o `smoke.py` só o pegaria pelo `Unable to` numa passada que
+  desse o valor errado. Lida com `sys.get_config_string` e validada num módulo sem motor, a
+  chave errada estoura no `init` com o recebido (`<projeto>.seed inválido: recebido "abc",
+  esperado inteiro >= 0`). Com o erro no `init` de um `.gui_script`, o motor escreve o erro, o
+  traceback e `ERROR:GAMESYS: Error when initializing gui component: RESULT_SCRIPT_ERROR.`, não
+  inicia o componente, não chama o `update` dele e não gera erro em cascata. A passada de
+  recusa declara as duas linhas em `--erro-esperado` (o `smoke.py` perdoa só elas e o
+  traceback, e cobra que apareçam) e recusa o fato de início (`--recusar '<PROJETO> INICIO '`).
+  No motor basta uma amostra, uma chave por forma de leitura; toda chave se cobra na suíte, com
+  um `sys` de mentira que imita o medido aqui ("Gerais de jogo", configuração calada). Chave
+  ainda lida com `get_config_int` (no CampCrawler, `autoplay` e as do robô) recebe 0 do valor
+  errado, calada.
 
 ## Verificação estática
 
