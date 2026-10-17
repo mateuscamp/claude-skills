@@ -1,11 +1,12 @@
 # Armadilhas do LÖVE que o agente não vê
 
-**Nada aqui foi medido no LÖVE.** Em 2026-10-17 ele não estava instalado na máquina, e a wiki
-(love2d.org) responde 403 a acesso automatizado. As armadilhas vêm da leitura do fonte, na tag
-`11.5` e no `main`, feita na auditoria da troca Defold → LÖVE e conferida de novo no `main`
-(reescrita do CampCrawler, 2026-10-17). Cada item diz o sintoma, a causa e o remédio, e leva a
-citação, no formato que a afirmação sobre o LÖVE pede em qualquer armadilha, `AGENTS.md`,
-skill ou anotação (é o mesmo que o projeto cobra dele):
+**Nada aqui foi medido no LÖVE.** Foi escrito lendo o fonte; o AppImage do b7daef0 entrou na
+máquina em 2026-10-17, e nada além do `--version` rodou nele. A wiki (love2d.org) responde 403 a
+acesso automatizado. As armadilhas vêm da leitura do fonte, na tag `11.5` e no `main`, feita na
+auditoria da troca Defold → LÖVE e conferida de novo no `main` (reescrita do CampCrawler,
+2026-10-17). Cada item diz o sintoma, a causa e o remédio, e leva a citação, no formato que a
+afirmação sobre o LÖVE pede em qualquer armadilha, `AGENTS.md`, skill ou anotação (é o mesmo que
+o projeto cobra dele):
 
 - `love:<caminho>:<linhas>@<sha7>`: lido no fonte do love2d/love naquele commit, com o caminho a
   partir da raiz do repositório. `@b7daef0` é o `main` de 2026-09-20 (12.0, codinome "Bestest
@@ -22,10 +23,11 @@ skill ou anotação (é o mesmo que o projeto cobra dele):
 
 11.5, wiki e memória são pista: antes de afirmar algo do `main`, confira o `changes.txt`, o
 `testing/tests/`, o wrap e o boot do pin, ou rode um caso mínimo. Uma citação vira
-`[medido@<sha>]` quando um projeto reproduz o caso e grava o número. Este arquivo é a única
-casa da citação e do número: o `SKILL.md` diz a regra e aponta o item, e a medida nova se
-escreve só aqui. Antes de confiar num item em outro sha, reproduza. Esta lista cresce com o
-uso: armadilha do LÖVE em que um projeto caiu e que ele resolveu entra aqui, com o número
+`[medido@<sha>]` quando um projeto reproduz o caso e grava o número. Este arquivo é a única casa
+da citação e do número: o `SKILL.md` diz a regra e aponta o item, e a medida nova se escreve só
+aqui. Medida que contradiz o lido reescreve a entrada, e o `SKILL.md` e o modelo que dependem
+dela mudam na mesma frente. Antes de confiar num item em outro sha, reproduza. Esta lista cresce
+com o uso: armadilha do LÖVE em que um projeto caiu e que ele resolveu entra aqui, com o número
 medido; a que vale para jogo em qualquer engine entra em `gerais-de-jogo.md`, na raiz do
 repositório das skills (seção Gerais, no fim).
 

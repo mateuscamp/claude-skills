@@ -6,12 +6,12 @@ description: Boas práticas AI-first para jogo em Lua com LÖVE (love2d) escrito
 # AI-first em LÖVE
 
 **Tudo o que esta skill diz do LÖVE é lido no fonte ou `[inferido]` até um projeto medir.** Ela
-foi escrita com o LÖVE fora da máquina, lendo o `main` no commit b7daef0 (12.0, não lançado), a
-tag 11.5 (6eb8d54) e o love-android 4c65fff. A citação de cada afirmação
-(`love:<caminho>:<linha>@<sha7>`, ou `[medido@<sha7>]` quando um projeto medir) mora **só** em
-`references/armadilhas.md`; aqui fica a regra, com o item entre parênteses (ex.: "armadilhas,
-Entrada"). O `[medido]` daqui é de Lua fora do LÖVE (LuaJIT 2.1.1791988261, Lua 5.5.1) ou da
-máquina.
+foi escrita lendo o fonte do `main` no commit b7daef0 (12.0, não lançado), da tag 11.5 (6eb8d54)
+e do love-android 4c65fff; o AppImage do b7daef0 entrou na máquina em 2026-10-17, e nada além do
+`--version` rodou nele. A citação de cada afirmação (`love:<caminho>:<linha>@<sha7>`, ou
+`[medido@<sha7>]` quando um projeto medir) mora **só** em `references/armadilhas.md`; aqui fica
+a regra, com o item entre parênteses (ex.: "armadilhas, Entrada"). O `[medido]` daqui é de Lua
+fora do LÖVE (LuaJIT 2.1.1791988261, Lua 5.4.9 e 5.5.1) ou da máquina.
 
 O agente escreve Lua bem. No LÖVE, laço, tela e entrada são código do projeto, e o erro mudo
 muda de forma (o `print` em buffer que some no SIGKILL, o argumento antes da pasta que vira o
@@ -33,7 +33,8 @@ Arquivos desta skill:
   valida, da lista apresentada, do hit-test e da ação de toque, provado em LuaJIT, Lua 5.4 e 5.5
   e no LuaLS.
 - `assets/loop.lua` e `assets/conf.lua`: esboços do `love.run` e do `conf.lua`, cada linha com
-  a armadilha que a pede. **Nunca rodaram no LÖVE**: só carregam em LuaJIT e Lua 5.5.
+  a armadilha que a pede. **Nunca rodaram no LÖVE**: só carregam em LuaJIT, Lua 5.4 e 5.5
+  [medido: `loadfile`].
 - `references/armadilhas.md`: o que o fonte do LÖVE faz e engana em silêncio, com sintoma,
   causa, remédio e citação. Leia antes de afirmar qualquer coisa sobre o LÖVE.
 - `references/gerais-de-jogo.md`: as lições de jogo de qualquer engine (cópia: seção 6).
