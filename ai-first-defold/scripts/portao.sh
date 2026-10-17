@@ -14,8 +14,10 @@ cd "$ROOT"
 # ---- AJUSTE ------------------------------------------------------------------
 OUTDIR=${PORTAO_OUT:-${XDG_CACHE_HOME:-$HOME/.cache}/$(basename "$ROOT")-headless}
 # Geradores com modo --check (fontes, tiles, ...): reprovam asset desatualizado.
+# E o teste de ferramenta que não é Lua, como o do próprio smoke.py.
 geradores() {
   : # python3 tools/gen_fonts.py --check
+  python3 tools/test_smoke.py
 }
 # As passadas do motor. Cada uma exige o que a peça alterada PRECISA produzir:
 # peça ausente não emite erro, então "não deu erro" não prova nada.
