@@ -123,9 +123,9 @@ class CheckGeneralLessons(Fixture):
         self.assert_one_problem("ai-first-godot/", "difere a partir da linha 8")
 
     def test_copy_missing(self):
-        os.remove(self.path(self.copy_path("ai-first-lua")))
+        os.remove(self.path(self.copy_path("ai-first-love")))
         self.commit("lua sem cópia")
-        self.assert_one_problem("ai-first-lua/", "não existe")
+        self.assert_one_problem("ai-first-love/", "não existe")
 
     def test_source_edited_alone(self):
         self.append(distribuir.GENERAL_LESSONS_SOURCE, "- Lição quatro, só na fonte.\n".encode())
@@ -206,8 +206,8 @@ class CopyGeneral(Fixture):
     def test_rewrites_on_branch_and_undoes_symlink(self):
         git(self.repo, "checkout", "-q", "-b", "licao")
         self.plant_divergent_copy()
-        os.remove(self.path(self.copy_path("ai-first-lua")))
-        os.symlink("../../gerais-de-jogo.md", self.path(self.copy_path("ai-first-lua")))
+        os.remove(self.path(self.copy_path("ai-first-love")))
+        os.symlink("../../gerais-de-jogo.md", self.path(self.copy_path("ai-first-love")))
         result = self.run_script("--copiar-gerais")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         for skill in SKILLS:

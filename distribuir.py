@@ -58,7 +58,7 @@ BACKUP_SUFFIX = ".antigo"
 # de motor. A lista é explícita: skill de motor nova entra acrescentando o nome aqui.
 GENERAL_LESSONS_SOURCE = "gerais-de-jogo.md"
 GENERAL_LESSONS_COPY = "references/gerais-de-jogo.md"
-GENERAL_LESSONS_SKILLS = ("ai-first-defold", "ai-first-godot", "ai-first-lua")
+GENERAL_LESSONS_SKILLS = ("ai-first-defold", "ai-first-godot", "ai-first-love")
 # A seção que o armadilhas.md das skills de motor tinha antes da fonte única. Ficou só com o
 # ponteiro, em prosa: item de lista ou subtítulo nela é lição escrita no lugar velho, ou a seção
 # inteira de volta por um merge com um ramo anterior à fonte única.

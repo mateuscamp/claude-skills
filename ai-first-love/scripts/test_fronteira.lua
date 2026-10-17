@@ -29,7 +29,7 @@
 -- (L["gra" .. "phics"]) num arquivo de platform/, e o que a função injetada pela plataforma (o
 -- medidor de texto) faz por dentro.
 --
--- Adaptado da skill ai-first-lua (o original, de Defold, é o da ai-first-defold). Ajuste
+-- Adaptado da skill ai-first-love (o original, de Defold, é o da ai-first-defold). Ajuste
 -- GRUPOS, DESENHO_SO_EM e PERMITIDOS ao projeto. Roda em LuaJIT e em Lua 5.x, pelo
 -- tests/run.lua, a partir da raiz do projeto.
 

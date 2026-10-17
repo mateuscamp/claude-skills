@@ -1,4 +1,4 @@
--- Esboço da skill ai-first-lua para platform/loop.lua: o love.run do projeto, a partir do padrão
+-- Esboço da skill ai-first-love para platform/loop.lua: o love.run do projeto, a partir do padrão
 -- de love:src/modules/love/callbacks.lua:168-206@b7daef0. NUNCA RODOU NO LÖVE: só carrega
 -- (loadfile) em LuaJIT 2.1.1791988261 e Lua 5.5.1. Fica fora do LuaLS até o overlay do projeto
 -- anotar setModalDrawCallback e parsedGameArguments (a 11.5 não os tem; armadilhas, LuaLS).

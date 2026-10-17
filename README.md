@@ -4,7 +4,7 @@ Skills próprias, carregadas de `~/.claude/skills/`.
 
 - `ai-first-defold`: boas práticas AI-first e portão de verificação para jogos em Defold.
 - `ai-first-godot`: o mesmo para Godot 4.
-- `ai-first-lua`: o mesmo para jogo em Lua com LÖVE (12.0 main, lido no fonte; nada medido no
+- `ai-first-love`: o mesmo para jogo em Lua com LÖVE (12.0 main, lido no fonte; nada medido no
   LÖVE ainda).
 - `code-audit`: auditoria de PRs, diffs e issues com evidência verificável.
 
@@ -17,7 +17,7 @@ a linha deles.
   skill sai num zip próprio, então carrega a cópia dentro dela, em
   `<skill>/references/gerais-de-jogo.md`; a cópia nunca se edita à mão.
 - As skills que recebem a cópia são a constante `GENERAL_LESSONS_SKILLS` do `distribuir.py`
-  (hoje `ai-first-defold`, `ai-first-godot` e `ai-first-lua`); skill de motor nova entra nela.
+  (hoje `ai-first-defold`, `ai-first-godot` e `ai-first-love`); skill de motor nova entra nela.
 - O `armadilhas.md` das skills de motor ficou só com o ponteiro na seção "Gerais de jogo": lição
   geral nunca entra ali.
 - Depois de editar a fonte, na worktree do ramo, regrave as cópias, faça commit das quatro e

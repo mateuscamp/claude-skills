@@ -1,5 +1,5 @@
 <!--
-Modelo da skill ai-first-lua para a seção LÖVE do AGENTS.md de um projeto.
+Modelo da skill ai-first-love para a seção LÖVE do AGENTS.md de um projeto.
 Copie, troque o que está entre <>, e apague o que não se aplica. O AGENTS.md é lido pelo
 Codex e pelo Claude Code (v2.1.277 ou mais nova), e pode ser o único arquivo de instruções do
 projeto. Mas o Claude Code o ignora em silêncio se houver CLAUDE.md ou CLAUDE.local.md na pasta
@@ -20,7 +20,7 @@ Tudo do LÖVE nesta seção é lido no fonte até o projeto medir; a skill guard
 - Afirmação sobre o LÖVE (aqui, numa armadilha, na anotação ou no comentário da linha que existe
   por comportamento dele) cita `love:<caminho>:<linha>@<sha7>` ou `[medido@<sha7>]`. 11.5, wiki
   e memória são pista: leia o fonte do sha fixado e `references/armadilhas.md` da skill
-  `ai-first-lua`; a API existe se o dump rodado pelo binário do lock a lista.
+  `ai-first-love`; a API existe se o dump rodado pelo binário do lock a lista.
 - Rode `<tools/portao.sh, a criar>` antes de dizer que terminou. **Não use o código de saída do
   LÖVE como prova**: peça ausente não emite erro, e o SIGTERM do prazo sai com 0. A prova é a
   linha de log que o portão exige.
@@ -243,7 +243,7 @@ Teste primeiro (TDD). Cobertura segue risco: TDD não é um teste por função.
 - O `AGENTS.md` fica abaixo dos 32.768 bytes que o Codex lê, e
   `<tests/test_agents_md.lua, a criar: conta os bytes do AGENTS.md>` reprova acima disso.
 - **Lição volta para a skill** (quando o projeto usa as skills ai-first): armadilha do LÖVE
-  resolvida vira lição na `ai-first-lua` (com `[medido@<sha7>]` ou a citação do fonte); lição de
+  resolvida vira lição na `ai-first-love` (com `[medido@<sha7>]` ou a citação do fonte); lição de
   jogo que não é do motor vai para o `gerais-de-jogo.md` da raiz do repositório das skills, que
   o `distribuir.py --copiar-gerais` copia para cada skill de motor. Na mesma frente do conserto,
   conferindo antes se já está lá. A lição entra num ramo numa worktree fora do `/tmp`

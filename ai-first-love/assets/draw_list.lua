@@ -1,4 +1,4 @@
--- Esboço da skill ai-first-lua para scene/draw_list.lua: a forma do item da lista de desenho,
+-- Esboço da skill ai-first-love para scene/draw_list.lua: a forma do item da lista de desenho,
 -- o construtor que valida na entrada, o hit-test e a ação do toque. Copie e adapte: o manifesto
 -- vem do gerador de assets; as constantes de layer e os campos do target são do projeto. Lua
 -- puro: a vista monta, a plataforma desenha, o toque consulta.

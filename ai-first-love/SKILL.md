@@ -1,5 +1,5 @@
 ---
-name: ai-first-lua
+name: ai-first-love
 description: Boas práticas AI-first para jogo em Lua com LÖVE (love2d) escrito por agente - a cena como lista de desenho (estado, lista, pixels: invariantes visuais na suíte, toque e robô pela mesma lista, replay e diff por quadro, amostra de pixel, medidor de texto injetado), como escrever (domínio em Lua puro com semente, um adaptador de entrada, love.run e conf.lua próprios, parser de chaves, fatos em log) e o ciclo de verificação que o agente fecha sozinho (teste visto falhar antes, suíte em LuaJIT e Lua 5.x, LuaLS, runtime fixado num lock, portão sem compilador e sem rede, passadas sob Xvfb, .love fora da worktree, hook Stop). Use sempre que o projeto for LÖVE - jogo novo, porte de outro motor para LÖVE, auditoria - e quando o assunto for conf.lua, love.run, love.errorhandler, erro visual, "funciona mas não como devia", teste de tela, captura, xdotool, Xvfb, toque contando duas vezes, love-android, adb, logcat, .love, LuaLS do love2d ou LÖVE 12. Complementa a skill jogos-ai-first (método e governança).
 ---
 
@@ -27,7 +27,7 @@ O método geral (contrato, posse, determinismo, ADR, fitness function, risco) es
 que por ora consome o domínio do jogo em Defold); as lições do Defold estão na `ai-first-defold`.
 
 Arquivos desta skill:
-- `assets/AGENTS-lua.md`: a seção LÖVE do `AGENTS.md` do projeto, pronta para adaptar. É **a
+- `assets/AGENTS-love.md`: a seção LÖVE do `AGENTS.md` do projeto, pronta para adaptar. É **a
   lista das boas práticas de código e de teste**; leia-a inteira antes de escrever código LÖVE.
 - `assets/draw_list.lua`: esboço do item da lista (`---@class DrawItem`), do construtor que
   valida, da lista apresentada, do hit-test e da ação de toque, provado em LuaJIT, Lua 5.4 e 5.5
@@ -48,7 +48,7 @@ Arquivos desta skill:
 1. Fixe o LÖVE: a release 11.5 ou um sha do `main` (12.0, sem release), e a via do binário
    (AppImage do CI, `love-git` do AUR com `#commit=`, ou compilar). As duas escolhas são do
    autor; esta skill marca o que muda entre as versões (seção 3, Versão). Escreva o `AGENTS.md`
-   a partir de `assets/AGENTS-lua.md`, com as pastas reais: `modules/` (domínio), `scene/`
+   a partir de `assets/AGENTS-love.md`, com as pastas reais: `modules/` (domínio), `scene/`
    (orquestração, vistas e o adaptador de entrada, Lua puro), `platform/` (o único que conhece
    `love`; repassa o callback cru ao adaptador), `conf.lua` e `main.lua` só montam.
 2. Monte o esqueleto de prova antes da primeira mecânica: `runtime.lock` e o lançador, o
@@ -57,7 +57,7 @@ Arquivos desta skill:
    (seções 2 e 3). Instale a suíte e a fronteira (`scripts/`) no mesmo passo.
 3. Teste primeiro, visto falhar pelo motivo certo: regra nova em `modules/` começa por um teste
    da suíte; vista nova, pelas invariantes dela na suíte e pelo `--exigir` do fato que ela
-   emite numa passada. A regra inteira está em "Testes e prova" no `assets/AGENTS-lua.md`.
+   emite numa passada. A regra inteira está em "Testes e prova" no `assets/AGENTS-love.md`.
 
 **Porte de outro motor (Defold, Godot)**
 1. **A sonda A primeiro.** Uma vista (no CampCrawler, o tabuleiro) como lista de desenho no LÖVE,
@@ -214,7 +214,7 @@ mostrado sem função, userdata nem metatable; a suíte a constrói com `love` a
 
 ## 2. Como escrever
 
-As regras de código estão em `assets/AGENTS-lua.md` (Organização, Código, Recursos e arquivos);
+As regras de código estão em `assets/AGENTS-love.md` (Organização, Código, Recursos e arquivos);
 aqui fica o que pede código ou motivo.
 
 - **Domínio puro com RNG semeado.** Regra em `modules/`, sem nada do que a tabela `PURO` de
@@ -248,7 +248,7 @@ aqui fica o que pede código ou motivo.
   `love.load`, depois do parser, `resizable` e com `vsync = 0` na passada. Fora do parser, só se
   leem, por nome, as variáveis da passada (`<PROJETO>_PASSADA` e `<PROJETO>_VIDEO`, cujo
   `nenhum` tira `window` e `graphics`).
-- **Código só pela árvore do jogo** (`assets/AGENTS-lua.md`, Código): sem `package.path`
+- **Código só pela árvore do jogo** (`assets/AGENTS-love.md`, Código): sem `package.path`
   zerado, o `require` ausente acha o `./?.lua` do diretório atual (armadilhas, Lançamento e
   argumentos).
 - **Renderer e unidade: decisões abertas do autor.** `t.graphics.renderers` fica fora do

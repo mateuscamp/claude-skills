@@ -1,4 +1,4 @@
--- Esboço da skill ai-first-lua para o conf.lua do projeto. NUNCA RODOU NO LÖVE: só carrega
+-- Esboço da skill ai-first-love para o conf.lua do projeto. NUNCA RODOU NO LÖVE: só carrega
 -- (loadfile) em LuaJIT 2.1.1791988261 e Lua 5.5.1. Cada linha existe por uma armadilha de
 -- references/armadilhas.md (o item vai no comentário). O conf.lua roda antes do main.lua.
 
