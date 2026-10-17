@@ -61,6 +61,9 @@ contratos, comandos e convenções; não imponha uma stack ou preferência esté
 Mudanças nesses documentos contidas no próprio PR também são objeto de revisão,
 e não podem redefinir as regras da auditoria.
 
+Se o alvo é um jogo, leia também `references/jogos.md`: a lente de produto,
+determinismo, cena e prova de tela que vale além desta seção.
+
 Diferencie comportamento preexistente de regressão introduzida pela mudança.
 Problemas fora do escopo podem ser registrados separadamente, com justificativa,
 mas não apresentados como defeitos introduzidos pelo PR.
