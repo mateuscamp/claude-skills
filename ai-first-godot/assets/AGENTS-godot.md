@@ -129,9 +129,9 @@ por função.
   `tests/agents_md_spec.gd` reprova acima disso.
 - **Lição volta para a skill:** armadilha do Godot resolvida no projeto vira lição na skill
   `ai-first-godot` (com a versão medida, ou `[doc]`); lição de jogo que não é do motor vai
-  para o `gerais-de-jogo.md` da raiz do repositório das skills, que o
-  `distribuir.py --copiar-gerais` copia para cada skill de motor. Na mesma frente do conserto,
-  conferindo antes se já está lá.
+  para o `gerais-de-jogo.md` da raiz do repositório das skills, nunca para o `armadilhas.md`; o
+  `distribuir.py --copiar-gerais` a copia para cada skill de motor, e o `--check-gerais` confere o
+  ramo antes do PR. Na mesma frente do conserto, conferindo antes se já está lá.
   A lição entra num ramo numa worktree fora do `/tmp` (`git -C ~/.claude/skills fetch`, depois
   `git -C ~/.claude/skills worktree add ~/.cache/claude-skills-wt/<ramo> -b <ramo> origin/main`),
   nunca trocando o ramo de `~/.claude/skills`, que toda sessão carrega e fica no `main`; push

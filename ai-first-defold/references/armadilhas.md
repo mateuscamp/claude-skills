@@ -308,8 +308,10 @@ na raiz do repositório das skills, e o `distribuir.py --copiar-gerais` a copia 
 - O console é zerado a cada `run`: leia `/console` depois do `run`, não guarde índice de linha
   de antes.
 
-## Gerais de jogo (valem em qualquer engine)
+## Gerais de jogo: moram em `references/gerais-de-jogo.md`
 
-Moram em `references/gerais-de-jogo.md`, cópia da fonte única `gerais-de-jogo.md` na raiz do
-repositório das skills: testes que passam com qualquer código, prova e oráculo, ferramentas de
-verificação, entrada e troca de estado, captura e cor, log da partida e instruções do agente.
+Ali estão as lições de jogo que valem em qualquer engine: testes que passam com qualquer código,
+prova e oráculo, ferramentas de verificação, entrada e troca de estado, captura e cor, log da
+partida e instruções do agente. É cópia da fonte única `gerais-de-jogo.md`, na raiz do repositório
+das skills. Não acrescente lição aqui: a fonte se edita num ramo em worktree, e o
+`distribuir.py --check-gerais` reprova item de lista ou subtítulo nesta seção.

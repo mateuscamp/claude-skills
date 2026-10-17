@@ -156,8 +156,10 @@ Medido em 2026-10-16 num projeto mínimo, `Label` com a fonte padrão do tema e 
 - `application/config/quit_on_go_back` vem `true`, e o Voltar do Android fecha o app de uma vez. Para ele fechar a tela de cima, ponha `false` e trate NOTIFICATION_WM_GO_BACK_REQUEST com `call_deferred`: a notificação chega no meio da propagação pela árvore, onde recarregar a cena ou tirar nós é recusado. Na chamada adiada, confira `is_inside_tree()`, porque dois Voltar no mesmo quadro viram duas chamadas (4.7.2, medido no flipper-boom, 2026-10-09). Prove com `root.propagate_notification(NOTIFICATION_WM_GO_BACK_REQUEST)` a partir da raiz, e não chamando a função, com dois Voltar no mesmo quadro e sem erro no log.
 - `OS.is_debug_build()` é verdadeiro no editor, em todo teste e no APK de depuração, e os modelos de exportação, de release e de depuração, ignoram `--script` (`disable_path_overrides=True` por padrão no SConstruct do 4.7.2). Ferramenta de depuração gateada por ele só se prova numa exportação de verdade: exporte uma cópia com uma sonda como cena principal e compare `--export-release` com `--export-debug` (aqui 14 → 14 itens contra 14 → 22; medido no flipper-boom, 2026-10-09). No teste, a release se simula só desligando, nunca ligando.
 
-## Gerais de jogo (valem em qualquer engine)
+## Gerais de jogo: moram em `references/gerais-de-jogo.md`
 
-Moram em `references/gerais-de-jogo.md`, cópia da fonte única `gerais-de-jogo.md` na raiz do
-repositório das skills: testes que passam com qualquer código, prova e oráculo, ferramentas de
-verificação, entrada e troca de estado, captura e cor, log da partida e instruções do agente.
+Ali estão as lições de jogo que valem em qualquer engine: testes que passam com qualquer código,
+prova e oráculo, ferramentas de verificação, entrada e troca de estado, captura e cor, log da
+partida e instruções do agente. É cópia da fonte única `gerais-de-jogo.md`, na raiz do repositório
+das skills. Não acrescente lição aqui: a fonte se edita num ramo em worktree, e o
+`distribuir.py --check-gerais` reprova item de lista ou subtítulo nesta seção.

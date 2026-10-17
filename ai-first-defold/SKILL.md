@@ -24,8 +24,10 @@ Arquivos desta skill:
 - `references/armadilhas.md`: os comportamentos medidos do bob, da entrada, das mensagens, da GUI,
   do LuaLS, da Automation Bridge e da API HTTP do editor. Leia antes de afirmar qualquer coisa sobre eles.
 - `references/gerais-de-jogo.md`: as lições de jogo que valem em qualquer engine (testes, prova,
-  ferramentas, entrada, captura, log, instruções do agente). É cópia: a fonte é o
-  `gerais-de-jogo.md` da raiz do repositório das skills.
+  ferramentas, entrada, captura, log, instruções do agente). Leia antes de escrever teste,
+  verificador, robô, ferramenta de prova, captura ou log da partida, e antes de registrar lição
+  ou instrução do agente. É cópia: a fonte é o `gerais-de-jogo.md` da raiz do repositório das
+  skills.
 - `scripts/`: `portao.sh`, `plataforma.sh`, `smoke.py` (com o teste dele, `test_smoke.py`),
   `smoketest.ini`, `luals_check.sh`, `run_tests.sh`, `run.lua`, `test_fronteira.lua`,
   `hook_portao.sh`, `bridge.ini`, `bridge_build.sh`, `prova_bridge_exemplo.py`, `editor.py`

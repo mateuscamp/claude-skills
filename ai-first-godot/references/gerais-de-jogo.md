@@ -1,7 +1,8 @@
 # Gerais de jogo (valem em qualquer engine)
 
-Fonte única: `gerais-de-jogo.md`, na raiz do repositório das skills (`~/.claude/skills`); edite só ela, nunca uma cópia.
-Cópias: `references/gerais-de-jogo.md` da ai-first-defold, da ai-first-godot e da ai-first-lua, regravadas pelo `distribuir.py --copiar-gerais`; o `--check` reprova a ausente ou diferente.
+Fonte única: `gerais-de-jogo.md`, na raiz do repositório das skills; edite só ela, num ramo em worktree (`~/.cache/claude-skills-wt/<ramo>`, README do repositório), nunca uma cópia nem a pasta `~/.claude/skills`.
+
+Cópias: `references/gerais-de-jogo.md` de cada skill da `GENERAL_LESSONS_SKILLS` do `distribuir.py`, regravadas pelo `--copiar-gerais`; o `--check-gerais` (no ramo, antes do PR) e o `--check` reprovam a ausente ou diferente, e a lição escrita no `armadilhas.md`.
 
 Os números vêm do flipper-boom (Godot 4.7.2), mas a lição não depende da engine.
 
