@@ -269,7 +269,10 @@ aqui fica o que pede código ou motivo.
   `[inferido]`). A unidade é uma só em toda a cadeia (lista, hit-test, robô, amostra, adb): a do
   DPI com conversão testada, ou o pixel com `usedpiscale = false` no `setMode`, que ele julga
   pela captura no backend dele (armadilhas, Laço, tempo e janela). O `INICIO` leva o renderer; o
-  fato `JANELA`, a escala e as duas unidades.
+  fato `JANELA`, a escala e as duas unidades. No CampCrawler o autor escolheu o pixel pela
+  captura na escala forçada, que divergiu do uso comum do LÖVE e funcionou: a conversão some da
+  cadeia, e a passada da escala forçada passa a provar que a do sistema não vaza (`JANELA` com
+  dpi 1).
 - **Parser de chaves**, módulo puro em `love.load(args)`, testado com o argv como tabela, sobre
   `1..#args`: só `--config=<projeto>.<chave>=<valor>` (não casa opção do LÖVE); chave
   desconhecida, repetida ou argumento solto estouram com o recebido, e cada chave lida sai num
@@ -395,7 +398,7 @@ com o ponteiro entrando de fora da janela a cada ação, e exige a resposta de t
 (`SDL_VIDEO_X11_SCALING_FACTOR`). É o caminho do sistema (X11 → SDL3 → LÖVE → adaptador →
 hit-test) e prova a entrada, não o layout; o aparelho fica com o adb. Só ele pega o defeito entre
 o pixel e a unidade, e só na escala forçada: em escala 1 a conversão é a identidade (armadilhas,
-Entrada). O redimensionar também se prova por ele (`xdotool windowsize`), não pelo
+Entrada); com a unidade em pixel, a mesma passada prova que a escala não vaza. O redimensionar também se prova por ele (`xdotool windowsize`), não pelo
 `updateMode`, com o robô parado até o tamanho chegar; e o layout não refeito depois de ampliar
 só um fato de geometria pega (armadilhas, Laço, tempo e janela; Gráficos e pixel).
 

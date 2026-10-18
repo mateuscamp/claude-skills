@@ -242,9 +242,14 @@ repositório das skills (seção Gerais, no fim).
 - **A escala de DPI se força sob Xvfb pelo SDL.** Sem nada, a escala é 1; com
   `SDL_VIDEO_X11_SCALING_FACTOR=2` no ambiente do jogo, a janela pedida de 1920x1080 abriu com
   1920x1080 pixels e 960x540 unidades (`getDimensions`), `getDPIScale` 2, e a posição
-  (`getPosition`) seguiu em pixel, a mesma das duas escalas. Remédio: a passada na escala forçada
-  é a que prova a conversão entre pixel e unidade (Entrada); o condutor cobra em todo `JANELA` a
-  escala pedida e os pixels iguais às unidades vezes o dpi. `[medido@b7daef0: tools/smoke.py --escala 2 do CampCrawler, 527058d; o porquê do tamanho: inferido]`
+  (`getPosition`) seguiu em pixel, a mesma das duas escalas. Com `usedpiscale = false` nos flags
+  do `setMode` e as fontes em `dpiscale = 1`, a mesma janela ficou em 1920x1080 unidades e
+  `getDPIScale` 1, e a imagem saiu igual, pixel a pixel, à da escala 1; sem a flag, ela diferia só
+  no texto (a fonte na metade do tamanho, rasterizada a 2×, posta em unidade inteira, em passos de
+  2 px). Remédio: a passada na escala forçada é a que prova a unidade; com a da DPI, a conversão
+  entre pixel e unidade (Entrada), com o `JANELA` na escala pedida e os pixels iguais às unidades
+  vezes o dpi; com o pixel, que a escala do sistema não vaza (`JANELA` com dpi 1 e os pixels
+  iguais às unidades). `[medido@b7daef0: tools/smoke.py --escala 2 do CampCrawler, 527058d e c2c6e94, e as capturas de 8ee2319; o porquê do tamanho: inferido]`
 - **O toque do adb cai em outra célula.** Com `usedpiscale` (o padrão, ainda `true` no `main`),
   dimensões, mouse e toque chegam em unidades de DPI: um 1080×2400 com escala 2,75 vira ~393×873.
   O `adb shell input tap` é em pixel físico: calculado a partir dos fatos do jogo, toca a 2,75×
