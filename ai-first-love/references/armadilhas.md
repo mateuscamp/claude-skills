@@ -220,9 +220,10 @@ repositório das skills (seção Gerais, no fim).
   abre a janela com `t.window` e o módulo window), nos flags do `setMode` com que a plataforma a
   abre no `love.load`, depois do parser; e o redimensionar provado pelo gerenciador de janelas
   (xdotool sob Xvfb), não pelo `updateMode`. Medido no `main`: o `love.resize` dispara uma vez na
-  abertura, com o tamanho de já (o `setMode` do `love.load`, sob Xvfb), e a cada `windowsize` de
-  fora; quem relata a janela (o fato `JANELA`) reemite no `love.resize`, e o robô espera o tamanho
-  pedido antes da próxima ação, ou o alvo calculado no layout velho cai na janela nova.
+  abertura, com o tamanho de já (sob Xvfb; a causa, o `setMode` do `love.load`, é inferida), e a
+  cada `windowsize` de fora; quem relata a janela (o fato `JANELA`) reemite no `love.resize`, e o
+  robô espera o tamanho pedido antes da próxima ação, ou o alvo calculado no layout velho cai na
+  janela nova. O pedido no tamanho que a janela já tem não dispara nada: recuse-o no boot.
   `[love:src/modules/window/sdl/Window.cpp:565-588,696,724-726@b7daef0; love:src/modules/love/boot.lua:194,398-426@b7daef0; pista 11.5@6eb8d54; disparar: medido@b7daef0, tools/smoke.py --redimensiona do CampCrawler, 655c623; o updateMode sozinho: inferido]`
 - **O `xdotool search` com padrão não filtra pelo pid.** As condições se juntam por "ou" (o
   `--any` é o padrão): `search --pid N ""` devolveu três janelas, a primeira de fora do jogo, e o
@@ -430,7 +431,7 @@ repositório das skills (seção Gerais, no fim).
   repetida contra a borda da imagem, e exija zero diferenças num fato do boot. A passada na
   ampliação não basta: a 3840x2160 (a arte a 1,5) o filtro lê o extrude só no 1º pixel de cada
   borda (u < 0 só ali), e a amostra que olha a 2 px para dentro passou sem tocá-lo; a prova pela
-  tela pede um ponto nesse anel. `[medido@b7daef0: tools/smoke.py do CampCrawler, d24ba8c; o anel no 4K, 655c623]`
+  tela pede um ponto nesse anel. `[medido@b7daef0: tools/smoke.py do CampCrawler, d24ba8c, e a amostra aprovando o 4K, 655c623; o anel: inferido, pela conta acima]`
 - **O layout não refeito depois de ampliar a janela passa na amostra e no clique.** A lista, o
   desenho e o toque saem do mesmo layout velho, coerentes entre si, e o tabuleiro fica no canto da
   janela nova: a amostra (103 pontos iguais) e o clique aprovaram. Na redução o item sai da
