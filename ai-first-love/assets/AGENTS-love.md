@@ -147,8 +147,10 @@ Tudo do LÖVE nesta seção é lido no fonte até o projeto medir; a skill guard
 - **Texto:** todo texto de tela nasce em `<data/texts.csv>`, nos <N> idiomas de uma vez; nenhum
   literal com letra chega à tela (um teste varre a cena). Nunca a fonte padrão do LÖVE; uma
   fonte por escrita, escolhida pelo idioma, sem fallback. Só `<platform/fonts.lua>` cria, guarda
-  (por escrita, papel e px, com teto) e libera fontes; o render recebe a fonte pelo argumento,
-  nunca por `setFont`. A quebra é da vista; o medidor da suíte é injetado, declarado aproximado e
+  (por escrita, papel e px, com teto) e libera fontes, e `getStats().fonts` bate com o cache; o
+  render recebe a fonte pelo argumento (`print(linha, fonte, x, y)`), nunca por `setFont`, em px
+  inteiro, com filtro explícito e, sem SDF, x e y inteiros; com a unidade única, `dpiscale = 1`.
+  A quebra é da vista; o medidor da suíte é injetado, declarado aproximado e
   devolve um intervalo: só afirma "cabe" ou "não cabe" quando o intervalo garante.
 
 ### Recursos e arquivos
