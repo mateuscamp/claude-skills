@@ -7,8 +7,8 @@ description: Boas práticas AI-first para jogo em Lua com LÖVE (love2d) escrito
 
 **Tudo o que esta skill diz do LÖVE é lido no fonte ou `[inferido]` até um projeto medir.** Ela
 foi escrita lendo o fonte do `main` no commit b7daef0 (12.0, não lançado), da tag 11.5 (6eb8d54)
-e do love-android 4c65fff; o AppImage do b7daef0 entrou na máquina em 2026-10-17, e nada além do
-`--version` rodou nele. A citação de cada afirmação (`love:<caminho>:<linha>@<sha7>`, ou
+e do love-android 4c65fff; o AppImage do b7daef0 entrou na máquina em 2026-10-17, e nele só o
+boot rodou (a R0.1 da reescrita do CampCrawler: o `[medido@b7daef0]` das armadilhas). A citação de cada afirmação (`love:<caminho>:<linha>@<sha7>`, ou
 `[medido@<sha7>]` quando um projeto medir) mora **só** em `references/armadilhas.md`; aqui fica
 a regra, com o item entre parênteses (ex.: "armadilhas, Entrada"). O `[medido]` daqui é de Lua
 fora do LÖVE (LuaJIT 2.1.1791988261, Lua 5.4.9 e 5.5.1) ou da máquina.
@@ -33,8 +33,8 @@ Arquivos desta skill:
   valida, da lista apresentada, do hit-test e da ação de toque, provado em LuaJIT, Lua 5.4 e 5.5
   e no LuaLS.
 - `assets/loop.lua` e `assets/conf.lua`: esboços do `love.run` e do `conf.lua`, cada linha com
-  a armadilha que a pede. **Nunca rodaram no LÖVE**: só carregam em LuaJIT, Lua 5.4 e 5.5
-  [medido: `loadfile`].
+  a armadilha que a pede. Carregam em LuaJIT, Lua 5.4 e 5.5 [medido: `loadfile`]; uma
+  adaptação deles fez o boot verde do CampCrawler no b7daef0 (R0.1).
 - `references/armadilhas.md`: o que o fonte do LÖVE faz e engana em silêncio, com sintoma,
   causa, remédio e citação. Leia antes de afirmar qualquer coisa sobre o LÖVE.
 - `references/gerais-de-jogo.md`: as lições de jogo de qualquer engine (cópia: seção 6).
@@ -242,7 +242,8 @@ aqui fica o que pede código ou motivo.
   `love.errorhandler` nosso antes de qualquer `require`: o do `main.lua` chega tarde para o
   `require` que falhou, depois da caixa de versão (armadilhas, Saída, erro e log). Nas passadas
   o handler imprime o traceback, grava no arquivo da partida e sai com um código próprio (o erro
-  plantado no `conf.lua` sai com ele, não com 1), e `love.setDeprecationOutput(true)` liga ali.
+  plantado no `conf.lua` sai com ele, não com 1, se vier antes do `love.conf`: depois dele o boot
+  o engole, e o `love.conf` fecha o arquivo), e `love.setDeprecationOutput(true)` liga ali.
   Na partida do autor, tela de erro ou seguir com a linha no log é **decisão aberta do autor**.
   No `love.conf`: `t.identity`, `t.appendidentity = true` (a save não sombreia o código),
   `t.version` igual ao pin (outra abre caixa modal) e `t.window = false`: a janela abre no

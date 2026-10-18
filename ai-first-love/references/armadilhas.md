@@ -1,7 +1,8 @@
 # Armadilhas do LÖVE que o agente não vê
 
-**Nada aqui foi medido no LÖVE.** Foi escrito lendo o fonte; o AppImage do b7daef0 entrou na
-máquina em 2026-10-17, e nada além do `--version` rodou nele. A wiki (love2d.org) responde 403 a
+**Quase nada aqui foi medido no LÖVE.** Foi escrito lendo o fonte; o AppImage do b7daef0 entrou
+na máquina em 2026-10-17, e só o marcado `[medido@b7daef0]` rodou nele (a R0.1 da reescrita do
+CampCrawler, o boot, no mesmo dia). A wiki (love2d.org) responde 403 a
 acesso automatizado. As armadilhas vêm da leitura do fonte, na tag `11.5` e no `main`, feita na
 auditoria da troca Defold → LÖVE e conferida de novo no `main` (reescrita do CampCrawler,
 2026-10-17). Cada item diz o sintoma, a causa e o remédio, e leva a citação, no formato que a
@@ -15,7 +16,9 @@ o projeto cobra dele):
 - `love-android:<caminho>:<linhas>@4c65fff` e `megasource:<caminho>:<linhas>@5118c13`: o mesmo no
   `main` do love-android (2026-07-25) e no megasource que ele fixa;
 - `[medido@<sha7>]`: medido no LÖVE daquele commit, por um comando de `tools/` do projeto que
-  grava o `exe=` do binário (nenhum ainda);
+  grava o `exe=` do binário (no CampCrawler, o `tools/smoke.py`, desde a R0.1);
+- `[lido: strings da liblove-12.0.so do lock]`: o Lua embutido no binário que roda (`boot.lua`,
+  `callbacks.lua`, `arg.lua`, o `love.run` padrão), lido por `strings`, sem baixar o fonte;
 - `[medido]`: medido nesta máquina **fora do LÖVE** (LuaJIT 2.1.1791988261, Lua 5.5.1, pacotes),
   com a versão e a data;
 - `[lido: <fonte>]`: outra fonte nomeada (API do GitHub, AUR, AOSP, LuaCATS);
@@ -60,6 +63,12 @@ repositório das skills (seção Gerais, no fim).
   trocar de sha é rodar o portão inteiro e ler o diff de `boot.lua`, `callbacks.lua`, `arg.lua`
   e `event/` antes; a lista da API sai do binário do lock (um dump de `love.*` rodado por ele), e
   o diff de pinos é o diff das listas. `[lido: gh api compare 792690b...b7daef0]`
+- **O LuaJIT do AppImage não é o da máquina, e o `LD_LIBRARY_PATH` troca as cinco.** A árvore
+  extraída (`--appimage-extract`) roda sem FUSE e com `env -i`: `bin/love` e a liblove têm
+  RUNPATH `$ORIGIN/../lib`. O LuaJIT dela é o 2.1.1788856981, e o do sistema, 2.1.1791988261: a
+  suíte não roda o Lua do jogo. Um `LD_LIBRARY_PATH=/usr/lib` vence o RUNPATH, e as cinco do
+  runtime vêm do sistema (`libs_fora=5`, `jit=` do sistema). Remédio: o lançador limpa `LD_*` e o
+  `INICIO` leva `libs_fora=` e `jit=`, cobrados. `[medido@b7daef0; RUNPATH: readelf -d; bibliotecas: /proc/self/maps]`
 - **O binário do CI some.** O artefato `love-linux-X64.AppImage` da run do b7daef0 expira em
   2026-12-19, e baixá-lo pede o gh autenticado. Remédio: se essa for a fonte, guarde a cópia
   fora do repositório, com o sha256 no lock (baixar pede aprovação). `[lido: gh api actions/runs]`
@@ -83,13 +92,16 @@ repositório das skills (seção Gerais, no fim).
 - **Pasta ou `.love` sem `main.lua` na raiz cai no handler de erro.** O boot estoura
   `No code to run` ("Your game might be packaged incorrectly"), e o caminho que não existe,
   `Cannot load game at path`; os dois vão ao handler, e o padrão abre a tela de erro. Remédio: o
-  executor das passadas recusa as duas linhas. `[love:src/modules/love/boot.lua:448-455,507-516@b7daef0]`
+  executor das passadas recusa as duas linhas. Medido: a linha é
+  `Error: [love "boot.lua"]:452: No code to run at .`, e sob Xvfb o padrão espera na tela de erro
+  até o prazo; sem o `setvbuf` do `conf.lua` (que ali não existe), o SIGKILL leva tudo: 0 linhas.
+  `[love:src/modules/love/boot.lua:448-455,507-516@b7daef0; medido@b7daef0]`
 - **`t.version` de outra versão prende a passada numa caixa modal.** Depois do `conf.lua` e antes
   do `main.lua`, o boot compara `t.version` com a lista de compatíveis, que no `main` é só
   `"12.0"`; fora dela, imprime "This game indicates it was made for version ..." e, com o módulo
   window, abre `showMessageBox("Compatibility Warning")`, que sob Xvfb espera até o SIGKILL.
   Código vindo da 11.5 traz `t.version = "11.5"`. Remédio: `t.version` igual ao pin, e o executor
-  recusa `^This game indicates`. `[love:src/modules/love/boot.lua:379-391@b7daef0; love:src/common/version.h:33@b7daef0; trava sob Xvfb: inferido]`
+  recusa `^This game indicates`. `[love:src/modules/love/boot.lua:379-391@b7daef0; love:src/common/version.h:33@b7daef0; trava sob Xvfb: medido@b7daef0, a linha saiu e a passada ficou presa até o prazo]`
 - **A prova toca som.** O áudio do LÖVE é o OpenAL Soft, que lê `ALSOFT_DRIVERS`; com
   `ALSOFT_DRIVERS=null` no ambiente, a passada e a captura rodam mudas. Remédio: o executor monta
   o ambiente por lista branca, com a variável nela. `[inferido: variável do OpenAL Soft, não lida pelo LÖVE]`
@@ -123,7 +135,7 @@ repositório das skills (seção Gerais, no fim).
   pelo prazo termina com o código de quem acabou o plano. Remédio: só o fato de fim do plano
   (`FIM`), num lugar só, chama `love.event.quit(0)`; o `love.run` do projeto devolve um código
   próprio para quit sem `FIM`; o executor reprova prazo e morte por sinal, qualquer que seja o
-  código. `[love:src/modules/event/sdl/Event.cpp:566-568@b7daef0; love:src/modules/love/callbacks.lua:180-183@b7daef0; SIGTERM vira quit no SDL3: inferido]`
+  código. `[love:src/modules/event/sdl/Event.cpp:566-568@b7daef0; love:src/modules/love/callbacks.lua:180-183@b7daef0; SIGTERM vira quit: medido@b7daef0, o love.run do projeto devolveu o código do quit sem FIM ao SIGTERM aos 2 s]`
 - **O handler de erro padrão trava sob Xvfb.** O `love.errorhandler` (o `love.errhand` é
   apelido) imprime `Error: <msg>` e o traceback, e então:
   - sem o módulo window, retorna, e o processo sai com 1;
@@ -137,7 +149,14 @@ repositório das skills (seção Gerais, no fim).
   traceback e grava no arquivo da partida. Devolver `nil` termina o laço do boot e sai com 1;
   devolver `function() return 3 end` sai com 3, e o portão distingue erro de Lua de quit (o erro
   plantado no `conf.lua` tem de sair com 3, não com 1). Passada sem janela desliga também
-  `t.modules.window`. `[love:src/modules/love/callbacks.lua:217-352@b7daef0; love:src/modules/love/boot.lua:462-521@b7daef0; código de saída do handler nosso: inferido]`
+  `t.modules.window`. `[love:src/modules/love/callbacks.lua:217-352@b7daef0; love:src/modules/love/boot.lua:462-521@b7daef0; código de saída do handler nosso: medido@b7daef0, 3 com o erro plantado antes do love.conf]`
+- **O erro do `conf.lua` depois do `function love.conf` some.** O `love.init` faz
+  `pcall(require, "conf")` e, se `love.conf` existe, `pcall(love.conf, c)`, que sobrescreve o
+  `confok, conferr` do primeiro: o erro de qualquer linha depois da definição se perde, e o jogo
+  abre como se nada fosse. Antes dela, o erro chega ao handler com o prefixo
+  `[love "boot.lua"]:395: ` na mensagem. Remédio: o `love.conf` é o último comando do `conf.lua`,
+  cobrado por teste, e o `--erro-esperado` do erro de conf aceita o prefixo.
+  `[lido: love.init nas strings da liblove-12.0.so do lock; medido@b7daef0: error() plantado depois do love.conf, passada aprovada; antes dele, saída 3]`
 - **O handler definido no `main.lua` chega tarde.** O `main.lua` é carregado dentro do
   `love.init`, depois dos módulos, da janela e da caixa de versão; erro num `require` do topo
   dele, antes da linha que atribui o handler, cai no padrão. O erro do `conf.lua` é relançado
@@ -151,7 +170,10 @@ repositório das skills (seção Gerais, no fim).
   estraga a amostra de pixel. O boot faz `love.setDeprecationOutput(not fused)`: no modo fundido
   nada imprime nem desenha. Ligar depois só imprime a deprecada usada uma vez até ali: a usada
   duas vezes antes nunca imprime, e a caixa mostra todas. Disparam: `require` com `/`,
-  `love.graphics.newText`, `Texture:newImageData`, `t.renderers` no topo do `conf`. Remédio:
+  `love.graphics.newText`, `Texture:newImageData`, `t.renderers` no topo do `conf` e o
+  `love.data.hash(função, dado)` de dois argumentos (vale `love.data.hash("string", função,
+  dado)`; o aviso diz "replaced by variant with container return type parameter" [medido@b7daef0]:
+  a sonda manual fundida, sem a deprecação religada, não o via; a passada o recusou). Remédio:
   a passada roda no modo (fundido ou não) do autor, com `love.setDeprecationOutput(true)` no topo
   do `conf.lua` quando a variável da passada está posta, e o executor recusa
   `^LOVE - Warning: `. `[love:src/modules/love/boot.lua:96,283-289@b7daef0; love:src/common/deprecation.cpp:69-92,146-190@b7daef0; love:src/modules/graphics/Deprecations.cpp:45-90@b7daef0]`
