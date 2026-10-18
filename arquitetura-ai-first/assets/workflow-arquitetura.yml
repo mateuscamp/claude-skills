@@ -1,0 +1,83 @@
+# .github/workflows/arquitetura.yml
+# Barreira de governança: o que o agente não pode contornar.
+# Os jobs rápidos rodam a cada push; os caros, no agendado.
+# Cada checagem aqui corresponde a um ADR — ao remover uma, atualizar o ADR.
+
+name: arquitetura
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1" # segunda de manhã: o que é caro demais para todo push
+
+jobs:
+  governanca:
+    name: fitness functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      # ADR-0002 / ADR-0005: formatação não se discute, o formatador decide
+      - name: Formatação e lint
+        run: |
+          ruff format --check .
+          ruff check .
+
+      # ADR-0006: tipo explícito é gabarito para o agente
+      - name: Tipos
+        run: mypy --strict src/
+
+      # ADR-0001: fronteiras de módulo
+      - name: Fronteiras de arquitetura
+        run: |
+          pytest tests/arquitetura -q
+          lint-imports  # opcional: contratos declarados em setup.cfg
+
+      # Testabilidade: comando único, headless, sem credencial
+      - name: Testes
+        run: pytest -q --durations=10
+
+      # Deployabilidade: a suíte precisa caber no orçamento de tempo
+      - name: Orçamento de tempo da suíte
+        run: |
+          INICIO=$(date +%s)
+          pytest -q > /dev/null
+          DURACAO=$(( $(date +%s) - INICIO ))
+          echo "suíte levou ${DURACAO}s"
+          test "$DURACAO" -le 90 || {
+            echo "::error::suíte levou ${DURACAO}s, orçamento é 90s (ADR-0007)"
+            exit 1
+          }
+
+      # Segurança: dependência vulnerável não entra na main
+      - name: Auditoria de dependências
+        run: pip-audit --strict
+
+  carga:
+    name: performance sob carga
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      # ADR-0003: p95 abaixo do alvo do driver principal.
+      # Fitness function holística: só faz sentido com o sistema de pé.
+      - name: Subir o sistema
+        run: docker compose up -d --wait
+      - name: Teste de carga
+        run: |
+          docker run --rm --network host -v "$PWD:/app" grafana/k6 run /app/carga/perfil.js
+          # o threshold vive no perfil.js: http_req_duration p(95) < 300ms
