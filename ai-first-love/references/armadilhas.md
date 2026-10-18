@@ -219,8 +219,17 @@ repositório das skills (seção Gerais, no fim).
   fala nele). Remédio: `resizable = true`, em `t.window` ou, com `t.window = false` (o boot só
   abre a janela com `t.window` e o módulo window), nos flags do `setMode` com que a plataforma a
   abre no `love.load`, depois do parser; e o redimensionar provado pelo gerenciador de janelas
-  (xdotool sob Xvfb), não pelo `updateMode`; medir no esqueleto se o `updateMode` dispara.
-  `[love:src/modules/window/sdl/Window.cpp:565-588,696,724-726@b7daef0; love:src/modules/love/boot.lua:194,398-426@b7daef0; pista 11.5@6eb8d54; disparar: inferido]`
+  (xdotool sob Xvfb), não pelo `updateMode`. Medido no `main`: o `love.resize` dispara uma vez na
+  abertura, com o tamanho de já (o `setMode` do `love.load`, sob Xvfb), e a cada `windowsize` de
+  fora; quem relata a janela (o fato `JANELA`) reemite no `love.resize`, e o robô espera o tamanho
+  pedido antes da próxima ação, ou o alvo calculado no layout velho cai na janela nova.
+  `[love:src/modules/window/sdl/Window.cpp:565-588,696,724-726@b7daef0; love:src/modules/love/boot.lua:194,398-426@b7daef0; pista 11.5@6eb8d54; disparar: medido@b7daef0, tools/smoke.py --redimensiona do CampCrawler, 655c623; o updateMode sozinho: inferido]`
+- **O `xdotool search` com padrão não filtra pelo pid.** As condições se juntam por "ou" (o
+  `--any` é o padrão): `search --pid N ""` devolveu três janelas, a primeira de fora do jogo, e o
+  `windowmove --sync` nela esperou para sempre; encadeado a outro comando sem padrão, o `search`
+  toma o comando seguinte como o padrão de nome e não acha nada. Remédio: `xdotool search --sync
+  --pid N` sozinho, com o `--pid` no fim, exatamente uma janela exigida, e o comando seguinte na
+  janela achada. `[medido: xdotool 4.20260303.1 sob Xvfb, com a janela do LÖVE b7daef0, 18/10]`
 - **`love.resize` chega em unidades de DPI**, a partir do `SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED`,
   e é seguido de um `collectgarbage`; misturar `getPixelDimensions` (ou o tamanho da janela do
   sistema) com as coordenadas de entrada erra pela escala. Remédio: uma unidade em toda a
@@ -230,6 +239,12 @@ repositório das skills (seção Gerais, no fim).
   se vê em tela de alta densidade e por isso é proposta que o autor julga pela captura, no
   backend dele.
   `[love:src/modules/event/sdl/Event.cpp:811-837@b7daef0; love:src/modules/love/boot.lua:196,422@b7daef0; mistura: pista 11.5 + inferido]`
+- **A escala de DPI se força sob Xvfb pelo SDL.** Sem nada, a escala é 1; com
+  `SDL_VIDEO_X11_SCALING_FACTOR=2` no ambiente do jogo, a janela pedida de 1920x1080 abriu com
+  1920x1080 pixels e 960x540 unidades (`getDimensions`), `getDPIScale` 2, e a posição
+  (`getPosition`) seguiu em pixel, a mesma das duas escalas. Remédio: a passada na escala forçada
+  é a que prova a conversão entre pixel e unidade (Entrada); o condutor cobra em todo `JANELA` a
+  escala pedida e os pixels iguais às unidades vezes o dpi. `[medido@b7daef0: tools/smoke.py --escala 2 do CampCrawler, 527058d; o porquê do tamanho: inferido]`
 - **O toque do adb cai em outra célula.** Com `usedpiscale` (o padrão, ainda `true` no `main`),
   dimensões, mouse e toque chegam em unidades de DPI: um 1080×2400 com escala 2,75 vira ~393×873.
   O `adb shell input tap` é em pixel físico: calculado a partir dos fatos do jogo, toca a 2,75×
@@ -284,6 +299,20 @@ repositório das skills (seção Gerais, no fim).
   fora da janela entra como veio. Remédio: o robô empurra na unidade da lista, com o ponto preso
   na janela, lê o efeito pelo fato, e nada do jogo lê `love.mouse` nem `love.touch`.
   `[love:src/modules/event/Event.cpp:57-90@b7daef0; love:src/modules/event/sdl/Event.cpp:50-70,127-209,342@b7daef0; ordem no quadro: inferido; estado: pista 11.5 + inferido]`
+- **O evento empurrado não prova a conversão entre pixel e unidade.** O robô que empurra no centro
+  do item, na unidade da lista, e confere o id que respondeu pega o hit-test deslocado; não pega o
+  que mora entre o pixel da tela e a unidade, porque o `push` pula a conversão. No CampCrawler, a
+  posição da janela relatada em unidade, a conversão do condutor sem o dpi e a lista em pixel com
+  o desenho certo aprovaram pelo push e pelo xdotool em escala 1 (lá a conversão é a identidade), e
+  só o xdotool na escala 2 reprovou. Remédio: uma passada com o clique de fora numa escala
+  forçada, com o desvio julgado em pixel da tela (em unidade, a escala 2 aceita 1 px inteiro), até
+  meio pixel, o medido. `[medido@b7daef0: tools/smoke.py --clique --escala 2 do CampCrawler, 527058d e os mutantes da R0.4.4 sobre 655c623]`
+- **O foco no lugar onde o ponteiro já está não chega.** O X11 não gera movimento sem mudança de
+  posição: o `xdotool mousemove` ao pixel onde o ponteiro parou no clique anterior não dá
+  `mousemoved`, e o foco pedido ali (o alcance que acende sob o mouse) nunca responde. Remédio: o
+  ponteiro entra de fora da janela a cada ação e volta a um ponto de espera fora dela (com a tela
+  do Xvfb maior que a janela); o foco não depende de onde a ação anterior o deixou.
+  `[inferido: o X11 só gera MotionNotify com o ponteiro movido; o desenho, medido@b7daef0 no CampCrawler, 38ae218]`
 - **`love.handlers` estoura com evento desconhecido** (`Unknown event: <nome>`): robô que empurra
   nome errado cai alto, o que é bom. Callback novo do 12 (`exposed`, `occluded`,
   `localechanged`, `dropbegan`, `sensorupdated`, `audiodisconnected`, `themechanged`) chega sem
@@ -376,8 +405,9 @@ repositório das skills (seção Gerais, no fim).
   resto por 4 só dá 0,17, 1,5 e 2,83, nunca entre dois pixels da arte. O alfa vai de 0 a 1 sem
   meio-termo, e o blend errado (o padrão no lugar do premultiplicado) não muda pixel nenhum: a
   amostra deitada o aprova, e com razão. Remédio: o defeito de blend se prova numa escala que
-  mistura (em pé, 1080x1920, ou depois de um resize), com a borda de alfa amostrada (SKILL, seção
-  3, Amostra de pixel). `[medido@b7daef0: tools/smoke.py do CampCrawler, 7f540d4 e 0061111]`
+  mistura (em pé, 1080x1920), com a borda de alfa amostrada (SKILL, seção 3, Amostra de pixel). O
+  resize deitado não serve: a 1280x720, 2560x1440 e 3840x2160 (a arte a 0,5, 1 e 1,5) não houve
+  ponto de borda de alfa. `[medido@b7daef0: tools/smoke.py do CampCrawler, 7f540d4 e 0061111; o resize, 655c623]`
 - **O transparente preto já está premultiplicado.** Arte cujo transparente é (0,0,0,0) e o resto
   opaco vale como premultiplicada: basta desenhá-la com `setBlendMode("alpha", "premultiplied")` e
   a cor do item premultiplicada. Com o blend padrão (`alphamultiply`) e filtro linear, o filtro
@@ -391,8 +421,18 @@ repositório das skills (seção Gerais, no fim).
   CampCrawler, a arte hd a 0,75 deitado e 0,72 em pé), a GPU nunca o lê: o atlas sem extrude
   nenhum passou nas passadas e na amostra de pixel, que ainda prendia o índice ao quad, o que o
   extrude promete. Remédio: confira o extrude no atlas montado, lendo de volta cada texel da borda
-  repetida contra a borda da imagem, e exija zero diferenças num fato do boot; a prova pela tela
-  pede uma passada na ampliação (o 4K). `[medido@b7daef0: tools/smoke.py do CampCrawler, d24ba8c]`
+  repetida contra a borda da imagem, e exija zero diferenças num fato do boot. A passada na
+  ampliação não basta: a 3840x2160 (a arte a 1,5) o filtro lê o extrude só no 1º pixel de cada
+  borda (u < 0 só ali), e a amostra que olha a 2 px para dentro passou sem tocá-lo; a prova pela
+  tela pede um ponto nesse anel. `[medido@b7daef0: tools/smoke.py do CampCrawler, d24ba8c; o anel no 4K, 655c623]`
+- **O layout não refeito depois de ampliar a janela passa na amostra e no clique.** A lista, o
+  desenho e o toque saem do mesmo layout velho, coerentes entre si, e o tabuleiro fica no canto da
+  janela nova: a amostra (103 pontos iguais) e o clique aprovaram. Na redução o item sai da
+  janela, e o `ImageData:getPixel` da amostra estoura (`Attempt to get out-of-range pixel!`) sem
+  dizer o item. Remédio: um fato de geometria do item contra uma fórmula independente da janela
+  (no CampCrawler, `LAYOUT` com a célula contra o encaixe, 111 · min(w/1920, h/1080)); e a amostra
+  confere a caixa do item dentro da captura antes de ler, com o item fora como falha nomeada.
+  `[medido@b7daef0: tools/smoke.py --redimensiona do CampCrawler, 655c623]`
 - **O SDL centraliza a janela menor que a tela.** Sob um Xvfb de 1920x1920, sem gerenciador de
   janela, a janela de 1080x1920 abriu em x=420. Remédio: quem lê a tela por fora (a captura
   externa, o xdotool) soma a posição que o jogo relata (`love.window.getPosition()`), nunca supõe

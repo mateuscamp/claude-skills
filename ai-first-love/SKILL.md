@@ -387,11 +387,17 @@ execuções limpas (dezenas), antes de plantar o defeito**, e o limiar de uma re
 autor. A captura sai depois do aviso de deprecação (armadilhas, Gráficos e pixel). Cor de
 verdade: máscara e quadro fixo (`references/gerais-de-jogo.md`, Captura, cor e enquadramento).
 
-**xdotool.** Sob Xvfb, o condutor espera o `PRONTO`, faz `xdotool mousemove --sync X Y click 1`
-no `ALVO` relatado (a posição da janela mais o centro, em pixel) e exige `ENTRADA alvo=<id>` a
-≤ 0,5 px e o efeito, em escala 1 e numa escala forçada. É o caminho do sistema (X11 → SDL3 →
-LÖVE → adaptador → hit-test) e prova a entrada, não o layout; o aparelho fica com o adb. O
-redimensionar também se prova por ele (`xdotool windowsize`), não pelo `updateMode`.
+**xdotool.** Sob Xvfb, o robô relata o alvo (`ALVO`, o centro na unidade da lista) em vez de
+empurrar o toque e espera; o condutor converte em pixel pela conta dele (a posição da janela mais
+o centro vezes o dpi do `JANELA`, nunca a do jogo), faz `xdotool mousemove --sync X Y click 1`
+com o ponteiro entrando de fora da janela a cada ação, e exige a resposta de todo `ALVO` no
+`ENTRADA`, com o mesmo id e o desvio até meio pixel **da tela**, em escala 1 e numa escala forçada
+(`SDL_VIDEO_X11_SCALING_FACTOR`). É o caminho do sistema (X11 → SDL3 → LÖVE → adaptador →
+hit-test) e prova a entrada, não o layout; o aparelho fica com o adb. Só ele pega o defeito entre
+o pixel e a unidade, e só na escala forçada: em escala 1 a conversão é a identidade (armadilhas,
+Entrada). O redimensionar também se prova por ele (`xdotool windowsize`), não pelo
+`updateMode`, com o robô parado até o tamanho chegar; e o layout não refeito depois de ampliar
+só um fato de geometria pega (armadilhas, Laço, tempo e janela; Gráficos e pixel).
 
 **Texto medido.** Cada vista exporta os pares (chave do texto, caixa) que desenha; a bancada da
 passada com janela mede todos com a fonte real, em todo idioma e tamanho, e emite
@@ -421,11 +427,14 @@ aprovação; o digest soma a árvore do jogo e, no porte, o domínio.
 6. tirar o relançamento sem rede → o portão reprova;
 7. um soldado parado em cima do número → a **invariante** da suíte reprova;
 8. um deslocamento no renderizador que a lista não conhece → a **amostra de pixel** reprova;
-9. um hit-test meia célula deslocado → o **xdotool** reprova, e o robô, que empurra o evento já
-   na unidade do jogo, aprova: é o autorrelato;
+9. a posição da janela relatada em unidade, a conversão do condutor sem o dpi ou a lista em
+   pixel com o desenho certo → só o **xdotool na escala forçada** reprova; o robô, que empurra o
+   evento já na unidade da lista, e o xdotool em escala 1 aprovam. O hit-test meia célula
+   deslocado, o robô também reprova, se confere o id que respondeu (armadilhas, Entrada);
 10. uma conta de layout errada que move desenho e toque juntos, sem sair da janela → nenhuma
     das camadas automáticas pega se nenhuma invariante a cobre: diga isso, e a captura vai ao
-    autor.
+    autor. O layout não refeito depois de ampliar a janela é desse tipo, e o `LAYOUT` contra uma
+    fórmula independente (a célula no encaixe) o pega.
 
 ## 4. Android
 
