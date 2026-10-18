@@ -348,6 +348,14 @@ repositório das skills (seção Gerais, no fim).
   código nunca decide por `isFused()`, e a passada roda no modo do autor.
   `[love:src/modules/filesystem/physfs/Filesystem.cpp:181-252,582-745@b7daef0; love:src/modules/filesystem/Filesystem.h:38-52@b7daef0; pista 11.5@6eb8d54]`
 
+- **As pastas das passadas reprovadas enchem o `/tmp`.** O executor guarda a pasta da passada que
+  reprova, para leitura, e com a captura externa ela leva as cópias do framebuffer do Xvfb (XWD,
+  ~59 MB por quadro numa tela de 3840²; até 340 MB por passada). Um catálogo de mutantes, que
+  reprova de propósito, deixou 168 delas e encheu a 80% o `/tmp` (tmpfs de 8 GB), e o resto da
+  tabela reprovou por ambiente, sem linha `REPROVA`. Remédio: a ferramenta dos mutantes roda o
+  portão com o `TMPDIR` dentro da cópia descartável, e as pastas somem com ela; o verificador que
+  reprova sem `REPROVA` mostra o fim da saída. `[medido: o tools/mutantes.py do CampCrawler, 18/10]`
+
 ## Texto e fonte
 
 - **Sem janela não há quebra de linha do LÖVE.** O `love.font` não pede janela, mas o
@@ -379,6 +387,13 @@ repositório das skills (seção Gerais, no fim).
   `GlyphData` do SDF), não pela opção. `[love:src/modules/font/wrap_Font.cpp:67-104@b7daef0; love:src/modules/font/freetype/TrueTypeRasterizer.cpp:115-140@b7daef0; precisar de shader e a margem: inferido]`
 - **`newText` dispara o aviso de tela.** O tipo agora é `TextBatch` (`newTextBatch`); `newText`
   é apelido deprecado. `[love:src/modules/graphics/wrap_Graphics.cpp:2343-2347,4069,4200@b7daef0]`
+
+- **O medidor aproximado não decide o estouro da quebra.** Com o intervalo largo que a moldagem
+  pede (no CampCrawler, 0,25 a 1,05 em por caractere), o mínimo de uma linha japonesa sem quebra
+  não passa da coluna de 730 px, e a suíte só afirma "não cabe" quando ele passa. Remédio: o item
+  de texto declara o contêiner (`wrap_w`), e a passada com janela mede cada texto pela fonte real
+  contra ele. A quebra medindo a 0,6 do tamanho desenhado deu, na luta em japonês, a linha de
+  1022 px contra o limite de 730. `[medido@b7daef0: tools/smoke.py do CampCrawler, 95529ed]`
 
 ## Gráficos e pixel
 

@@ -406,7 +406,10 @@ só um fato de geometria pega (armadilhas, Laço, tempo e janela; Gráficos e pi
 passada com janela mede todos com a fonte real, em todo idioma e tamanho, e emite
 `TEXTO estouro=` e `TEXTO_RESUMO medidos=<n>`, com `n` = pares × idiomas × tamanhos. Na suíte,
 todo `text` da lista tem par, e toda chave da tabela de idiomas tem par ou isenção com motivo.
-Uma fonte por escrita, sem fallback, num cache com dono (armadilhas, Texto e fonte).
+Uma fonte por escrita, sem fallback, num cache com dono (armadilhas, Texto e fonte). A forma
+mínima, que o CampCrawler pôs antes da bancada: o item de texto declara o contêiner (`wrap_w`), e
+cada quadro amostrado mede cada texto pela fonte real contra ele e contra a caixa que a vista deu
+(`TEXTO largura= caixa= limite=`); o medidor aproximado da suíte não decide o estouro da quebra.
 
 **Captura para o autor.** Uma ferramenta abre o jogo sob Xvfb com o robô, nos tamanhos e
 arranjos da constante, e grava as capturas: o olhar fica repetível, sem substituir o aparelho.
@@ -437,7 +440,17 @@ aprovação; o digest soma a árvore do jogo e, no porte, o domínio.
 10. uma conta de layout errada que move desenho e toque juntos, sem sair da janela → nenhuma
     das camadas automáticas pega se nenhuma invariante a cobre: diga isso, e a captura vai ao
     autor. O layout não refeito depois de ampliar a janela é desse tipo, e o `LAYOUT` contra uma
-    fórmula independente (a célula no encaixe) o pega.
+    fórmula independente (a célula no encaixe) o pega;
+11. o catálogo inteiro, numa ferramenta: cada defeito com o trecho único, a troca e os elos que
+    devem pegá-lo, escritos antes de plantar; ela o planta numa cópia e roda o portão sem parar no
+    primeiro que reprova, com o veredito de cada verificador, e a tabela mostra onde a previsão
+    errou. Um teste prende cada trecho a uma ocorrência na árvore (o código que o apaga reprova, em
+    vez de o mutante deixar de plantar), e os mutantes que a suíte deve pegar rodam no portão, com
+    o executor parando na 1ª falha: o verificador da suíte que apodrece reprova sozinho;
+12. variantes cegas, escritas por outro agente que não leu testes, invariantes nem documentos:
+    a que passa é a invariante que falta, e vai ao autor (no CampCrawler, 3 de 4 pegas; passou o
+    texto meia linha abaixo na lista e no desenho juntos, que só uma invariante de contêiner na
+    vertical pegaria).
 
 ## 4. Android
 
