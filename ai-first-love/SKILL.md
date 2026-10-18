@@ -26,6 +26,15 @@ O método geral (contrato, posse, determinismo, ADR, fitness function, risco) es
 **jogos-ai-first**. A referência viva é a reescrita do CampCrawler em LÖVE (repositório próprio,
 que por ora consome o domínio do jogo em Defold); as lições do Defold estão na `ai-first-defold`.
 
+**O que diverge do uso comum do LÖVE se diz.** Boa parte desta skill diverge de propósito do
+jeito comum de fazer jogo em LÖVE, para o agente conseguir verificar: o `love.run` próprio, o
+lançador com o runtime num lock, a lista de desenho, nada de `love.graphics` na vista. Toda opção
+que o agente leva ao autor contra a prática comum diz isso nela mesma, com a alternativa comum ao
+lado; e uma prática divergente nova entra aqui só depois de testada e funcionando num projeto,
+com o sha. O critério de arquitetura é o que otimiza o LÖVE para o desenvolvimento AI-first, não
+o motor de onde o jogo veio. No CampCrawler (2026-10-18), a opção do filtro linear saiu sem dizer
+que contrariava o `nearest` usual de pixel art, e o autor só soube ao perguntar.
+
 Arquivos desta skill:
 - `assets/AGENTS-love.md`: a seção LÖVE do `AGENTS.md` do projeto, pronta para adaptar. É **a
   lista das boas práticas de código e de teste**; leia-a inteira antes de escrever código LÖVE.
