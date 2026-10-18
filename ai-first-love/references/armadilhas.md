@@ -385,6 +385,14 @@ repositório das skills (seção Gerais, no fim).
   premultiplique no carregamento (identidade nessa arte; o atlas conta os pixels que mudaram) e
   desenhe com o blend premultiplicado. `[medido: histograma das PNGs de assets/hd do CampCrawler,
   18/10; escurecer: inferido, e o mutante do blend reprova em pé]`
+- **O extrude do atlas só se lê na ampliação, e a tela não o prova.** O filtro linear lê o texel
+  além do quad só quando a arte sai maior que o atlas: o primeiro pixel dentro do item cai em
+  u = (0,5 + f) × q/W − 0,5, com f de 0 a 1, que só fica abaixo de 0 se q/W < 1. Reduzida (no
+  CampCrawler, a arte hd a 0,75 deitado e 0,72 em pé), a GPU nunca o lê: o atlas sem extrude
+  nenhum passou nas passadas e na amostra de pixel, que ainda prendia o índice ao quad, o que o
+  extrude promete. Remédio: confira o extrude no atlas montado, lendo de volta cada texel da borda
+  repetida contra a borda da imagem, e exija zero diferenças num fato do boot; a prova pela tela
+  pede uma passada na ampliação (o 4K). `[medido@b7daef0: tools/smoke.py do CampCrawler, d24ba8c]`
 - **O SDL centraliza a janela menor que a tela.** Sob um Xvfb de 1920x1920, sem gerenciador de
   janela, a janela de 1080x1920 abriu em x=420. Remédio: quem lê a tela por fora (a captura
   externa, o xdotool) soma a posição que o jogo relata (`love.window.getPosition()`), nunca supõe
