@@ -93,7 +93,7 @@ repositório das skills (seção Gerais, no fim).
   `No code to run` ("Your game might be packaged incorrectly"), e o caminho que não existe,
   `Cannot load game at path`; os dois vão ao handler, e o padrão abre a tela de erro. Remédio: o
   executor das passadas recusa as duas linhas. Medido: a linha é
-  `Error: [love "boot.lua"]:452: No code to run at .`, e sob Xvfb o padrão espera na tela de erro
+  `Error: [love "boot.lua"]:452: No code to run at <caminho do jogo>`, e sob Xvfb o padrão espera na tela de erro
   até o prazo; sem o `setvbuf` do `conf.lua` (que ali não existe), o SIGKILL leva tudo: 0 linhas.
   `[love:src/modules/love/boot.lua:448-455,507-516@b7daef0; medido@b7daef0]`
 - **`t.version` de outra versão prende a passada numa caixa modal.** Depois do `conf.lua` e antes
