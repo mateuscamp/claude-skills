@@ -7,6 +7,14 @@ Skills próprias, carregadas de `~/.claude/skills/`.
 - `ai-first-love`: o mesmo para jogo em Lua com LÖVE (12.0 main, lido no fonte; nada medido no
   LÖVE ainda).
 - `code-audit`: auditoria de PRs, diffs e issues com evidência verificável.
+- `jogos-ai-first`: método e governança para jogo escrito por agente, em qualquer engine.
+- `arquitetura-ai-first`: decisão de arquitetura em backend ou full stack feito com agentes
+  (drivers, trade-off, ADR, fitness function).
+- `revisao-de-capitulo` e `revisao-de-livro`: revisão de ficção, por capítulo e depois entre
+  capítulos.
+
+As quatro últimas nasceram no claude.ai e foram trazidas da cópia sincronizada (`synced/`) em
+18/10/2026; daqui em diante a fonte delas é este `main`.
 
 O `.gitignore` é lista de permissão: skill nova, e arquivo novo da raiz, só entram acrescentando
 a linha deles.
