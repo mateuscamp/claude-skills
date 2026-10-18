@@ -23,6 +23,11 @@ Arquivos desta skill:
   **a lista das boas práticas de código**; leia-a inteira antes de escrever código Defold.
 - `references/armadilhas.md`: os comportamentos medidos do bob, da entrada, das mensagens, da GUI,
   do LuaLS, da Automation Bridge e da API HTTP do editor. Leia antes de afirmar qualquer coisa sobre eles.
+- `references/gerais-de-jogo.md`: as lições de jogo que valem em qualquer engine (testes, prova,
+  ferramentas, entrada, captura, log, instruções do agente). Leia antes de escrever teste,
+  verificador, robô, ferramenta de prova, captura ou log da partida, e antes de registrar lição
+  ou instrução do agente. É cópia: a fonte é o `gerais-de-jogo.md` da raiz do repositório das
+  skills.
 - `scripts/`: `portao.sh`, `plataforma.sh`, `smoke.py` (com o teste dele, `test_smoke.py`),
   `smoketest.ini`, `luals_check.sh`, `run_tests.sh`, `run.lua`, `test_fronteira.lua`,
   `hook_portao.sh`, `bridge.ini`, `bridge_build.sh`, `prova_bridge_exemplo.py`, `editor.py`
@@ -102,7 +107,7 @@ chmod +x tools/*.sh
   os `--exigir` do que ela precisa produzir e os `--recusar` do que não pode sair). A
   **passada de recusa** dá a uma chave um valor errado e cobra com `--erro-esperado` o erro que
   diz o recebido: valor que cai calado num padrão é o caso perigoso (`references/armadilhas.md`,
-  `sys.get_config_int` e "Gerais de jogo").
+  `sys.get_config_int`, e `references/gerais-de-jogo.md`, configuração calada).
 - `tools/luals_check.sh`: `LUALS_IGNORAR` para pastas que não são código do jogo; API que o
   motor tem e a anotação não, num `---@meta` em `tools/luals/` (ver `references/armadilhas.md`).
 - O jogo precisa de um robô opt-in (`<projeto>.autoplay = 1` no `game.project`, lido com
