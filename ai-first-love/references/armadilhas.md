@@ -458,6 +458,13 @@ repositório das skills (seção Gerais, no fim).
 
 ## Lua: LuaJIT do jogo e Lua 5.x da suíte
 
+- **`a and f() or g()` corta os vários retornos num só.** O idiom `table.unpack and
+  table.unpack(t, 2) or unpack(t, 2)`, para servir ao LuaJIT (sem `table.unpack` fora do modo de
+  compatibilidade 5.2) e ao Lua 5.x, devolve só o primeiro valor: a chamada que recebia `x, y`
+  recebe `x, nil`, e o erro sai longe da causa ("attempt to compare number with nil"). Remédio:
+  `local unpack_ = table.unpack or unpack` uma vez, e `unpack_(t, 2)` na chamada.
+  `[medido: LuaJIT 2.1.1791988261 e Lua 5.5.1, no teste do adaptador de entrada do CampCrawler]`
+
 - **`-joff` quebra teste que relança o intérprete.** No CampCrawler, a suíte em `luajit -joff`
   passou inteira antes do replay (367 testes, 13,4 s contra 6,8 s com o JIT); depois dele, levou
   ~15 s contra ~9 s e 6 casos de `test_reproduz_run` reprovaram, porque relançam o intérprete

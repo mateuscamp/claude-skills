@@ -192,7 +192,9 @@ mostrado sem função, userdata nem metatable; a suíte a constrói com `love` a
    lista difere** entre duas execuções que deviam dar a mesma (gravação e replay; robô e
    xdotool; antes e depois da mudança, na mesma semente e com o mesmo medidor). A lista se
    serializa em ordem (`layer`, `seq`), com números por `string.format`, nunca `tostring`, e o
-   robô grava a do repouso, igual em LuaJIT, Lua 5.x e em toda velocidade. O dt se grava com ida
+   robô grava a do repouso, igual em LuaJIT, Lua 5.x e em toda velocidade, sem a pose da
+   animação: a velocidade instantânea conclui a fila sem dar tarefa a ninguém, e quem anda fica
+   onde estava (medido no CampCrawler, R0.2); o resultado é igual, a pose não. O dt se grava com ida
    e volta exata (`%.17g`, ou microssegundos inteiros), com teste: no LuaJIT, `tostring(1/3)` dá
    `0.33333333333333`, que não volta ao mesmo número
    `[medido: LuaJIT 2.1.1791988261; no Lua 5.5.1 volta]`.
