@@ -410,9 +410,10 @@ repositório das skills (seção Gerais, no fim).
   resto por 4 só dá 0,17, 1,5 e 2,83, nunca entre dois pixels da arte. O alfa vai de 0 a 1 sem
   meio-termo, e o blend errado (o padrão no lugar do premultiplicado) não muda pixel nenhum: a
   amostra deitada o aprova, e com razão. Remédio: o defeito de blend se prova numa escala que
-  mistura (em pé, 1080x1920), com a borda de alfa amostrada (SKILL, seção 3, Amostra de pixel). O
-  resize deitado não serve: a 1280x720, 2560x1440 e 3840x2160 (a arte a 0,5, 1 e 1,5) não houve
-  ponto de borda de alfa. `[medido@b7daef0: tools/smoke.py do CampCrawler, 7f540d4 e 0061111; o resize, 655c623]`
+  mistura, com a borda de alfa amostrada (SKILL, seção 3, Amostra de pixel): em pé (1080x1920) ou
+  depois de um resize deitado. A 1280x720, 2560x1440 e 3840x2160 (a arte a 0,5, 1 e 1,5) a porta
+  tem ponto de borda e, no 4K, o soldado também, e o blend trocado reprova pela amostra nos três.
+  `[medido@b7daef0: tools/smoke.py do CampCrawler, 7f540d4 e 0061111; o resize e o blend nele, c2c6e94, na auditoria da R0.4]`
 - **O transparente preto já está premultiplicado.** Arte cujo transparente é (0,0,0,0) e o resto
   opaco vale como premultiplicada: basta desenhá-la com `setBlendMode("alpha", "premultiplied")` e
   a cor do item premultiplicada. Com o blend padrão (`alphamultiply`) e filtro linear, o filtro
