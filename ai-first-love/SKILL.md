@@ -362,7 +362,18 @@ bordas de cada item marcado com `probe`, a medida segue o `kind`: `rect`, a cor;
 texel do atlas vezes a cor do item; `text`, a fração de tinta contra o fundo (nunca o centro).
 O resumo se cobra com referência na regex
 (`AMOSTRA_RESUMO marcados=([1-9]\d*) amostrados=\1 falhas=0`), com o mínimo por vista num
-teste; item marcado sem ponto limpo sai com `motivo=sem_ponto`. **A tolerância se fixa nas
+teste; item marcado sem ponto limpo sai com `motivo=sem_ponto`. A marcação escolhe, por papel,
+estado e tipo, o item com ponto a amostrar descoberto (o sprite pelo centro; o rect e o ladrilho
+que a vista declara opaco, por qualquer candidato): o item sob outro, como a porta sob a tropa
+parada, não tem ponto. O esperado da imagem lê o retângulo de quem empacotou o atlas, nunca o
+`Quad` que o render usa: lido do mesmo objeto, o quad deslocado desloca o desenho e o esperado
+juntos e passa (CampCrawler 7f540d4). Além do alfa 1, confira a borda de alfa (o pixel que mistura
+texel opaco e transparente) pelo blend sobre o item de baixo, quando ele é computável: é o único
+ponto em que o blend errado aparece, e só numa escala que mistura (armadilhas, Gráficos e pixel).
+A captura externa não pede ferramenta nova: o Xvfb grava o framebuffer em XWD (`-fbdir`, com
+`-nocursor`), que a biblioteca padrão lê; o jogo segura o quadro amostrado até o executor copiar
+o arquivo (o framebuffer é vivo, e a tela anima no repouso), e o executor confere cada ponto da
+interna, somada a posição da janela (CampCrawler b84fccb). **A tolerância se fixa nas
 execuções limpas (dezenas), antes de plantar o defeito**, e o limiar de uma referência é do
 autor. A captura sai depois do aviso de deprecação (armadilhas, Gráficos e pixel). Cor de
 verdade: máscara e quadro fixo (`references/gerais-de-jogo.md`, Captura, cor e enquadramento).

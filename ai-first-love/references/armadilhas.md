@@ -370,6 +370,25 @@ repositório das skills (seção Gerais, no fim).
   aviso. O `main` pede GL 3.3 ou GLES 3.0 (o manifesto do love-android exige GLES 3.0), e o que
   vale para shader nele ainda não foi lido. Remédio: todo shader novo (contorno, SDF) e todo
   mipmap entram com prova no aparelho. `[pista 11.5@6eb8d54; love:src/modules/window/sdl/Window.cpp:252-283@b7daef0; love-android:app/src/main/AndroidManifest.xml:11@4c65fff]`
+- **Arte pré-ampliada reduzida a uma fração exata nunca mistura pixels no filtro linear.** No
+  CampCrawler, a arte de 37 px ampliada 4× (148) desenhada em 111 px (escala 0,75, o 1080p
+  deitado), em posição inteira: o centro de cada pixel cai em u = (px + 0,5) × 4/3 − 0,5, cujo
+  resto por 4 só dá 0,17, 1,5 e 2,83, nunca entre dois pixels da arte. O alfa vai de 0 a 1 sem
+  meio-termo, e o blend errado (o padrão no lugar do premultiplicado) não muda pixel nenhum: a
+  amostra deitada o aprova, e com razão. Remédio: o defeito de blend se prova numa escala que
+  mistura (em pé, 1080x1920, ou depois de um resize), com a borda de alfa amostrada (SKILL, seção
+  3, Amostra de pixel). `[medido@b7daef0: tools/smoke.py do CampCrawler, 7f540d4 e 0061111]`
+- **O transparente preto já está premultiplicado.** Arte cujo transparente é (0,0,0,0) e o resto
+  opaco vale como premultiplicada: basta desenhá-la com `setBlendMode("alpha", "premultiplied")` e
+  a cor do item premultiplicada. Com o blend padrão (`alphamultiply`) e filtro linear, o filtro
+  mistura o preto na borda e o blend o multiplica de novo pelo alfa: a borda escurece. Remédio:
+  premultiplique no carregamento (identidade nessa arte; o atlas conta os pixels que mudaram) e
+  desenhe com o blend premultiplicado. `[medido: histograma das PNGs de assets/hd do CampCrawler,
+  18/10; escurecer: inferido, e o mutante do blend reprova em pé]`
+- **O SDL centraliza a janela menor que a tela.** Sob um Xvfb de 1920x1920, sem gerenciador de
+  janela, a janela de 1080x1920 abriu em x=420. Remédio: quem lê a tela por fora (a captura
+  externa, o xdotool) soma a posição que o jogo relata (`love.window.getPosition()`), nunca supõe
+  0,0. `[medido@b7daef0: tools/smoke.py do CampCrawler, 0061111]`
 
 ## Rede, licença e terceiros
 
