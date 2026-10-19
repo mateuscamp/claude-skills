@@ -8,6 +8,10 @@
 package.path = "./?.lua;" .. package.path
 
 local files = { ... }
+-- Com --para (o 1º argumento), sai na 1ª falha: a ferramenta dos mutantes só precisa saber que a
+-- suíte pegou, e o teste que joga o mapa e não o fecha iria até o teto.
+local stop_first = files[1] == "--para"
+if stop_first then table.remove(files, 1) end
 if #files == 0 then
 	print("nenhum arquivo de teste recebido: esperado tests/run.lua tests/test_*.lua")
 	os.exit(2)
@@ -20,6 +24,7 @@ for _, path in ipairs(files) do
 	if not ok or type(suite) ~= "table" or #suite == 0 then
 		failed = failed + 1
 		print("FALHA ao carregar " .. path .. ": " .. tostring(ok and "nenhum teste devolvido" or suite))
+		if stop_first then os.exit(1) end
 	else
 		for _, case in ipairs(suite) do
 			local success, err = pcall(case[2])
@@ -28,6 +33,7 @@ for _, path in ipairs(files) do
 			else
 				failed = failed + 1
 				print(string.format("FALHA %s :: %s\n  %s", path, case[1], tostring(err)))
+				if stop_first then os.exit(1) end
 			end
 		end
 	end
