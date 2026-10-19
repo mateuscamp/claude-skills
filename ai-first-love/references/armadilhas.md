@@ -429,6 +429,14 @@ repositório das skills (seção Gerais, no fim).
   contra ele. A quebra medindo a 0,6 do tamanho desenhado deu, na luta em japonês, a linha de
   1022 px contra o limite de 730. `[medido@b7daef0: tools/smoke.py do CampCrawler, 95529ed]`
 
+- **O teto do medidor aproximado não serve à invariante de sobreposição.** Ele é largo de propósito
+  (o intervalo que garante a quebra), e dois textos que não se tocam na tela se sobrepõem pelo teto:
+  a invariante reprova o código certo. Remédio: com fonte monoespaçada, a largura exata é o número de
+  glifos vezes o avanço da tabela `hmtx` (constante), lido do arquivo da fonte pela biblioteca padrão;
+  a passada com janela a confirma pelo `TEXTO`, com a fonte real. `[medido@b7daef0: no CampCrawler,
+  a Vera Sans Mono Bold avança 1233 de 2048, e o "-1" a 48 px mediu 58,00 px pela Font, contra 57,8
+  da conta; 62a9a57]`
+
 ## Gráficos e pixel
 
 - **Cor de 0 a 255 não estoura.** Desde a 11.0 toda cor é de 0 a 1; o `setColor(255, 0, 0)`
