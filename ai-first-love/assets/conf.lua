@@ -1,5 +1,5 @@
--- Esboço da skill ai-first-love para o conf.lua do projeto. NUNCA RODOU NO LÖVE: só carrega
--- (loadfile) em LuaJIT 2.1.1791988261 e Lua 5.5.1. Cada linha existe por uma armadilha de
+-- Esboço da skill ai-first-love para o conf.lua do projeto. Carrega (loadfile) em LuaJIT
+-- 2.1.1791988261 e Lua 5.5.1; uma adaptação dele fez o boot verde do CampCrawler no b7daef0. Cada linha existe por uma armadilha de
 -- references/armadilhas.md (o item vai no comentário). O conf.lua roda antes do main.lua.
 
 -- Saída, erro e log: sem buffer de linha, o SIGKILL leva a cauda do log e o próprio erro.
@@ -33,6 +33,7 @@ if VIDEO ~= nil and VIDEO ~= "nenhum" and VIDEO ~= "gl" and VIDEO ~= "x11" then
 	error(("<PROJETO>_VIDEO=%s; esperado nenhum, gl ou x11"):format(VIDEO))
 end
 
+-- Por último, sempre: erro em linha depois do love.conf o boot engole (Saída, erro e log).
 function love.conf(t)
 	t.identity = "<projeto>" -- Arquivos e save: sem ele, um save por worktree
 	t.appendidentity = true -- Arquivos e save: o código vem antes da save, que não o sombreia

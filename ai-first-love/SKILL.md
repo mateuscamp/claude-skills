@@ -7,8 +7,8 @@ description: Boas práticas AI-first para jogo em Lua com LÖVE (love2d) escrito
 
 **Tudo o que esta skill diz do LÖVE é lido no fonte ou `[inferido]` até um projeto medir.** Ela
 foi escrita lendo o fonte do `main` no commit b7daef0 (12.0, não lançado), da tag 11.5 (6eb8d54)
-e do love-android 4c65fff; o AppImage do b7daef0 entrou na máquina em 2026-10-17, e nada além do
-`--version` rodou nele. A citação de cada afirmação (`love:<caminho>:<linha>@<sha7>`, ou
+e do love-android 4c65fff; o AppImage do b7daef0 entrou na máquina em 2026-10-17, e nele rodaram
+as etapas R0.1 a R0.6 da reescrita do CampCrawler (o `[medido@b7daef0]` das armadilhas). A citação de cada afirmação (`love:<caminho>:<linha>@<sha7>`, ou
 `[medido@<sha7>]` quando um projeto medir) mora **só** em `references/armadilhas.md`; aqui fica
 a regra, com o item entre parênteses (ex.: "armadilhas, Entrada"). O `[medido]` daqui é de Lua
 fora do LÖVE (LuaJIT 2.1.1791988261, Lua 5.4.9 e 5.5.1) ou da máquina.
@@ -26,6 +26,15 @@ O método geral (contrato, posse, determinismo, ADR, fitness function, risco) es
 **jogos-ai-first**. A referência viva é a reescrita do CampCrawler em LÖVE (repositório próprio,
 que por ora consome o domínio do jogo em Defold); as lições do Defold estão na `ai-first-defold`.
 
+**O que diverge do uso comum do LÖVE se diz.** Boa parte desta skill diverge de propósito do
+jeito comum de fazer jogo em LÖVE, para o agente conseguir verificar: o `love.run` próprio, o
+lançador com o runtime num lock, a lista de desenho, nada de `love.graphics` na vista. Toda opção
+que o agente leva ao autor contra a prática comum diz isso nela mesma, com a alternativa comum ao
+lado; e uma prática divergente nova entra aqui só depois de testada e funcionando num projeto,
+com o sha. O critério de arquitetura é o que otimiza o LÖVE para o desenvolvimento AI-first, não
+o motor de onde o jogo veio. No CampCrawler (2026-10-18), a opção do filtro linear saiu sem dizer
+que contrariava o `nearest` usual de pixel art, e o autor só soube ao perguntar.
+
 Arquivos desta skill:
 - `assets/AGENTS-love.md`: a seção LÖVE do `AGENTS.md` do projeto, pronta para adaptar. É **a
   lista das boas práticas de código e de teste**; leia-a inteira antes de escrever código LÖVE.
@@ -33,8 +42,8 @@ Arquivos desta skill:
   valida, da lista apresentada, do hit-test e da ação de toque, provado em LuaJIT, Lua 5.4 e 5.5
   e no LuaLS.
 - `assets/loop.lua` e `assets/conf.lua`: esboços do `love.run` e do `conf.lua`, cada linha com
-  a armadilha que a pede. **Nunca rodaram no LÖVE**: só carregam em LuaJIT, Lua 5.4 e 5.5
-  [medido: `loadfile`].
+  a armadilha que a pede. Carregam em LuaJIT, Lua 5.4 e 5.5 [medido: `loadfile`]; uma
+  adaptação deles fez o boot verde do CampCrawler no b7daef0 (R0.1).
 - `references/armadilhas.md`: o que o fonte do LÖVE faz e engana em silêncio, com sintoma,
   causa, remédio e citação. Leia antes de afirmar qualquer coisa sobre o LÖVE.
 - `references/gerais-de-jogo.md`: as lições de jogo de qualquer engine (cópia: seção 6).
@@ -192,7 +201,9 @@ mostrado sem função, userdata nem metatable; a suíte a constrói com `love` a
    lista difere** entre duas execuções que deviam dar a mesma (gravação e replay; robô e
    xdotool; antes e depois da mudança, na mesma semente e com o mesmo medidor). A lista se
    serializa em ordem (`layer`, `seq`), com números por `string.format`, nunca `tostring`, e o
-   robô grava a do repouso, igual em LuaJIT, Lua 5.x e em toda velocidade. O dt se grava com ida
+   robô grava a do repouso, igual em LuaJIT, Lua 5.x e em toda velocidade, sem a pose da
+   animação: a velocidade instantânea conclui a fila sem dar tarefa a ninguém, e quem anda fica
+   onde estava (medido no CampCrawler, R0.2); o resultado é igual, a pose não. O dt se grava com ida
    e volta exata (`%.17g`, ou microssegundos inteiros), com teste: no LuaJIT, `tostring(1/3)` dá
    `0.33333333333333`, que não volta ao mesmo número
    `[medido: LuaJIT 2.1.1791988261; no Lua 5.5.1 volta]`.
@@ -242,7 +253,8 @@ aqui fica o que pede código ou motivo.
   `love.errorhandler` nosso antes de qualquer `require`: o do `main.lua` chega tarde para o
   `require` que falhou, depois da caixa de versão (armadilhas, Saída, erro e log). Nas passadas
   o handler imprime o traceback, grava no arquivo da partida e sai com um código próprio (o erro
-  plantado no `conf.lua` sai com ele, não com 1), e `love.setDeprecationOutput(true)` liga ali.
+  plantado no `conf.lua` sai com ele, não com 1, se vier antes do `love.conf`: depois dele o boot
+  o engole, e o `love.conf` fecha o arquivo), e `love.setDeprecationOutput(true)` liga ali.
   Na partida do autor, tela de erro ou seguir com a linha no log é **decisão aberta do autor**.
   No `love.conf`: `t.identity`, `t.appendidentity = true` (a save não sombreia o código),
   `t.version` igual ao pin (outra abre caixa modal) e `t.window = false`: a janela abre no
@@ -257,7 +269,10 @@ aqui fica o que pede código ou motivo.
   `[inferido]`). A unidade é uma só em toda a cadeia (lista, hit-test, robô, amostra, adb): a do
   DPI com conversão testada, ou o pixel com `usedpiscale = false` no `setMode`, que ele julga
   pela captura no backend dele (armadilhas, Laço, tempo e janela). O `INICIO` leva o renderer; o
-  fato `JANELA`, a escala e as duas unidades.
+  fato `JANELA`, a escala e as duas unidades. No CampCrawler o autor escolheu o pixel pela
+  captura na escala forçada, que divergiu do uso comum do LÖVE e funcionou: a conversão some da
+  cadeia, e a passada da escala forçada passa a provar que a do sistema não vaza (`JANELA` com
+  dpi 1).
 - **Parser de chaves**, módulo puro em `love.load(args)`, testado com o argv como tabela, sobre
   `1..#args`: só `--config=<projeto>.<chave>=<valor>` (não casa opção do LÖVE); chave
   desconhecida, repetida ou argumento solto estouram com o recebido, e cada chave lida sai num
@@ -303,11 +318,14 @@ LÖVE, com o JIT dele e com `jit.off()`. O passe em `luajit -joff` (cerca do dob
 Android), e forçar `jit.off()` é **decisão aberta do autor**.
 
 **LuaLS.** O 3.18.0 do mason está na máquina, fora do PATH, com as anotações love2d da 11.5, que
-erram o 12 caladas (armadilhas, LuaLS e anotações). Um `tools/luals_check.sh` roda `--check` com
-`runtime.version = "LuaJIT"` e `undefined-field` como erro. A anotação do LÖVE é do projeto,
-**sozinha** no `.luarc`: só o que o jogo chama, com a citação, e um teste confere cada nome
-contra o dump e as deprecadas; a de tabela que cruza módulos tem teste que a prende ao
-construtor (`ai-first-defold`, Verificação estática).
+erram o 12 caladas (armadilhas, LuaLS e anotações). O executor roda `--check` com
+`runtime.version = "LuaJIT"` e `undefined-field` como erro, e confere o total de arquivos lidos
+(o `--check` sem arquivo diz "no problems found"). A anotação do LÖVE é do projeto, **sozinha** no
+`.luarc`, gerada do dump da API do binário do lock (só nomes, todo retorno `any`), e o portão
+refaz o dump e reprova a velha; o domínio entra como biblioteca. No CampCrawler (R0.6.5), o
+binário fora do PATH vem por uma variável que só o lançador lê, com sha256 e versão no lock. A
+de tabela que cruza módulos tem teste que a prende ao construtor (`ai-first-defold`,
+Verificação estática).
 
 **Portão sem compilador.** O LÖVE não tem build que reprove: o portão faz o papel do bob.
 - `loadfile` em todo `.lua`, em LuaJIT e em Lua 5.x (no CampCrawler, 120 arquivos em 29 ms no
@@ -359,22 +377,42 @@ bordas de cada item marcado com `probe`, a medida segue o `kind`: `rect`, a cor;
 texel do atlas vezes a cor do item; `text`, a fração de tinta contra o fundo (nunca o centro).
 O resumo se cobra com referência na regex
 (`AMOSTRA_RESUMO marcados=([1-9]\d*) amostrados=\1 falhas=0`), com o mínimo por vista num
-teste; item marcado sem ponto limpo sai com `motivo=sem_ponto`. **A tolerância se fixa nas
+teste; item marcado sem ponto limpo sai com `motivo=sem_ponto`. A marcação escolhe, por papel,
+estado e tipo, o item com ponto a amostrar descoberto (o sprite pelo centro; o rect e o ladrilho
+que a vista declara opaco, por qualquer candidato): o item sob outro, como a porta sob a tropa
+parada, não tem ponto. O esperado da imagem lê o retângulo de quem empacotou o atlas, nunca o
+`Quad` que o render usa: lido do mesmo objeto, o quad deslocado desloca o desenho e o esperado
+juntos e passa (CampCrawler 7f540d4). Além do alfa 1, confira a borda de alfa (o pixel que mistura
+texel opaco e transparente) pelo blend sobre o item de baixo, quando ele é computável: é o único
+ponto em que o blend errado aparece, e só numa escala que mistura (armadilhas, Gráficos e pixel).
+A captura externa não pede ferramenta nova: o Xvfb grava o framebuffer em XWD (`-fbdir`, com
+`-nocursor`), que a biblioteca padrão lê; o jogo segura o quadro amostrado até o executor copiar
+o arquivo (o framebuffer é vivo, e a tela anima no repouso), e o executor confere cada ponto da
+interna, somada a posição da janela (CampCrawler b84fccb). **A tolerância se fixa nas
 execuções limpas (dezenas), antes de plantar o defeito**, e o limiar de uma referência é do
 autor. A captura sai depois do aviso de deprecação (armadilhas, Gráficos e pixel). Cor de
 verdade: máscara e quadro fixo (`references/gerais-de-jogo.md`, Captura, cor e enquadramento).
 
-**xdotool.** Sob Xvfb, o condutor espera o `PRONTO`, faz `xdotool mousemove --sync X Y click 1`
-no `ALVO` relatado (a posição da janela mais o centro, em pixel) e exige `ENTRADA alvo=<id>` a
-≤ 0,5 px e o efeito, em escala 1 e numa escala forçada. É o caminho do sistema (X11 → SDL3 →
-LÖVE → adaptador → hit-test) e prova a entrada, não o layout; o aparelho fica com o adb. O
-redimensionar também se prova por ele (`xdotool windowsize`), não pelo `updateMode`.
+**xdotool.** Sob Xvfb, o robô relata o alvo (`ALVO`, o centro na unidade da lista) em vez de
+empurrar o toque e espera; o condutor converte em pixel pela conta dele (a posição da janela mais
+o centro vezes o dpi do `JANELA`, nunca a do jogo), faz `xdotool mousemove --sync X Y click 1`
+com o ponteiro entrando de fora da janela a cada ação, e exige a resposta de todo `ALVO` no
+`ENTRADA`, com o mesmo id e o desvio até meio pixel **da tela**, em escala 1 e numa escala forçada
+(`SDL_VIDEO_X11_SCALING_FACTOR`). É o caminho do sistema (X11 → SDL3 → LÖVE → adaptador →
+hit-test) e prova a entrada, não o layout; o aparelho fica com o adb. Só ele pega o defeito entre
+o pixel e a unidade, e só na escala forçada: em escala 1 a conversão é a identidade (armadilhas,
+Entrada); com a unidade em pixel, a mesma passada prova que a escala não vaza. O redimensionar também se prova por ele (`xdotool windowsize`), não pelo
+`updateMode`, com o robô parado até o tamanho chegar; e o layout não refeito depois de ampliar
+só um fato de geometria pega (armadilhas, Laço, tempo e janela; Gráficos e pixel).
 
 **Texto medido.** Cada vista exporta os pares (chave do texto, caixa) que desenha; a bancada da
 passada com janela mede todos com a fonte real, em todo idioma e tamanho, e emite
 `TEXTO estouro=` e `TEXTO_RESUMO medidos=<n>`, com `n` = pares × idiomas × tamanhos. Na suíte,
 todo `text` da lista tem par, e toda chave da tabela de idiomas tem par ou isenção com motivo.
-Uma fonte por escrita, sem fallback, num cache com dono (armadilhas, Texto e fonte).
+Uma fonte por escrita, sem fallback, num cache com dono (armadilhas, Texto e fonte). A forma
+mínima, que o CampCrawler pôs antes da bancada: o item de texto declara o contêiner (`wrap_w`), e
+cada quadro amostrado mede cada texto pela fonte real contra ele e contra a caixa que a vista deu
+(`TEXTO largura= caixa= limite=`); o medidor aproximado da suíte não decide o estouro da quebra.
 
 **Captura para o autor.** Uma ferramenta abre o jogo sob Xvfb com o robô, nos tamanhos e
 arranjos da constante, e grava as capturas: o olhar fica repetível, sem substituir o aparelho.
@@ -398,11 +436,24 @@ aprovação; o digest soma a árvore do jogo e, no porte, o domínio.
 6. tirar o relançamento sem rede → o portão reprova;
 7. um soldado parado em cima do número → a **invariante** da suíte reprova;
 8. um deslocamento no renderizador que a lista não conhece → a **amostra de pixel** reprova;
-9. um hit-test meia célula deslocado → o **xdotool** reprova, e o robô, que empurra o evento já
-   na unidade do jogo, aprova: é o autorrelato;
+9. a posição da janela relatada em unidade, a conversão do condutor sem o dpi ou a lista em
+   pixel com o desenho certo → só o **xdotool na escala forçada** reprova; o robô, que empurra o
+   evento já na unidade da lista, e o xdotool em escala 1 aprovam. O hit-test meia célula
+   deslocado, o robô também reprova, se confere o id que respondeu (armadilhas, Entrada);
 10. uma conta de layout errada que move desenho e toque juntos, sem sair da janela → nenhuma
     das camadas automáticas pega se nenhuma invariante a cobre: diga isso, e a captura vai ao
-    autor.
+    autor. O layout não refeito depois de ampliar a janela é desse tipo, e o `LAYOUT` contra uma
+    fórmula independente (a célula no encaixe) o pega;
+11. o catálogo inteiro, numa ferramenta: cada defeito com o trecho único, a troca e os elos que
+    devem pegá-lo, escritos antes de plantar; ela o planta numa cópia e roda o portão sem parar no
+    primeiro que reprova, com o veredito de cada verificador, e a tabela mostra onde a previsão
+    errou. Um teste prende cada trecho a uma ocorrência na árvore (o código que o apaga reprova, em
+    vez de o mutante deixar de plantar), e os mutantes que a suíte deve pegar rodam no portão, com
+    o executor parando na 1ª falha: o verificador da suíte que apodrece reprova sozinho;
+12. variantes cegas, escritas por outro agente que não leu testes, invariantes nem documentos:
+    a que passa é a invariante que falta, e vai ao autor (no CampCrawler, 3 de 4 pegas; passou o
+    texto meia linha abaixo na lista e no desenho juntos, que só uma invariante de contêiner na
+    vertical pegaria).
 
 ## 4. Android
 

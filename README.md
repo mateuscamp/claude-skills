@@ -4,8 +4,8 @@ Skills próprias, carregadas de `~/.claude/skills/`.
 
 - `ai-first-defold`: boas práticas AI-first e portão de verificação para jogos em Defold.
 - `ai-first-godot`: o mesmo para Godot 4.
-- `ai-first-love`: o mesmo para jogo em Lua com LÖVE (12.0 main, lido no fonte; nada medido no
-  LÖVE ainda).
+- `ai-first-love`: o mesmo para jogo em Lua com LÖVE (12.0 main, lido no fonte; medido no LÖVE
+  só o boot, pela R0.1 do CampCrawler).
 - `code-audit`: auditoria de PRs, diffs e issues com evidência verificável.
 - `jogos-ai-first`: método e governança para jogo escrito por agente, em qualquer engine.
 - `arquitetura-ai-first`: decisão de arquitetura em backend ou full stack feito com agentes
