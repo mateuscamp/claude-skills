@@ -504,6 +504,13 @@ repositório das skills (seção Gerais, no fim).
   chave própria para o espelhado: sem ela, só o virado para a direita vai à amostra, e o render que
   não vira passa. `[medido@b7daef0: tools/smoke.py do CampCrawler, 3ee27a4: o soldado espelhado
   passa nos 5 pontos, e o render sem o espelho reprova 4 deles, até 216 de diferença]`
+- **Girar 90° pelo ângulo tira a imagem do retângulo do item.** Com `r = −π/2` e sem origem, a matriz
+  faz X = x + sy · v e Y = y − sx · u: o quad vai de y − w a y, acima do ponto
+  `[love:src/common/Matrix.cpp:265-282@b7daef0]`. Remédio: o item leva o retângulo já deitado e o giro
+  como dado (`rotation`, de 90, sem o espelho junto), o render desenha em (x, y + h) com `sx = h/qw` e
+  `sy = w/qh`, e a amostra emula o texel (u = h − y, v = x, no item). `[medido@b7daef0: tools/smoke.py
+  do CampCrawler, c4c313a: o caído deitado passa nos 5 pontos, com diferença máxima de 1, e o render
+  que o desenha de pé reprova]`
 - **O SDL centraliza a janela menor que a tela.** Sob um Xvfb de 1920x1920, sem gerenciador de
   janela, a janela de 1080x1920 abriu em x=420. Remédio: quem lê a tela por fora (a captura
   externa, o xdotool) soma a posição que o jogo relata (`love.window.getPosition()`), nunca supõe
