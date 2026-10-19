@@ -611,6 +611,16 @@ repositório das skills (seção Gerais, no fim).
   `ignoreDir` errado, responde "no problems found". Remédio: o executor confere o total da barra
   de progresso (`N/N`) contra os `.lua` que ele mesmo conta, os do jogo e os da biblioteca.
   `[medido: LuaLS 3.18.0 do mason, CampCrawler R0.6.5]`
+- **O `--check` sai com 1 quando acha erro, e escreve na própria instalação.** O executor que para
+  no código não lê o `check.json` e reprova sem dizer o arquivo e a linha: o 1 é "achou", leia o
+  relatório; outro código é o LuaLS que não rodou. Cada chamada grava o `log/` dentro da instalação:
+  o `--logpath` desvia o `service.log`, mas o `middleScript.lua` vai a `ROOT/log` fixo; e o
+  `--metapath` numa pasta própria faz o `meta/` gerado virar biblioteca dele e entrar na conta dos
+  arquivos lidos (no CampCrawler, 116 contra 98). Remédio: só o `--logpath`, numa pasta que o
+  `ignoreDir` ignora (o `build/`), e o resto declarado. E o lock fixa a árvore que decide, não o
+  binário: a lógica está no `script/`, a versão no `changelog.md` e a biblioteca padrão no
+  `meta/template/`; com só o binário no sha256, um diagnóstico desligado no `script/` passava.
+  `[medido: LuaLS 3.18.0 do mason, a auditoria da R0.6 do CampCrawler; lido: script/library.lua:187 e script/version.lua:4-9 do 3.18.0]`
 
 ## Lua: LuaJIT do jogo e Lua 5.x da suíte
 
