@@ -496,6 +496,14 @@ repositório das skills (seção Gerais, no fim).
   (no CampCrawler, `LAYOUT` com a célula contra o encaixe, 111 · min(w/1920, h/1080)); e a amostra
   confere a caixa do item dentro da captura antes de ler, com o item fora como falha nomeada.
   `[medido@b7daef0: tools/smoke.py --redimensiona do CampCrawler, 655c623]`
+- **Espelhar por escala negativa tira a imagem do retângulo do item.** `draw(img, quad, x, y, 0,
+  -sx, sy)` leva o quad de x − w a x: a matriz faz x + sx · u, e sem origem nada o devolve
+  `[love:src/common/Matrix.cpp:265-282@b7daef0]`. A lista diz [x, x + w], o desenho sai à esquerda,
+  e a amostra lê o fundo. Remédio: o espelho é dado do item (`mirror`, só na imagem), o render
+  desenha em x + w com a escala negativa, e a amostra emula a coluna espelhada (u = w − u) com
+  chave própria para o espelhado: sem ela, só o virado para a direita vai à amostra, e o render que
+  não vira passa. `[medido@b7daef0: tools/smoke.py do CampCrawler, 3ee27a4: o soldado espelhado
+  passa nos 5 pontos, e o render sem o espelho reprova 4 deles, até 216 de diferença]`
 - **O SDL centraliza a janela menor que a tela.** Sob um Xvfb de 1920x1920, sem gerenciador de
   janela, a janela de 1080x1920 abriu em x=420. Remédio: quem lê a tela por fora (a captura
   externa, o xdotool) soma a posição que o jogo relata (`love.window.getPosition()`), nunca supõe
