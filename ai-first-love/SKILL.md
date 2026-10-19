@@ -298,7 +298,8 @@ portão exige os dois antes de chamá-lo
 Ajuste `GRUPOS`, `DESENHO_SO_EM` e `PERMITIDOS` do `test_fronteira.lua` (exceção exata:
 arquivo, trecho, regra, motivo e número de linhas; a órfã reprova). O LuaJIT da máquina não é o
 do runtime: um digest de determinismo das mesmas sementes sai em LuaJIT, Lua 5.x e dentro do
-LÖVE, com o JIT dele e com `jit.off()`. O passe em `luajit -joff` (cerca do dobro do tempo
+LÖVE, com o JIT dele e com `jit.off()`, e na suíte também com um `pairs` adversário, porque a
+ordem natural pode cair na das linhas (armadilhas, Lua). O passe em `luajit -joff` (cerca do dobro do tempo
 `[medido]`) não espelha mais o celular: o `main` deixou de desligar o JIT no ARM (armadilhas,
 Android), e forçar `jit.off()` é **decisão aberta do autor**.
 

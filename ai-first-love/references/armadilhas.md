@@ -449,6 +449,15 @@ repositório das skills (seção Gerais, no fim).
   `string.format("%d", 3/2)` estoura no Lua 5.5 e sai `1`, calado, no LuaJIT. Remédio:
   `math.floor` em toda divisão inteira (a lição do CampCrawler está na ai-first-defold, seção
   Lua). `[medido: LuaJIT 2.1.1791988261 e Lua 5.5.1, 2026-10-17; LuaJIT 2.1, Lua 5.4 e 5.5 na ai-first-defold, 2026-10-16]`
+- **A ordem natural de `pairs` cai na das linhas e esconde quem depende dela.** No CampCrawler,
+  o mutante que percorre por `pairs` as células do mostrado (chave `"x_y"`) na digital de
+  determinismo escapou da suíte inteira em 10 de 150 rodadas: no processo da suíte a ordem saiu
+  na das linhas, girada (`7_0 8_0 0_1 ...`, `0_0 1_0 2_0 ...`), e com o giro em zero a digital
+  é a escrita; sozinho, o mesmo cálculo deu 60 digitais diferentes em 60 processos. A ordem que
+  muda a cada execução não basta para provar a independência. Remédio: o teste da digital roda
+  também com o `pairs` global trocado por um adversário (as chaves em ordem decrescente de tipo
+  e texto) e exige a mesma digital; o mutante reprovou em 150 de 150, nos dois Luas, e o
+  domínio deu a mesma. `[medido: LuaJIT 2.1.1792349434 e Lua 5.5.1, 2026-10-19; campcrawler-love e9d8785]`
 
 ## Gerais de jogo: moram em `references/gerais-de-jogo.md`
 
