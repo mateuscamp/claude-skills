@@ -1,8 +1,8 @@
 # Armadilhas do LÖVE que o agente não vê
 
 **Quase nada aqui foi medido no LÖVE.** Foi escrito lendo o fonte; o AppImage do b7daef0 entrou
-na máquina em 2026-10-17, e só o marcado `[medido@b7daef0]` rodou nele (a R0.1 da reescrita do
-CampCrawler, o boot, no mesmo dia). A wiki (love2d.org) responde 403 a
+na máquina em 2026-10-17, e só o marcado `[medido@b7daef0]` rodou nele (as etapas R0.1 a R0.6 da
+reescrita do CampCrawler, de 17 e 18/10). A wiki (love2d.org) responde 403 a
 acesso automatizado. As armadilhas vêm da leitura do fonte, na tag `11.5` e no `main`, feita na
 auditoria da troca Defold → LÖVE e conferida de novo no `main` (reescrita do CampCrawler,
 2026-10-17). Cada item diz o sintoma, a causa e o remédio, e leva a citação, no formato que a
@@ -73,6 +73,13 @@ repositório das skills (seção Gerais, no fim).
   2026-12-19, e baixá-lo pede o gh autenticado. Remédio: se essa for a fonte, guarde a cópia
   fora do repositório, com o sha256 no lock (baixar pede aprovação). `[lido: gh api actions/runs]`
 
+- **O AppImage se lê sem executar.** O `7z` abre o squashfs de dentro do ELF: a árvore extraída
+  do AppImage do b7daef0 saiu igual ao lock (41 arquivos e os links), sem rodar o runtime do
+  AppImage. Trocar de sha, ensaiado de b7daef0 para 792690b e de volta numa cópia: mudam o lock,
+  o teste que prende o sha e o cabeçalho da anotação gerada; o portão inteiro passa nos dois
+  sentidos, a API por nome é igual, e o `boot.lua`, o `callbacks.lua` e o `arg.lua` embutidos no
+  `liblove` são idênticos, lidos do binário (o `event/`, em C++, pede o fonte). `[medido: 7z e tools/love --conferir; o ensaio: tools/check.sh numa cópia, CampCrawler R0.6.9]`
+
 ## Lançamento e argumentos
 
 - **Um `--x` antes da pasta vira o caminho do jogo.** O primeiro argumento que não é opção
@@ -123,13 +130,25 @@ repositório das skills (seção Gerais, no fim).
   é `love.filesystem.mountFullPath(caminho_absoluto, ponto, [permissão])`.
   `[love:src/modules/filesystem/physfs/Filesystem.cpp:153-164,259-350,421-454@b7daef0; seguir para fora: inferido]`
 
+- **Um `.lua` solto roda como jogo, com a janela padrão.** No 12, `love arquivo.lua` roda o
+  arquivo; sem `conf.lua`, o boot abre a janela padrão antes dele, e com o `DISPLAY` da sessão
+  ela aparece na tela de quem está usando a máquina. Remédio: sonda é pasta com `conf.lua`
+  (`t.window = false` quando não desenha) e roda sob um Xvfb próprio. `[medido@b7daef0: love.window.isOpen() verdadeiro no .lua solto, CampCrawler R0.6.11]`
+- **Sem janela ainda pede vídeo.** Com `t.window = false` e o módulo `window` carregado, o boot
+  inicia o vídeo do SDL: sem `DISPLAY` (e com o `SDL_VIDEO_DRIVER=x11` do lançador), cai em
+  "Could not initialize SDL video subsystem (x11 not available)". Remédio: Xvfb mesmo sem
+  janela, ou `t.modules.window` e `t.modules.graphics` desligados, e aí o jogo roda sem Xvfb
+  nenhum (a passada sem vídeo). `[medido@b7daef0: o dump da API sem DISPLAY, CampCrawler R0.6.5 e .11; a sem vídeo sem Xvfb: tools/smoke.py --video=nenhum, CampCrawler R0.6.4]`
+
 ## Saída, erro e log
 
 - **O SIGKILL leva a cauda do log e o próprio erro.** Com a saída num arquivo ou num pipe, o
   `print` fica em buffer de bloco; a passada que estoura o prazo mata o processo e perde tudo,
   inclusive o texto do erro. No LuaJIT da máquina: 0 bytes sem buffer de linha, 39 com.
   Remédio: `io.stdout:setvbuf("line")` na primeira linha do `conf.lua` (ele roda antes do
-  `main.lua`), cobrado por passada. `[medido: LuaJIT 2.1.1791988261, fora do LÖVE; ordem conf → main: love:src/modules/love/boot.lua:250,444@b7daef0]`
+  `main.lua`), cobrado por passada. No LÖVE, o aviso de deprecação (um `printf` no mesmo
+  `stdout` do C) e a linha seguinte sobrevivem ao SIGKILL com o buffer de linha; sem ele, 0
+  linhas. `[medido: LuaJIT 2.1.1791988261, fora do LÖVE; medido@b7daef0: sonda morta por SIGKILL, CampCrawler R0.6.10; o printf: love:src/common/deprecation.cpp:69-73@b7daef0; ordem conf → main: love:src/modules/love/boot.lua:250,444@b7daef0]`
 - **O SIGTERM do prazo sai com 0.** O SDL3 troca SIGTERM e SIGINT por `SDL_EVENT_QUIT`, o LÖVE o
   entrega como `quit` sem argumento, e o `love.run` padrão devolve `a or 0`: a passada morta
   pelo prazo termina com o código de quem acabou o plano. Remédio: só o fato de fim do plano
@@ -187,6 +206,11 @@ repositório das skills (seção Gerais, no fim).
   emissor de fatos estoura acima de 4.000 B, o leitor do aparelho tira o `[LOVE] ` antes de
   cobrar (`adb logcat -v raw -s SDL/APP:I`), e o arquivo da partida vem por `adb pull`.
   `[love:src/modules/love/love.cpp:255-283,559-560@b7daef0; io.write, corte e etiqueta SDL/APP: inferido]`
+
+- **O OpenAL suja o stdout sem dispositivo.** Sem sessão de áudio (sem `XDG_RUNTIME_DIR`) e sem
+  `ALSOFT_DRIVERS=null`, "Could not open device." sai no stdout do jogo, no meio da saída que uma
+  ferramenta lê linha a linha. Remédio: `ALSOFT_DRIVERS=null` no ambiente de toda passada e
+  sonda, e leitura estrita da saída (a linha estranha reprova, não se pula). `[medido@b7daef0: o dump da API, CampCrawler R0.6.5 e .11]`
 
 ## Laço, tempo e janela
 
@@ -364,7 +388,12 @@ repositório das skills (seção Gerais, no fim).
   existe por `love.graphics`. Remédio: medidor injetado na vista; o da suíte é nosso, sobre os
   avanços, e devolve um intervalo `[inf, sup]` com a folga medida (a moldagem do HarfBuzz afasta
   a largura real da soma): afirma "cabe" só com `sup` ≤ limite e "não cabe" só com `inf` >
-  limite; a medida de verdade é da passada com janela. `[love:src/modules/font/wrap_Rasterizer.cpp:129-136@b7daef0; love:src/modules/font/wrap_Font.cpp:241-245@b7daef0; diferença da soma: inferido]`
+  limite; a medida de verdade é da passada com janela, que confere também a largura real dentro
+  do intervalo (o "MEDIDOR fora"), de que a suíte e a passada sem vídeo dependem. O `love.font`
+  não tem moldador (só `newBMFontRasterizer`, `newGlyphData`, `newImageRasterizer`,
+  `newRasterizer` e `newTrueTypeRasterizer`), e a soma dos avanços do `GlyphData` erra até 9 px
+  contra a `Font:getWidth` (en, de e ja, a 26, 32 e 60 px): medidor sem janela pelos avanços
+  muda a quebra perto do limite. `[love:src/modules/font/wrap_Rasterizer.cpp:129-136@b7daef0; love:src/modules/font/wrap_Font.cpp:241-245@b7daef0; medido@b7daef0: sondas, CampCrawler R0.6.4 e .11]`
 - **A largura do texto muda de versão.** O TrueType passa a ser moldado pelo HarfBuzz
   (kerning e combinação melhores), e a fonte padrão passa de Vera 12 a Noto Sans 13. Nenhuma
   expectativa de largura vinda do Defold ou da 11.5 transfere. Remédio: nunca a fonte padrão; a
@@ -378,13 +407,18 @@ repositório das skills (seção Gerais, no fim).
   `Font:setFallbacks` o glifo que falta na primeira cai calado noutra fonte, com outra métrica.
   Remédio: uma fonte por escrita (o idioma escolhe), sem fallback, e o portão confere a
   cobertura de todo texto da tabela de idiomas contra o `cmap` dela e com `hasGlyphs`, também
-  pelo `Rasterizer`, sem janela. `[pista 11.5@6eb8d54; hasGlyphs no main: love:src/modules/font/wrap_Rasterizer.cpp:129-136@b7daef0; fallback calado: inferido]`
-- **SDF sem shader, e a opção errada é ignorada.** `love.graphics.newFont(arq, tam, { sdf = true })`
-  (ou `love.font.newRasterizer`) liga o `FT_RENDER_MODE_SDF` e volta ao normal calado se falhar;
-  as opções se leem pelo nome exato (`hinting`, `dpiscale`, `sdf`), e `{ SDF = true }` vira fonte
-  comum sem aviso. Não achei shader de SDF embutido, então o desenho e o contorno pedem shader
-  nosso; não há opção de contorno. Remédio: o modo de fonte se prova pelo glifo (a margem do
-  `GlyphData` do SDF), não pela opção. `[love:src/modules/font/wrap_Font.cpp:67-104@b7daef0; love:src/modules/font/freetype/TrueTypeRasterizer.cpp:115-140@b7daef0; precisar de shader e a margem: inferido]`
+  pelo `Rasterizer`, sem janela. A passada com janela aprovou um Hangul em alemão (desenhou a
+  caixa): só o `hasGlyphs` da fonte real no fato do texto e o `cmap` lido no portão (por
+  `struct`, sem fontTools) o pegam. O `hasGlyphs("")` devolve falso. `[pista 11.5@6eb8d54; hasGlyphs no main: love:src/modules/font/wrap_Rasterizer.cpp:129-136@b7daef0; texto vazio: love:src/modules/font/Rasterizer.cpp:79-82@b7daef0; a caixa aprovada: medido@b7daef0, o mutante glifo, CampCrawler R0.6.6; fallback calado: inferido]`
+- **SDF sem shader, e a opção errada é ignorada.** `love.font.newTrueTypeRasterizer(arq, px,
+  { sdf = true })` e o `newFont` dele ligam o `FT_RENDER_MODE_SDF` e voltam ao normal calado se
+  falhar; as opções se leem pelo nome exato, e a chave desconhecida (`{ qualquer = 1 }`) passa
+  calada. O 12 desenha o campo de distância cru, um halo: o desenho pede shader nosso
+  (`fwidth` e `smoothstep` no alfa, só em GL), e o contorno sai no mesmo shader. Remédio: o modo
+  de fonte se prova pelo glifo, a margem do `GlyphData` (8 px: o `A` a 40 px sai 41×45 contra
+  25×29), não pela opção. **E gerar o SDF na hora é caro:** a troca para japonês com as fontes
+  novas levou 3,5 s só nos textos de uma tela e 19 s na tabela inteira (o exact, 11 ms e 61 ms);
+  SDF viável pede glifo pré-gerado ou cache. `[love:src/modules/font/wrap_Font.cpp:67-104@b7daef0; love:src/modules/font/freetype/TrueTypeRasterizer.cpp:115-140@b7daef0; medido@b7daef0: sondas da folha de texto, CampCrawler R0.6.7 e .11]`
 - **`newText` dispara o aviso de tela.** O tipo agora é `TextBatch` (`newTextBatch`); `newText`
   é apelido deprecado. `[love:src/modules/graphics/wrap_Graphics.cpp:2343-2347,4069,4200@b7daef0]`
 
@@ -460,6 +494,14 @@ repositório das skills (seção Gerais, no fim).
   externa, o xdotool) soma a posição que o jogo relata (`love.window.getPosition()`), nunca supõe
   0,0. `[medido@b7daef0: tools/smoke.py do CampCrawler, 0061111]`
 
+- **Sob o Xvfb, a GPU é a da máquina.** Com o driver da NVIDIA, o `getRendererInfo` sob o Xvfb
+  dá a placa (uma RTX 4070), não o Mesa: a passada e a captura desenham na GPU de quem roda, e o
+  que depende de driver diverge do CI (o Mesa). O lövetest do b7daef0, como o CI o roda (o
+  `testing/main.lua --all --isRunner --renderers opengl`, sob Xvfb), deu aqui 341 passam e 1 falha,
+  o array de `bool` em uniform do `Shader`, que o CI passa (342 e 0). Remédio: a tolerância e a
+  base de imagem são da máquina; lövetest no portão só com a falha local que o CI não teve
+  declarada. `[medido@b7daef0: getRendererInfo, CampCrawler R0.6.7 e .11; o lövetest: o AppRun do lock conferido, CampCrawler R0.6.10; o caso: love:testing/tests/graphics.lua:892-895@b7daef0; o CI: lido no check-run test-report-linux-X64-opengl do b7daef0]`
+
 ## Rede, licença e terceiros
 
 - **O jogo abre rede sem dependência nova.** O runtime pré-carrega `socket` (luasocket), `enet`
@@ -477,8 +519,12 @@ repositório das skills (seção Gerais, no fim).
   FreeType, HarfBuzz e outros; o `main` tirou o mpg123 (dr_mp3). Remédio: um registro único de
   terceiros (`CREDITS.md`: SPDX, onde está, obrigação), que todo terceiro do artefato e do fonte
   fixado casa; SPDX fora da lista que o autor aprovou só com decisão dele, e cabeçalho de
-  terceiro fora de `vendor/` reprova. Quando a LGPL entra e como, decide o autor.
-  `[pista 11.5@6eb8d54; love:CMakeLists.txt:106-107,186-192@b7daef0]`
+  terceiro fora de `vendor/` reprova. Quando a LGPL entra e como, decide o autor. O
+  `license.txt` do AppImage do CI traz o UTF8-CPP do `liblove` sob o texto da BSL-1.0, rotulado
+  "Unknown, MIT/Expat-like", e não cita HarfBuzz, Ogg, Vorbis, Theora, modplug nem zlib, que vêm
+  no `lib/` dele: o aviso da BSD-3-Clause da Xiph, que a distribuição tem de levar, falta. O APK
+  do love-android traz ainda o Oboe e a `libc++_shared`.
+  `[pista 11.5@6eb8d54; love:CMakeLists.txt:106-107,186-192@b7daef0; lido: license.txt e lib/ do AppImage do b7daef0, lib/ do APK do 792690b, CampCrawler R0.6.8]`
 
 ## Android
 
@@ -497,7 +543,10 @@ repositório das skills (seção Gerais, no fim).
   não roda nesse LuaJIT. Remédio: `jit.version` e `jit.status()` no `jit=` do fato de início;
   um digest de determinismo das mesmas sementes em LuaJIT, Lua 5.x e dentro do runtime, com o
   JIT dele e com `jit.off()`; o mesmo sha nos dois exige escolher o pino ou trocar o submódulo
-  (decisão do autor). `[lido: árvore dos submódulos do love-android@4c65fff; megasource:libs/LuaJIT/android/arm64-v8a/luajit.h:33@5118c13; medido: luajit -v]`
+  (decisão do autor). No CampCrawler, os 25 mapas das sementes 1 a 25, com a 1ª ordem, dão a
+  mesma digital em LuaJIT 2.1.1791988261, em Lua 5.5.1 e no runtime (LuaJIT 2.1.1788856981), com
+  o JIT ligado e depois de `jit.off()` e `jit.flush()` (o `flush` joga fora o código já
+  compilado); percorrer o estado por `pairs` muda a digital. `[lido: árvore dos submódulos do love-android@4c65fff; megasource:libs/LuaJIT/android/arm64-v8a/luajit.h:33@5118c13; medido: luajit -v; medido@b7daef0: o fato DETERMINISMO, CampCrawler R0.6.3]`
 - **O JIT voltou a ligar no ARM.** A 11.5 fazia `jit.off()` em todo arm e arm64, Android
   incluso; o commit fc42127 (2025-11-06) tirou o bloco, e o `jitsetup.lua` do `main` só ajusta
   `jit.opt`. A premissa "o celular roda o interpretador" e o passe `-joff` como espelho dele
@@ -526,6 +575,11 @@ repositório das skills (seção Gerais, no fim).
   `~/Android/Sdk` só com o NDK 28.2.13676358 e o platform android-34, e `ANDROID_HOME` vazio;
   faltam o NDK 27.3 e o platform 35. Instalar pede o sim do autor. `[medido, 2026-10-17]`
 
+- **As bibliotecas arm64 do APK já vêm em páginas de 16 KB.** No APK do CI do love-android que
+  compila o 792690b, toda `.so` de arm64-v8a (`libluajit`, `liblove`, `libSDL3`, `libopenal`,
+  `liboboe`, `libc++_shared`) tem `LOAD` alinhado em 0x4000; as de armeabi-v7a, em 0x1000.
+  `[medido: readelf -lW no APK da run 30122584815, CampCrawler R0.6.11]`
+
 ## LuaLS e anotações
 
 - **Não há anotação do LÖVE 12 pronta, e a da 11.5 erra calada.** O LuaLS 3.18.0 do mason (fora
@@ -544,6 +598,19 @@ repositório das skills (seção Gerais, no fim).
   `---@param`, e o veredito pode mudar com `--checklevel`. Remédio: o `luals_check.sh` aponta
   para uma cópia fixada (caminho e versão no script) e a troca dela passa pelo portão.
   `[medido: cópias locais; lido: LuaCATS/love2d]`
+
+- **A anotação pode sair do próprio binário.** Uma pasta de dump (`main.lua` e `conf.lua` com
+  `t.window = false`), rodada pelo lançador sob Xvfb, percorre `love.*` (os módulos são os de
+  `package.loaded["love.<nome>"]`), as metatabelas do registro por nome com `typeOf` (cada uma
+  já com os métodos herdados) e as chaves de `love.handlers`, e gera a anotação inteira, só
+  nomes e todo retorno `any`: no b7daef0, 20 módulos, 423 funções, 54 tipos, 1.205 métodos e 40
+  eventos. O `undefined-field` como erro pega o nome que o 12 não tem, no módulo e no método
+  (`fun(self: love.Image, ...: any): ...any` o LuaLS aceita), num caminho que nenhuma passada
+  roda; o portão refaz o dump e reprova a anotação velha. `[medido@b7daef0: tools/overlay.py e o mutante api, CampCrawler R0.6.5]`
+- **O `--check` sem arquivo diz que está tudo bem.** O LuaLS 3.18.0 com a pasta vazia, ou com o
+  `ignoreDir` errado, responde "no problems found". Remédio: o executor confere o total da barra
+  de progresso (`N/N`) contra os `.lua` que ele mesmo conta, os do jogo e os da biblioteca.
+  `[medido: LuaLS 3.18.0 do mason, CampCrawler R0.6.5]`
 
 ## Lua: LuaJIT do jogo e Lua 5.x da suíte
 

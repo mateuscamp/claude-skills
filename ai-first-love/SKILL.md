@@ -7,8 +7,8 @@ description: Boas práticas AI-first para jogo em Lua com LÖVE (love2d) escrito
 
 **Tudo o que esta skill diz do LÖVE é lido no fonte ou `[inferido]` até um projeto medir.** Ela
 foi escrita lendo o fonte do `main` no commit b7daef0 (12.0, não lançado), da tag 11.5 (6eb8d54)
-e do love-android 4c65fff; o AppImage do b7daef0 entrou na máquina em 2026-10-17, e nele só o
-boot rodou (a R0.1 da reescrita do CampCrawler: o `[medido@b7daef0]` das armadilhas). A citação de cada afirmação (`love:<caminho>:<linha>@<sha7>`, ou
+e do love-android 4c65fff; o AppImage do b7daef0 entrou na máquina em 2026-10-17, e nele rodaram
+as etapas R0.1 a R0.6 da reescrita do CampCrawler (o `[medido@b7daef0]` das armadilhas). A citação de cada afirmação (`love:<caminho>:<linha>@<sha7>`, ou
 `[medido@<sha7>]` quando um projeto medir) mora **só** em `references/armadilhas.md`; aqui fica
 a regra, com o item entre parênteses (ex.: "armadilhas, Entrada"). O `[medido]` daqui é de Lua
 fora do LÖVE (LuaJIT 2.1.1791988261, Lua 5.4.9 e 5.5.1) ou da máquina.
@@ -318,11 +318,14 @@ LÖVE, com o JIT dele e com `jit.off()`. O passe em `luajit -joff` (cerca do dob
 Android), e forçar `jit.off()` é **decisão aberta do autor**.
 
 **LuaLS.** O 3.18.0 do mason está na máquina, fora do PATH, com as anotações love2d da 11.5, que
-erram o 12 caladas (armadilhas, LuaLS e anotações). Um `tools/luals_check.sh` roda `--check` com
-`runtime.version = "LuaJIT"` e `undefined-field` como erro. A anotação do LÖVE é do projeto,
-**sozinha** no `.luarc`: só o que o jogo chama, com a citação, e um teste confere cada nome
-contra o dump e as deprecadas; a de tabela que cruza módulos tem teste que a prende ao
-construtor (`ai-first-defold`, Verificação estática).
+erram o 12 caladas (armadilhas, LuaLS e anotações). O executor roda `--check` com
+`runtime.version = "LuaJIT"` e `undefined-field` como erro, e confere o total de arquivos lidos
+(o `--check` sem arquivo diz "no problems found"). A anotação do LÖVE é do projeto, **sozinha** no
+`.luarc`, gerada do dump da API do binário do lock (só nomes, todo retorno `any`), e o portão
+refaz o dump e reprova a velha; o domínio entra como biblioteca. No CampCrawler (R0.6.5), o
+binário fora do PATH vem por uma variável que só o lançador lê, com sha256 e versão no lock. A
+de tabela que cruza módulos tem teste que a prende ao construtor (`ai-first-defold`,
+Verificação estática).
 
 **Portão sem compilador.** O LÖVE não tem build que reprove: o portão faz o papel do bob.
 - `loadfile` em todo `.lua`, em LuaJIT e em Lua 5.x (no CampCrawler, 120 arquivos em 29 ms no
