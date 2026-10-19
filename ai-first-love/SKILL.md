@@ -350,14 +350,16 @@ linha do registro único (`CREDITS.md`: SPDX, onde, obrigação), e cabeçalho d
 **Passadas.** O executor das passadas (o par do `smoke.py` da ai-first-defold) abre o jogo pelo
 lançador, com prazo, e o fato `TEMPO` de cada uma: em série enquanto a série medida couber no
 orçamento; acima dele, em paralelo, com uma tela por passada (o Xvfb com `-displayfd` pega o
-display livre; ambiente e save no `mktemp -d` dela). O portão solta cada uma com a saída e o
-código num arquivo e dá o veredito **na ordem do roteiro, não na de chegada** (o modo que para
-no 1º para no mesmo da série), e a lançada sem veredito reprova. Sob o Xvfb o GL é o do Mesa, e
-a GPU não entra na disputa; o que enche é o disco temporário, com as cópias do framebuffer da
-captura externa vivas até o fim de cada passada: limite quantas correm juntas pelo pico medido,
-e, no modo que para no 1º, apague a pasta das outras que reprovaram (no CampCrawler, 708f37d: de
-91 para 29 s em 28 núcleos; todas juntas, 3,6 GB num tmpfs de 8; com 8 de cada vez, o mesmo
-tempo e 1,8 GB). Regras:
+display livre; ambiente e save no `mktemp -d` dela). Sem mudar a chamada da série: o roteiro
+roda duas vezes, a 1ª soltando cada passada com a saída e o código num arquivo numerado na ordem
+dele, e a 2ª colhendo cada uma na mesma linha, com o veredito **na ordem do roteiro, não na de
+chegada** (o modo que para no 1º para no mesmo da série) e as comparações entre passadas no lugar
+de sempre; a chamada da colheita que não casa com a lançada, ou a lançada sem colheita, reprova.
+Sob o Xvfb o GL é o do Mesa, e a GPU não entra na disputa; o que enche é o disco temporário, com
+as cópias do framebuffer da captura externa vivas até o fim de cada passada: limite quantas
+correm juntas pelo pico medido, e, no modo que para no 1º, apague a pasta das outras que
+reprovaram (no CampCrawler, 1cbea24: de 84 para 29 s em 28 núcleos; todas juntas, 3,6 GB num
+tmpfs de 8; com 8 de cada vez, o mesmo tempo e 1,8 GB). Regras:
 - toda passada declara o vídeo (`--video=nenhum|gl|x11`; o `x11` é o de xdotool e
   redimensionar), e o ambiente se monta por **lista branca**, nunca por cópia do de fora: idioma
   fixo, `ALSOFT_DRIVERS=null`, `XDG_*` num `mktemp -d` (a passada exige `save=` e `log=` dentro
