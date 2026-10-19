@@ -338,6 +338,13 @@ repositório das skills (seção Gerais, no fim).
   (`getPixelWidth`). Remédio: a amostra converte o retângulo do item para pixel, compara pela
   medida do `kind` (SKILL, seção 3, Amostra de pixel) e só vale sem aviso na saída.
   `[love:src/modules/graphics/wrap_Graphics.cpp:508-558@b7daef0; love:src/modules/graphics/opengl/Graphics.cpp:1215-1320@b7daef0]`
+- **A borda de meio pixel o GL pinta, e o ponto do centro mente.** Um rect cuja borda cai em
+  x,5 deixa a linha daquele pixel com o centro na própria borda; no b7daef0 (OpenGL, sob Xvfb) o
+  GL a pintou: a moldura do alcance do CampCrawler, 9 de espessura centrada na divisa, foi de
+  35,5 a 44,5, e a linha 44 saiu vermelha. A amostra que dava o ponto por limpo olhando só o
+  centro do pixel reprovou o código certo com 91 de diferença. Remédio: ponto limpo é o pixel que
+  nenhum item de depois toca (o quadrado [px, px + 1) cruzando a caixa), não o de centro
+  descoberto. `[medido@b7daef0: tools/smoke.py, passadas da luta e da poção do campcrawler-love, ce64214]`
 - **Fonte guardada fora de um dono vaza.** Cada `newFont` é um objeto de GPU, e um cache por
   vista cresce a cada troca de idioma ou de tamanho. Remédio: um módulo de plataforma só cria,
   guarda (por escrita, papel e px) e libera fontes, com teto; o render recebe a fonte pelo
