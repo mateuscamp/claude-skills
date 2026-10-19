@@ -357,9 +357,17 @@ chegada** (o modo que para no 1º para no mesmo da série) e as comparações en
 de sempre; a chamada da colheita que não casa com a lançada, ou a lançada sem colheita, reprova.
 Sob o Xvfb o GL é o do Mesa, e a GPU não entra na disputa; o que enche é o disco temporário, com
 as cópias do framebuffer da captura externa vivas até o fim de cada passada: limite quantas
-correm juntas pelo pico medido, e, no modo que para no 1º, apague a pasta das outras que
-reprovaram (no CampCrawler, 1cbea24: de 84 para 29 s em 28 núcleos; todas juntas, 3,6 GB num
-tmpfs de 8; com 8 de cada vez, o mesmo tempo e 1,8 GB). Regras:
+correm juntas pelo pico medido, e, no modo que para no 1º, não solte mais nada depois da 1ª que
+reprovou e apague a pasta das outras que já corriam (as reprovadas de uma corrida somavam 4 GB,
+além do teto). O Ctrl-C não chega às passadas soltas, porque a lista em segundo plano do sh
+ignora o SIGINT: a corrida espera só as que correm, e a chamada sem pid conta como sumida (o
+`kill -0` de um pid vazio devolve 0 no bash em modo POSIX, e o trap esperava para sempre). E o
+SIGTERM do `timeout` chega a toda passada: o executor o trata (o padrão do Python mata sem os
+`finally`, e o Xvfb e o jogo, em sessão própria, ficam órfãos com a pasta), e o portão também,
+com um trap de TERM que sai pelo EXIT (o 2º SIGTERM, que o `timeout` manda ao grupo, matava o sh
+antes do trap). No CampCrawler (1cbea24, c59b615, ff91687, 4f2f770, ab16cd4): de 84 para 29 s em
+28 núcleos; todas juntas, 3,6 GB num tmpfs de 8; com 8 de cada vez, o mesmo tempo e 1,8 GB; um
+timeout no meio da corrida deixava 7 Xvfb órfãos e 1 GB. Regras:
 - toda passada declara o vídeo (`--video=nenhum|gl|x11`; o `x11` é o de xdotool e
   redimensionar), e o ambiente se monta por **lista branca**, nunca por cópia do de fora: idioma
   fixo, `ALSOFT_DRIVERS=null`, `XDG_*` num `mktemp -d` (a passada exige `save=` e `log=` dentro
