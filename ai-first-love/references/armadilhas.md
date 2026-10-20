@@ -429,6 +429,14 @@ repositório das skills (seção Gerais, no fim).
   contra ele. A quebra medindo a 0,6 do tamanho desenhado deu, na luta em japonês, a linha de
   1022 px contra o limite de 730. `[medido@b7daef0: tools/smoke.py do CampCrawler, 95529ed]`
 
+- **O teto do medidor aproximado não serve à invariante de sobreposição.** Ele é largo de propósito
+  (o intervalo que garante a quebra), e dois textos que não se tocam na tela se sobrepõem pelo teto:
+  a invariante reprova o código certo. Remédio: com fonte monoespaçada, a largura exata é o número de
+  glifos vezes o avanço da tabela `hmtx` (constante), lido do arquivo da fonte pela biblioteca padrão;
+  a passada com janela a confirma pelo `TEXTO`, com a fonte real. `[medido@b7daef0: no CampCrawler,
+  a Vera Sans Mono Bold avança 1233 de 2048, e o "-1" a 48 px mediu 58,00 px pela Font, contra 57,8
+  da conta; 62a9a57]`
+
 ## Gráficos e pixel
 
 - **Cor de 0 a 255 não estoura.** Desde a 11.0 toda cor é de 0 a 1; o `setColor(255, 0, 0)`
@@ -496,6 +504,21 @@ repositório das skills (seção Gerais, no fim).
   (no CampCrawler, `LAYOUT` com a célula contra o encaixe, 111 · min(w/1920, h/1080)); e a amostra
   confere a caixa do item dentro da captura antes de ler, com o item fora como falha nomeada.
   `[medido@b7daef0: tools/smoke.py --redimensiona do CampCrawler, 655c623]`
+- **Espelhar por escala negativa tira a imagem do retângulo do item.** `draw(img, quad, x, y, 0,
+  -sx, sy)` leva o quad de x − w a x: a matriz faz x + sx · u, e sem origem nada o devolve
+  `[love:src/common/Matrix.cpp:265-282@b7daef0]`. A lista diz [x, x + w], o desenho sai à esquerda,
+  e a amostra lê o fundo. Remédio: o espelho é dado do item (`mirror`, só na imagem), o render
+  desenha em x + w com a escala negativa, e a amostra emula a coluna espelhada (u = w − u) com
+  chave própria para o espelhado: sem ela, só o virado para a direita vai à amostra, e o render que
+  não vira passa. `[medido@b7daef0: tools/smoke.py do CampCrawler, 3ee27a4: o soldado espelhado
+  passa nos 5 pontos, e o render sem o espelho reprova 4 deles, até 216 de diferença]`
+- **Girar 90° pelo ângulo tira a imagem do retângulo do item.** Com `r = −π/2` e sem origem, a matriz
+  faz X = x + sy · v e Y = y − sx · u: o quad vai de y − w a y, acima do ponto
+  `[love:src/common/Matrix.cpp:265-282@b7daef0]`. Remédio: o item leva o retângulo já deitado e o giro
+  como dado (`rotation`, de 90, sem o espelho junto), o render desenha em (x, y + h) com `sx = h/qw` e
+  `sy = w/qh`, e a amostra emula o texel (u = h − y, v = x, no item). `[medido@b7daef0: tools/smoke.py
+  do CampCrawler, c4c313a: o caído deitado passa nos 5 pontos, com diferença máxima de 1, e o render
+  que o desenha de pé reprova]`
 - **O SDL centraliza a janela menor que a tela.** Sob um Xvfb de 1920x1920, sem gerenciador de
   janela, a janela de 1080x1920 abriu em x=420. Remédio: quem lê a tela por fora (a captura
   externa, o xdotool) soma a posição que o jogo relata (`love.window.getPosition()`), nunca supõe
