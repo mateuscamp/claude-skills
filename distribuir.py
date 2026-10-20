@@ -11,23 +11,31 @@ Skill é toda pasta de primeiro nível do ref que tem `SKILL.md`. Sem opção, g
 Antes de trocar o que difere, guarda o anterior em `<nome>.antigo`; um `<nome>.antigo` que já
 exista sai, feito por este script ou à mão. Não toca em nenhuma outra entrada do destino.
 
-`--copiar-gerais` só regrava, na árvore de trabalho de `--repo`, a cópia
-`<skill>/references/gerais-de-jogo.md` de cada skill de GENERAL_LESSONS_SKILLS a partir da fonte
-`gerais-de-jogo.md` da raiz (cada skill sai num zip próprio, então a cópia mora dentro dela); a
-cópia que virou symlink volta a ser arquivo. Recusa o checkout que está no ref e o HEAD
-desanexado: a lição entra numa worktree em ramo próprio.
+As Gerais são lições com uma fonte na raiz e uma cópia igual em cada skill que as usa (cada skill
+sai num zip próprio, então a cópia mora dentro dela), uma linha de SHARED_LESSONS para cada:
 
-`--check-gerais` só confere as Gerais de jogo, como o item delas no `--check`, no ref (aqui o
-padrão é o HEAD de `--repo`), e sai com 1 listando cada problema: é o que se roda no ramo, antes do
-PR. A geração confere o mesmo antes de escrever qualquer coisa e recusa se houver problema.
+- Gerais de jogo: a fonte `gerais-de-jogo.md`, copiada para `<skill>/references/gerais-de-jogo.md`
+  de cada skill de GENERAL_LESSONS_SKILLS (as de motor);
+- Gerais de Lua: a fonte `gerais-de-lua.md`, copiada para `<skill>/references/gerais-de-lua.md` de
+  cada skill de LUA_LESSONS_SKILLS (as de motor em Lua: a Godot não a recebe).
+
+`--copiar-gerais` só regrava, na árvore de trabalho de `--repo`, as cópias de todas as Gerais a
+partir das fontes da raiz; a cópia que virou symlink volta a ser arquivo. Recusa o checkout que
+está no ref e o HEAD desanexado, porque a lição entra numa worktree em ramo próprio, e recusa sem
+escrever nenhuma cópia se falta uma fonte ou a pasta de uma skill.
+
+`--check-gerais` só confere as Gerais, como o item delas no `--check`, no ref (aqui o padrão é o
+HEAD de `--repo`), e sai com 1 listando cada problema: é o que se roda no ramo, antes do PR. A
+geração confere o mesmo antes de escrever qualquer coisa e recusa se houver problema.
 
 `--check` só lê e sai com 1 listando cada problema:
 
 - cópia do destino diferente do ref (zip por conteúdo dos membros, pasta pela árvore, `.md` pelo
   conteúdo), ou ausente;
-- Gerais de jogo, lidas no ref: cópia ausente, diferente da fonte ou symlink; cópia fora das
-  skills de GENERAL_LESSONS_SKILLS; linha de lição na seção "## Gerais de jogo" de um `.md` dessas
-  skills (o lugar velho, que ficou só com o ponteiro) e item da fonte repetido num deles;
+- Gerais de jogo e de Lua, lidas no ref: cópia ausente, diferente da fonte ou symlink; cópia fora
+  das skills da lista dela; linha de lição na seção velha de um `.md` dessas skills ("## Gerais de
+  jogo"; "## Gerais de Lua" ou "## Lua:"), que ficou só com o ponteiro, e item da fonte repetido
+  num deles;
 - checkout de `--repo` fora do ref ou com mudança local, ou o ref atrás de `origin/<ref>` (só
   refs locais, sem rede);
 - skill sem symlink `<links>/<skill>` que resolva para `<repo>/<skill>` (o Codex acha a skill por
@@ -35,8 +43,8 @@ PR. A geração confere o mesmo antes de escrever qualquer coisa e recusa se hou
 - descrição do `SKILL.md` acima de 1.024 caracteres (o Codex 0.163.0 corta ali, calado).
 
 Uso: rode depois de cada merge no main; rode `--check` antes de subir um zip no claude.ai; rode
-`--repo <worktree> --copiar-gerais` depois de editar o `gerais-de-jogo.md`, antes do commit, e
-`--repo <worktree> --check-gerais` depois do commit, antes do PR.
+`--repo <worktree> --copiar-gerais` depois de editar o `gerais-de-jogo.md` ou o `gerais-de-lua.md`,
+antes do commit, e `--repo <worktree> --check-gerais` depois do commit, antes do PR.
 """
 
 import argparse
@@ -49,6 +57,7 @@ import sys
 import tarfile
 import tempfile
 import zipfile
+from typing import NamedTuple
 
 CODEX_DESCRIPTION_MAX = 1024
 # Skill que também sai como .md solto no destino, com o nome que o documento de origem tinha.
@@ -63,8 +72,35 @@ GENERAL_LESSONS_SKILLS = ("ai-first-defold", "ai-first-godot", "ai-first-love")
 # ponteiro, em prosa: item de lista ou subtítulo nela é lição escrita no lugar velho, ou a seção
 # inteira de volta por um merge com um ramo anterior à fonte única.
 GENERAL_LESSONS_OLD_SECTION = "## Gerais de jogo"
+# Lições da linguagem Lua comuns às skills de motor em Lua (as diferenças entre o LuaJIT do jogo e o
+# Lua 5.x da suíte): a mesma forma, só nas skills que usam Lua. O nome da fonte é fixo: o AGENTS.md
+# dos projetos o cita. A seção velha tinha o título "## Lua: LuaJIT do <jogo|motor> e Lua 5.x da
+# suíte", e o ponteiro novo é "## Gerais de Lua"; os dois prefixos levam o ':' ou o "Gerais de",
+# para não pegar a "## LuaLS e anotações" do motor.
+LUA_LESSONS_SOURCE = "gerais-de-lua.md"
+LUA_LESSONS_COPY = "references/gerais-de-lua.md"
+LUA_LESSONS_SKILLS = ("ai-first-defold", "ai-first-love")
+LUA_LESSONS_OLD_SECTIONS = ("## Gerais de Lua", "## Lua:")
 LESSON_LINE = re.compile(r"([-*+]|\d+[.)]|#{3,})\s")
 NEXT_SECTION = re.compile(r"#{1,2}\s")
+
+
+class Shared(NamedTuple):
+    """Uma fonte de Gerais: a fonte na raiz, a cópia em cada skill da lista e a seção velha."""
+    title: str
+    source: str
+    copy: str
+    skills: tuple
+    skills_name: str
+    old_sections: tuple
+
+
+SHARED_LESSONS = (
+    Shared("Gerais de jogo", GENERAL_LESSONS_SOURCE, GENERAL_LESSONS_COPY, GENERAL_LESSONS_SKILLS,
+           "GENERAL_LESSONS_SKILLS", (GENERAL_LESSONS_OLD_SECTION,)),
+    Shared("Gerais de Lua", LUA_LESSONS_SOURCE, LUA_LESSONS_COPY, LUA_LESSONS_SKILLS,
+           "LUA_LESSONS_SKILLS", LUA_LESSONS_OLD_SECTIONS),
+)
 
 
 def git(repo, *args, check=True):
@@ -339,23 +375,30 @@ def check_copies(repo, ref, skills, destination):
 
 
 def check_general_lessons(repo, ref):
-    """Problemas das Gerais de jogo no ref (não na árvore): as cópias, a cópia fora da lista e a
-    lição escrita fora da fonte."""
-    source = ref_blob(repo, ref, GENERAL_LESSONS_SOURCE)
-    if source is None:
-        return [f"{GENERAL_LESSONS_SOURCE} não existe no {ref}: é a fonte das cópias de "
-                f"{', '.join(GENERAL_LESSONS_SKILLS)}"]
+    """Problemas de todas as Gerais (de SHARED_LESSONS) no ref, não na árvore."""
     paths = tracked_paths(repo, ref)
-    problems = [copy_problem(repo, ref, skill, source) for skill in GENERAL_LESSONS_SKILLS]
-    problems = [p for p in problems if p]
-    problems += orphan_copies(ref, paths)
-    problems += lessons_outside_source(repo, ref, paths, source)
+    problems = []
+    for shared in SHARED_LESSONS:
+        problems += check_shared(repo, ref, paths, shared)
     return problems
 
 
-def copy_problem(repo, ref, skill, source):
+def check_shared(repo, ref, paths, shared):
+    """Problemas de uma Gerais no ref: as cópias, a cópia fora da lista e a lição escrita fora da
+    fonte."""
+    source = ref_blob(repo, ref, shared.source)
+    if source is None:
+        return [f"{shared.source} não existe no {ref}: é a fonte das cópias de {', '.join(shared.skills)}"]
+    problems = [copy_problem(repo, ref, skill, source, shared) for skill in shared.skills]
+    problems = [p for p in problems if p]
+    problems += orphan_copies(ref, paths, shared)
+    problems += lessons_outside_source(repo, ref, paths, source, shared)
+    return problems
+
+
+def copy_problem(repo, ref, skill, source, shared):
     """Cópia da skill ausente, symlink ou diferente da fonte; None se igual."""
-    path = f"{skill}/{GENERAL_LESSONS_COPY}"
+    path = f"{skill}/{shared.copy}"
     if ref_mode(repo, ref, path) == "120000":
         # O zip levaria o link quebrado, e o --copiar-gerais o desfaz.
         why = "é symlink, esperado arquivo"
@@ -364,23 +407,25 @@ def copy_problem(repo, ref, skill, source):
         if copy == source:
             return None
         why = "não existe" if copy is None else f"difere a partir da linha {first_differing_line(source, copy)}"
-    return (f"{path} no {ref} {why}; a fonte é {GENERAL_LESSONS_SOURCE}: regrave com "
+    return (f"{path} no {ref} {why}; a fonte é {shared.source}: regrave com "
             f"`distribuir.py --repo <worktree> --copiar-gerais` e faça commit")
 
 
-def orphan_copies(ref, paths):
+def orphan_copies(ref, paths, shared):
     """Arquivo com o nome da fonte fora da raiz e das cópias esperadas: o --check não o compara."""
-    expected = {GENERAL_LESSONS_SOURCE} | {f"{s}/{GENERAL_LESSONS_COPY}" for s in GENERAL_LESSONS_SKILLS}
-    return [f"{p} no {ref} é cópia das Gerais fora das skills de GENERAL_LESSONS_SKILLS "
-            f"({', '.join(GENERAL_LESSONS_SKILLS)}): acrescente a skill à lista ou apague a cópia"
-            for p in paths if p.rsplit("/", 1)[-1] == GENERAL_LESSONS_SOURCE and p not in expected]
+    expected = {shared.source} | {f"{s}/{shared.copy}" for s in shared.skills}
+    return [f"{p} no {ref} é cópia das {shared.title} fora das skills de {shared.skills_name} "
+            f"({', '.join(shared.skills)}): acrescente a skill à lista ou apague a cópia"
+            for p in paths if p.rsplit("/", 1)[-1] == shared.source and p not in expected]
 
 
-def old_section_lines(lines):
-    """Números (a partir de 1) das linhas de lição dentro de uma seção '## Gerais de jogo'."""
+def old_section_lines(lines, old_sections):
+    """Números (a partir de 1) das linhas de lição dentro de uma seção que começa por um dos títulos
+    de old_sections."""
+    prefixes = tuple(title.encode() for title in old_sections)
     found, inside = [], False
     for number, line in enumerate(lines, start=1):
-        if line.startswith(GENERAL_LESSONS_OLD_SECTION.encode()):
+        if line.startswith(prefixes):
             inside = True
         elif NEXT_SECTION.match(line.decode(errors="replace")):
             inside = False
@@ -389,27 +434,29 @@ def old_section_lines(lines):
     return found
 
 
-def lessons_outside_source(repo, ref, paths, source):
-    """Lição nos `.md` das skills de motor fora da cópia: no lugar velho da seção, ou item da fonte
-    repetido. Um problema por arquivo."""
+def lessons_outside_source(repo, ref, paths, source, shared):
+    """Lição nos `.md` das skills da lista fora da cópia: no lugar velho da seção, ou item da fonte
+    repetido. Um problema por arquivo; as cópias de todas as Gerais ficam de fora."""
     items = {line for line in source.split(b"\n") if line.startswith(b"- ")}
+    copies = {s.source for s in SHARED_LESSONS}
+    sections = " ou ".join(f"\"{title}\"" for title in shared.old_sections)
     problems = []
     for path in paths:
         name = path.rsplit("/", 1)[-1]
-        skill_markdown = path.split("/")[0] in GENERAL_LESSONS_SKILLS and name.endswith(".md")
-        if not skill_markdown or name == GENERAL_LESSONS_SOURCE:
+        skill_markdown = path.split("/")[0] in shared.skills and name.endswith(".md")
+        if not skill_markdown or name in copies:
             continue
         lines = (ref_blob(repo, ref, path) or b"").split(b"\n")
-        in_section = old_section_lines(lines)
+        in_section = old_section_lines(lines, shared.old_sections)
         repeated = [n for n, line in enumerate(lines, start=1) if line in items]
         if in_section:
             same = f", {len(repeated)} igual(is) a item da fonte" if repeated else ""
             problems.append(f"{path} no {ref} tem {len(in_section)} linha(s) de lição na seção "
-                            f"\"{GENERAL_LESSONS_OLD_SECTION}\" (a primeira na linha {in_section[0]}{same}); a "
-                            f"seção é só o ponteiro: lição geral se escreve em {GENERAL_LESSONS_SOURCE}, na "
+                            f"{sections} (a primeira na linha {in_section[0]}{same}); a seção é só o "
+                            f"ponteiro das {shared.title}: a lição se escreve em {shared.source}, na "
                             f"raiz, e o --copiar-gerais a copia")
         elif repeated:
-            problems.append(f"{path} no {ref} repete {len(repeated)} item(ns) do {GENERAL_LESSONS_SOURCE} "
+            problems.append(f"{path} no {ref} repete {len(repeated)} item(ns) do {shared.source} "
                             f"(o primeiro na linha {repeated[0]}); a lição mora só na fonte e nas cópias")
     return problems
 
@@ -507,13 +554,15 @@ def verdict(problems):
 
 
 def run_check_general(args):
-    """Só as Gerais de jogo no ref; o resto do --check (destino, links, checkout) não vale no ramo."""
+    """Só as Gerais no ref; o resto do --check (destino, links, checkout) não vale no ramo."""
     problems = check_general_lessons(args.repo, args.ref)
     print_problems(problems)
-    local = git_text(args.repo, "status", "--porcelain", "--", GENERAL_LESSONS_SOURCE, *GENERAL_LESSONS_SKILLS)
+    sources = [s.source for s in SHARED_LESSONS]
+    skills = sorted({skill for s in SHARED_LESSONS for skill in s.skills})
+    local = git_text(args.repo, "status", "--porcelain", "--", *sources, *skills)
     if local:
         print(f"nota: {len(local.splitlines())} mudança(s) local(is) fora do commit em "
-              f"{GENERAL_LESSONS_SOURCE} ou nas skills da lista; o --check-gerais confere o {args.ref}, "
+              f"{' ou '.join(sources)} ou nas skills das listas; o --check-gerais confere o {args.ref}, "
               f"não a árvore")
     return verdict(problems)
 
@@ -586,8 +635,8 @@ def run_generate(args, skills):
     if problems:
         # O zip levaria a cópia divergente ou a lição duplicada para o claude.ai, calado.
         print_problems(problems)
-        sys.exit(f"erro: nada foi escrito em {args.destino}: {len(problems)} problema(s) nas Gerais de "
-                 f"jogo do {args.ref}, acima; conserte num ramo e confira com --check-gerais")
+        sys.exit(f"erro: nada foi escrito em {args.destino}: {len(problems)} problema(s) nas Gerais do "
+                 f"{args.ref}, acima; conserte num ramo e confira com --check-gerais")
     os.makedirs(args.destino, exist_ok=True)
     # A pasta de trabalho fica dentro do destino para o rename ser atômico; é nossa e sai no fim.
     workdir = tempfile.mkdtemp(prefix=".distribuir-", dir=args.destino)
@@ -607,12 +656,12 @@ def run_generate(args, skills):
     return 0
 
 
-# --- cópias das Gerais de jogo -----------------------------------------------------------------
+# --- cópias das Gerais -------------------------------------------------------------------------
 
-def general_lessons_source(args):
-    """Conteúdo da fonte das Gerais na árvore de trabalho; sai com erro antes de escrever qualquer
-    cópia se o checkout está no ref ou desanexado, se a fonte falta ou se falta a pasta de alguma
-    skill."""
+def general_lessons_sources(args):
+    """[(Gerais, conteúdo da fonte na árvore de trabalho)] de SHARED_LESSONS; sai com erro antes de
+    escrever qualquer cópia se o checkout está no ref ou desanexado, se falta uma fonte ou se falta
+    a pasta de alguma skill."""
     branch = git(args.repo, "symbolic-ref", "-q", "--short", "HEAD", check=False).stdout.decode().strip()
     if not branch or branch == args.ref:
         # A pasta que toda sessão carrega fica no main e sem mudança local (README); desanexado no
@@ -621,23 +670,37 @@ def general_lessons_source(args):
         where = f"no {args.ref}" if branch else f"desanexado em {head}"
         sys.exit(f"erro: --copiar-gerais escreve na árvore de trabalho de {args.repo}, que está {where}; "
                  f"a lição entra numa worktree em ramo próprio: passe --repo <worktree>")
-    source = os.path.join(args.repo, GENERAL_LESSONS_SOURCE)
-    if not os.path.isfile(source):
-        sys.exit(f"erro: a fonte {source} não existe; esperado {GENERAL_LESSONS_SOURCE} na raiz de --repo")
-    missing = [s for s in GENERAL_LESSONS_SKILLS if not os.path.isdir(os.path.join(args.repo, s))]
-    if missing:
-        sys.exit(f"erro: sem a pasta da skill {', '.join(missing)} em {args.repo}; esperado uma pasta "
-                 f"para cada nome de GENERAL_LESSONS_SKILLS ({', '.join(GENERAL_LESSONS_SKILLS)})")
-    with open(source, "rb") as handle:
-        return handle.read()
+    sources = []
+    for shared in SHARED_LESSONS:
+        source = os.path.join(args.repo, shared.source)
+        if not os.path.isfile(source):
+            sys.exit(f"erro: a fonte {source} não existe; esperado {shared.source} na raiz de --repo; "
+                     f"nenhuma cópia foi escrita")
+        missing = [s for s in shared.skills if not os.path.isdir(os.path.join(args.repo, s))]
+        if missing:
+            sys.exit(f"erro: sem a pasta da skill {', '.join(missing)} em {args.repo}; esperado uma pasta "
+                     f"para cada nome de {shared.skills_name} ({', '.join(shared.skills)}); nenhuma "
+                     f"cópia foi escrita")
+        with open(source, "rb") as handle:
+            sources.append((shared, handle.read()))
+    return sources
 
 
 def run_copy_general(args):
-    """Regrava, na árvore de trabalho de --repo, as cópias das Gerais a partir da fonte dela."""
-    content = general_lessons_source(args)
+    """Regrava, na árvore de trabalho de --repo, as cópias de todas as Gerais a partir das fontes."""
     written = 0
-    for skill in GENERAL_LESSONS_SKILLS:
-        target = os.path.join(args.repo, skill, GENERAL_LESSONS_COPY)
+    for shared, content in general_lessons_sources(args):
+        written += copy_shared(args.repo, shared, content)
+    if written:
+        print("nota: só a árvore de trabalho mudou; o --check confere o commit")
+    return 0
+
+
+def copy_shared(repo, shared, content):
+    """Regrava a cópia de cada skill da lista que difere da fonte; devolve quantas escreveu."""
+    written = 0
+    for skill in shared.skills:
+        target = os.path.join(repo, skill, shared.copy)
         was_link = os.path.islink(target)
         if was_link:
             # O link seria seguido na comparação e na escrita, e iria quebrado no zip.
@@ -650,9 +713,7 @@ def run_copy_general(args):
             handle.write(content)
         print(f"escrito: {target}" + (" (era symlink)" if was_link else ""))
         written += 1
-    if written:
-        print("nota: só a árvore de trabalho mudou; o --check confere o commit")
-    return 0
+    return written
 
 
 def refuse_destination(repo, destination):
@@ -673,10 +734,12 @@ def parse_args(argv):
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true", help="só confere; sai com 1 se houver problema")
     mode.add_argument("--copiar-gerais", action="store_true",
-                      help=f"só regrava <skill>/{GENERAL_LESSONS_COPY} a partir do "
-                           f"{GENERAL_LESSONS_SOURCE} da árvore de trabalho de --repo")
+                      help="só regrava as cópias das Gerais (" + "; ".join(
+                          f"<skill>/{s.copy} a partir do {s.source}" for s in SHARED_LESSONS)
+                      + ") na árvore de trabalho de --repo")
     mode.add_argument("--check-gerais", action="store_true",
-                      help="só confere as Gerais de jogo no ref (padrão: HEAD); sai com 1 se houver problema")
+                      help="só confere as Gerais de jogo e de Lua no ref (padrão: HEAD); sai com 1 se "
+                           "houver problema")
     args = parser.parse_args(argv)
     if args.ref is None:
         args.ref = "HEAD" if args.check_gerais else "main"
@@ -695,8 +758,9 @@ def main(argv):
         suffix = f" ({detail})" if detail else ""
         sys.exit(f"erro: --ref {args.ref} não é um commit de {args.repo}{suffix}")
     if args.check_gerais:
+        shared = "; ".join(f"{s.title}: {s.source} e as cópias de {', '.join(s.skills)}" for s in SHARED_LESSONS)
         print(f"fonte: {args.repo} @ {args.ref} ({git_text(args.repo, 'rev-parse', '--short', args.ref)}); "
-              f"Gerais de jogo: {GENERAL_LESSONS_SOURCE} e as cópias de {', '.join(GENERAL_LESSONS_SKILLS)}")
+              f"{shared}")
         return run_check_general(args)
     refuse_destination(args.repo, args.destino)
     skills = list_skills(args.repo, args.ref)

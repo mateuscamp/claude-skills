@@ -28,6 +28,10 @@ Arquivos desta skill:
   verificador, robô, ferramenta de prova, captura ou log da partida, e antes de registrar lição
   ou instrução do agente. É cópia: a fonte é o `gerais-de-jogo.md` da raiz do repositório das
   skills.
+- `references/gerais-de-lua.md`: as diferenças da linguagem entre o LuaJIT do motor e o Lua 5.x da
+  suíte, comuns à ai-first-love (o `/` que devolve float, os retornos cortados, a variável do
+  `for`, o `-joff`, a ordem do `pairs`). Leia antes de escrever código ou teste que a suíte roda
+  nos dois Luas. É cópia: a fonte é o `gerais-de-lua.md` da raiz do repositório das skills.
 - `scripts/`: `portao.sh`, `plataforma.sh`, `smoke.py` (com o teste dele, `test_smoke.py`),
   `smoketest.ini`, `luals_check.sh`, `run_tests.sh`, `run.lua`, `test_fronteira.lua`,
   `hook_portao.sh`, `bridge.ini`, `bridge_build.sh`, `prova_bridge_exemplo.py`, `editor.py`

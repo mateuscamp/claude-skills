@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Testes das Gerais de jogo do distribuir.py: só a biblioteca padrão, sem rede.
+"""Testes das Gerais do distribuir.py (de jogo e de Lua): só a biblioteca padrão, sem rede.
 
-Cada caso monta um repositório git temporário com a fonte `gerais-de-jogo.md`, as três cópias e o
-ponteiro no `armadilhas.md`, planta um defeito, faz commit e exige o problema, ou a recusa.
+Cada caso monta um repositório git temporário com as fontes `gerais-de-jogo.md` e `gerais-de-lua.md`,
+as cópias (a de jogo nas três skills de motor, a de Lua só nas duas em Lua) e os ponteiros no
+`armadilhas.md`, planta um defeito, faz commit e exige o problema, ou a recusa.
 
 Uso, na raiz do repositório das skills: `python3 tests/test_distribuir.py`.
 """
@@ -45,18 +46,46 @@ SOURCE = (
     "- Lição dois: spec não conta por contador compartilhado, que anda por outros motivos.\n"
     "- Lição três: semente que não é inteiro positivo nunca cai calada no sorteio.\n"
 ).encode()
-POINTER = (
+MOTOR_HEAD = (
     "# Armadilhas do motor\n"
     "\n"
     "## Entrada\n"
     "\n"
     "- Armadilha do motor, que mora aqui.\n"
     "\n"
+)
+GAME_POINTER = (
     "## Gerais de jogo: moram em `references/gerais-de-jogo.md`\n"
     "\n"
     "Cópia da fonte única; não acrescente lição aqui.\n"
-).encode()
+)
+POINTER = (MOTOR_HEAD + GAME_POINTER).encode()
 SKILL_MD = b"---\nname: ai-first-defold\ndescription: Skill de teste.\n---\n\n# Teste\n"
+
+# As lições da linguagem Lua: o nome é fixo (o AGENTS.md do campcrawler-love o cita), e só as skills
+# de motor em Lua recebem a cópia; a Godot não usa Lua. Escritos à mão, não lidos do distribuir.py.
+LUA_SOURCE_NAME = "gerais-de-lua.md"
+LUA_COPY = "references/gerais-de-lua.md"
+LUA_SKILLS = ("ai-first-defold", "ai-first-love")
+LUA_SOURCE = (
+    "# Gerais de Lua\n"
+    "\n"
+    "Fonte única.\n"
+    "\n"
+    "### Valor que muda calado entre os dois\n"
+    "\n"
+    "- Lição um: `/` devolve float no Lua 5.3+, e só o texto mostra.\n"
+    "- Lição dois: `a and f() or g()` corta os vários retornos num só.\n"
+).encode()
+LUA_POINTER = (
+    "## Gerais de Lua: moram em `references/gerais-de-lua.md`\n"
+    "\n"
+    "Cópia da fonte única; não acrescente lição aqui.\n"
+    "\n"
+)
+# A seção que o armadilhas.md das skills em Lua tinha antes da fonte única.
+OLD_LUA_SECTION = "## Lua: LuaJIT do jogo e Lua 5.x da suíte\n\n"
+LUA_POINTER_MD = (MOTOR_HEAD + LUA_POINTER + GAME_POINTER).encode()
 
 
 def git(repo, *args):
@@ -75,8 +104,11 @@ class Fixture(unittest.TestCase):
         self.write(distribuir.GENERAL_LESSONS_SOURCE, SOURCE)
         for skill in SKILLS:
             self.write(self.copy_path(skill), SOURCE)
-        for skill in ("ai-first-defold", "ai-first-godot"):
-            self.write(f"{skill}/references/armadilhas.md", POINTER)
+        self.write(LUA_SOURCE_NAME, LUA_SOURCE)
+        for skill in LUA_SKILLS:
+            self.write(self.lua_copy_path(skill), LUA_SOURCE)
+            self.write(self.armadilhas(skill), LUA_POINTER_MD)
+        self.write(self.armadilhas("ai-first-godot"), POINTER)
         self.write("ai-first-defold/SKILL.md", SKILL_MD)
         self.commit("base")
 
@@ -85,6 +117,16 @@ class Fixture(unittest.TestCase):
 
     def copy_path(self, skill):
         return f"{skill}/{distribuir.GENERAL_LESSONS_COPY}"
+
+    def lua_copy_path(self, skill):
+        return f"{skill}/{LUA_COPY}"
+
+    def armadilhas(self, skill):
+        return f"{skill}/references/armadilhas.md"
+
+    def read(self, relative):
+        with open(self.path(relative), "rb") as handle:
+            return handle.read()
 
     def write(self, relative, content):
         os.makedirs(os.path.dirname(self.path(relative)) or self.repo, exist_ok=True)
@@ -180,6 +222,70 @@ class CheckGeneralLessons(Fixture):
         self.assert_one_problem("ai-first-unity/references/gerais-de-jogo.md", "GENERAL_LESSONS_SKILLS")
 
 
+class CheckLuaLessons(Fixture):
+    def test_copy_missing(self):
+        os.remove(self.path(self.lua_copy_path("ai-first-love")))
+        self.commit("love sem a cópia de Lua")
+        self.assert_one_problem("ai-first-love/references/gerais-de-lua.md", "não existe")
+
+    def test_copy_differs_at_line(self):
+        self.write(self.lua_copy_path("ai-first-defold"), LUA_SOURCE.replace("Lição dois".encode(), "Lição 2".encode()))
+        self.commit("defold diverge")
+        self.assert_one_problem("ai-first-defold/references/gerais-de-lua.md", "difere a partir da linha 8")
+
+    def test_source_edited_alone(self):
+        self.append(LUA_SOURCE_NAME, "- Lição três, só na fonte.\n".encode())
+        self.commit("fonte de Lua sozinha")
+        problems = self.problems()
+        self.assertEqual(len(problems), len(LUA_SKILLS), problems)
+        self.assertTrue(all(LUA_COPY in p for p in problems), problems)
+
+    def test_source_missing(self):
+        os.remove(self.path(LUA_SOURCE_NAME))
+        self.commit("sem a fonte de Lua")
+        self.assert_one_problem(f"{LUA_SOURCE_NAME} não existe")
+
+    def test_copy_is_symlink(self):
+        os.remove(self.path(self.lua_copy_path("ai-first-love")))
+        os.symlink("../../gerais-de-lua.md", self.path(self.lua_copy_path("ai-first-love")))
+        self.commit("symlink")
+        self.assert_one_problem("ai-first-love/references/gerais-de-lua.md", "symlink")
+
+    def test_copy_in_godot(self):
+        # A Godot não usa Lua: a cópia ali o --check não compararia.
+        self.write(self.lua_copy_path("ai-first-godot"), LUA_SOURCE)
+        self.commit("cópia de Lua na godot")
+        self.assert_one_problem("ai-first-godot/references/gerais-de-lua.md", "fora das skills")
+
+    def test_lesson_written_in_pointer(self):
+        md = self.read(self.armadilhas("ai-first-love"))
+        lesson = "Cópia da fonte única; não acrescente lição aqui.\n\n- Lição nova no ponteiro de Lua.\n"
+        md = md.replace("Cópia da fonte única; não acrescente lição aqui.\n\n".encode(), lesson.encode(), 1)
+        self.write(self.armadilhas("ai-first-love"), md)
+        self.commit("lição no ponteiro de Lua")
+        self.assert_one_problem("ai-first-love/references/armadilhas.md", "Gerais de Lua")
+
+    def test_old_section_resurrected(self):
+        # O merge com o armadilhas.md de um ramo anterior à fonte única traz a seção "Lua:" inteira.
+        body = LUA_SOURCE.split(b"\n", 6)[6]
+        md = (MOTOR_HEAD + OLD_LUA_SECTION).encode() + body + b"\n" + GAME_POINTER.encode()
+        self.write(self.armadilhas("ai-first-defold"), md)
+        self.commit("seção de Lua ressuscitada")
+        self.assert_one_problem("ai-first-defold/references/armadilhas.md", "Lua")
+
+    def test_source_item_repeated_elsewhere(self):
+        item = LUA_SOURCE.split(b"\n")[6]
+        self.append("ai-first-defold/SKILL.md", b"\n" + item + b"\n")
+        self.commit("item de Lua repetido")
+        self.assert_one_problem("ai-first-defold/SKILL.md", "repete")
+
+    def test_luals_section_is_not_the_lua_pointer(self):
+        # "## LuaLS e anotações" é do motor: começa como "## Lua", mas não é a seção de Lua.
+        self.append(self.armadilhas("ai-first-love"), "\n## LuaLS e anotações\n\n- Armadilha do LuaLS.\n".encode())
+        self.commit("seção do LuaLS")
+        self.assertEqual(self.problems(), [])
+
+
 class CopyGeneral(Fixture):
     def plant_divergent_copy(self):
         self.write(self.copy_path("ai-first-godot"), b"velha\n")
@@ -216,6 +322,29 @@ class CopyGeneral(Fixture):
         again = self.run_script("--copiar-gerais")
         self.assertNotIn("escrito", again.stdout)
 
+    def test_rewrites_lua_copies_only_in_lua_skills(self):
+        git(self.repo, "checkout", "-q", "-b", "licao")
+        self.write(self.lua_copy_path("ai-first-defold"), b"velha\n")
+        os.remove(self.path(self.lua_copy_path("ai-first-love")))
+        os.symlink("../../gerais-de-lua.md", self.path(self.lua_copy_path("ai-first-love")))
+        result = self.run_script("--copiar-gerais")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for skill in LUA_SKILLS:
+            self.assertFalse(os.path.islink(self.path(self.lua_copy_path(skill))), skill)
+            self.assertEqual(self.read(self.lua_copy_path(skill)), LUA_SOURCE, skill)
+        self.assertFalse(os.path.lexists(self.path(self.lua_copy_path("ai-first-godot"))))
+        again = self.run_script("--copiar-gerais")
+        self.assertNotIn("escrito", again.stdout)
+
+    def test_refuses_without_lua_source_before_writing(self):
+        git(self.repo, "checkout", "-q", "-b", "licao")
+        os.remove(self.path(LUA_SOURCE_NAME))
+        self.plant_divergent_copy()
+        result = self.run_script("--copiar-gerais")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn(LUA_SOURCE_NAME, result.stderr)
+        self.assertEqual(self.copy_content("ai-first-godot"), b"velha\n")
+
 
 class CheckGeneralMode(Fixture):
     def test_reads_head_by_default(self):
@@ -225,6 +354,14 @@ class CheckGeneralMode(Fixture):
         result = self.run_script("--check-gerais")
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("PROBLEMA: ai-first-defold/references/armadilhas.md", result.stdout)
+
+    def test_reads_lua_copy_in_head(self):
+        git(self.repo, "checkout", "-q", "-b", "licao")
+        self.write(self.lua_copy_path("ai-first-love"), b"velha\n")
+        self.commit("love diverge na cópia de Lua")
+        result = self.run_script("--check-gerais")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("PROBLEMA: ai-first-love/references/gerais-de-lua.md", result.stdout)
 
     def test_base_in_sync(self):
         result = self.run_script("--check-gerais")
@@ -243,6 +380,7 @@ class Generate(Fixture):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         with zipfile.ZipFile(os.path.join(destination, "ai-first-defold.zip")) as archive:
             self.assertIn("ai-first-defold/references/gerais-de-jogo.md", archive.namelist())
+            self.assertIn("ai-first-defold/references/gerais-de-lua.md", archive.namelist())
 
     def test_refuses_divergent_copy_before_writing(self):
         self.write(self.copy_path("ai-first-defold"), b"velha\n")
@@ -250,6 +388,15 @@ class Generate(Fixture):
         destination, result = self.generate()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("ai-first-defold/references/gerais-de-jogo.md", result.stdout)
+        zips = [n for n in os.listdir(destination) if n.endswith(".zip")] if os.path.isdir(destination) else []
+        self.assertEqual(zips, [])
+
+    def test_refuses_divergent_lua_copy_before_writing(self):
+        self.write(self.lua_copy_path("ai-first-love"), b"velha\n")
+        self.commit("love diverge na cópia de Lua")
+        destination, result = self.generate()
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("ai-first-love/references/gerais-de-lua.md", result.stdout)
         zips = [n for n in os.listdir(destination) if n.endswith(".zip")] if os.path.isdir(destination) else []
         self.assertEqual(zips, [])
 

@@ -1,11 +1,12 @@
 # Lista de permissão: só entram as skills próprias e os arquivos da raiz do
-# repositório (README, distribuir.py, gerais-de-jogo.md, tests/). synced/ é do
+# repositório (README, distribuir.py, gerais-de-jogo.md, gerais-de-lua.md, tests/). synced/ é do
 # app e use-railway é de terceiro; skill nova entra acrescentando a linha dela.
 /*
 !/.gitignore
 !/README.md
 !/distribuir.py
 !/gerais-de-jogo.md
+!/gerais-de-lua.md
 !/tests/
 !/ai-first-defold/
 !/ai-first-godot/

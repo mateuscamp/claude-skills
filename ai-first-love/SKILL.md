@@ -47,6 +47,9 @@ Arquivos desta skill:
 - `references/armadilhas.md`: o que o fonte do LÖVE faz e engana em silêncio, com sintoma,
   causa, remédio e citação. Leia antes de afirmar qualquer coisa sobre o LÖVE.
 - `references/gerais-de-jogo.md`: as lições de jogo de qualquer engine (cópia: seção 6).
+- `references/gerais-de-lua.md`: as diferenças da linguagem entre o LuaJIT do jogo e o Lua 5.x da
+  suíte, comuns à ai-first-defold (cópia: seção 6). Leia antes de escrever código ou teste que a
+  suíte roda nos dois Luas.
 - `scripts/`: o executor da suíte, `run.lua` e `run_tests.sh` (os da ai-first-defold), e
   `test_fronteira.lua` (domínio e vistas sem `love`, e só o renderizador desenha). Portão,
   lançador, executor das passadas e hook ainda não têm versão de LÖVE provada: nascem no
@@ -314,9 +317,10 @@ Ajuste `GRUPOS`, `DESENHO_SO_EM` e `PERMITIDOS` do `test_fronteira.lua` (exceç�
 arquivo, trecho, regra, motivo e número de linhas; a órfã reprova). O LuaJIT da máquina não é o
 do runtime: um digest de determinismo das mesmas sementes sai em LuaJIT, Lua 5.x e dentro do
 LÖVE, com o JIT dele e com `jit.off()`, e na suíte também com um `pairs` adversário, porque a
-ordem natural pode cair na das linhas (armadilhas, Lua). O passe em `luajit -joff` (cerca do dobro do tempo
-`[medido]`) não espelha mais o celular: o `main` deixou de desligar o JIT no ARM (armadilhas,
-Android), e forçar `jit.off()` é **decisão aberta do autor**.
+ordem natural pode cair na das linhas (`references/gerais-de-lua.md`, ordem do `pairs`). O passe
+em `luajit -joff` (cerca do dobro do tempo `[medido]`) não espelha mais o celular: o `main`
+deixou de desligar o JIT no ARM (armadilhas, Android), e forçar `jit.off()` é **decisão aberta do
+autor**.
 
 **LuaLS.** O 3.18.0 do mason está na máquina, fora do PATH, com as anotações love2d da 11.5, que
 erram o 12 caladas (armadilhas, LuaLS e anotações). O executor roda `--check` com
@@ -500,11 +504,13 @@ antes, nada de `android/`, SDK ou emulador no repositório, e instalar pede o si
 `references/armadilhas.md`: cada uma com sintoma, causa, remédio e citação. Antes de investigar
 um sintoma, procure-o lá.
 
-## 6. Gerais de jogo
+## 6. Gerais de jogo e de Lua
 
-`references/gerais-de-jogo.md` é cópia: a fonte única é o `gerais-de-jogo.md` da raiz do
-repositório das skills, copiado pelo `distribuir.py --copiar-gerais` e conferido pelo `--check`
-(no ramo, pelo `--check-gerais`). Lição nova de jogo vai lá, nunca na cópia.
+`references/gerais-de-jogo.md` e `references/gerais-de-lua.md` são cópias: as fontes únicas são o
+`gerais-de-jogo.md` e o `gerais-de-lua.md` da raiz do repositório das skills, copiados pelo
+`distribuir.py --copiar-gerais` e conferidos pelo `--check` (no ramo, pelo `--check-gerais`).
+Lição nova de jogo vai no primeiro; diferença da linguagem entre o LuaJIT e o Lua 5.x, que vale
+também no Defold, no segundo; nunca na cópia.
 
 ## Convivência
 
