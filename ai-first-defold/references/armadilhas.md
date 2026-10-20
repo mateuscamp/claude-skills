@@ -9,8 +9,9 @@ versão, reproduza o caso mínimo.
 
 Esta lista cresce com o uso: armadilha do Defold em que um projeto caiu e que ele resolveu entra
 aqui, com o número medido; a que vale para jogo em qualquer engine entra em `gerais-de-jogo.md`,
-na raiz do repositório das skills, e o `distribuir.py --copiar-gerais` a copia para
-`references/gerais-de-jogo.md` de cada skill de motor.
+na raiz do repositório das skills, e a da linguagem, entre o LuaJIT do motor e o Lua 5.x da suíte,
+em `gerais-de-lua.md`, também na raiz; o `distribuir.py --copiar-gerais` copia cada uma para o
+`references/` das skills que a recebem.
 
 ## Build e ferramenta
 
@@ -179,15 +180,16 @@ na raiz do repositório das skills, e o `distribuir.py --copiar-gerais` a copia 
 - Fonte distance-field com CJK inteiro é enorme: gere `extra_characters` a partir dos textos e
   reprove fonte desatualizada no portão (glifo ausente vira quadrado sem log).
 
-## Lua: LuaJIT do motor e Lua 5.x da suíte
+## Gerais de Lua: moram em `references/gerais-de-lua.md`
 
-- `/` devolve float no Lua 5.3+: `3*2/2` é `3` no LuaJIT e `3.0` no Lua 5.4 e 5.5. O `==`
-  continua verdadeiro, então só muda o que vira texto (`tostring`, `..`, `%s`), e `%d` com valor
-  fracionário estoura no 5.3+. O motor (LuaJIT) nunca mostraria: só a suíte no Lua 5.x pega. No
-  CampCrawler (D52, `squad.level_threshold`), a soma `base * passos + passos * (passos - 1) / 2`
-  saiu `"2.0,5.0,9.0,14.0,20.0"`, e o teste que compara texto reprovou só no Lua 5.5. Remédio:
-  `math.floor` em toda divisão cujo resultado é inteiro (medido em 2026-10-16: LuaJIT 2.1, Lua
-  5.4 e 5.5).
+Ali estão as diferenças da linguagem entre o LuaJIT do motor e o Lua 5.x da suíte, comuns à
+ai-first-love: valor que muda calado entre os dois (os retornos que o `a and f() or g()` corta, o
+`/` que devolve float), código que só um dos dois carrega (a variável do `for`) e a suíte que roda
+nos dois (o `-joff` de quem relança o intérprete, a ordem natural do `pairs`). É cópia da fonte
+única `gerais-de-lua.md`, na raiz do repositório das skills. Não acrescente lição aqui: a fonte se
+edita num ramo em worktree, e o `distribuir.py --check-gerais` reprova item de lista ou subtítulo
+nesta seção. O sorteio, logo abaixo, fica aqui: o `math.random` que ele mede é o do motor, no
+LuaJIT e no HTML5.
 
 ## Sorteio
 

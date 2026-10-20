@@ -1,0 +1,21 @@
+# Gerais de Lua (LuaJIT do jogo e Lua 5.x da suíte)
+
+Fonte única: `gerais-de-lua.md`, na raiz do repositório das skills; edite só ela, num ramo em worktree (`~/.cache/claude-skills-wt/<ramo>`, README do repositório), nunca uma cópia nem a pasta `~/.claude/skills`.
+
+Cópias: `references/gerais-de-lua.md` de cada skill da `LUA_LESSONS_SKILLS` do `distribuir.py` (as de motor em Lua: ai-first-defold e ai-first-love), regravadas pelo `--copiar-gerais`; o `--check-gerais` (no ramo, antes do PR) e o `--check` reprovam a ausente ou diferente, e a lição escrita no `armadilhas.md`.
+
+O jogo roda no LuaJIT do motor, e a suíte roda nele e num Lua 5.x de referência. Aqui ficam as diferenças da linguagem entre os dois, que valem em qualquer motor em Lua. O que depende do motor (o `math.random` do Defold no HTML5, o LuaJIT do runtime do LÖVE no Android) fica no `armadilhas.md` da skill dele, e a lição de jogo que vale em qualquer engine, no `gerais-de-jogo.md`. O `[medido: ...]` é medido fora do motor, no intérprete da suíte, com a versão de cada um e a data ou o projeto.
+
+### Valor que muda calado entre os dois
+
+- **`a and f() or g()` corta os vários retornos num só.** O idiom `table.unpack and table.unpack(t, 2) or unpack(t, 2)`, para servir ao LuaJIT (sem `table.unpack` fora do modo de compatibilidade 5.2) e ao Lua 5.x, devolve só o primeiro valor: a chamada que recebia `x, y` recebe `x, nil`, e o erro sai longe da causa ("attempt to compare number with nil"). Remédio: `local unpack_ = table.unpack or unpack` uma vez, e `unpack_(t, 2)` na chamada. `[medido: LuaJIT 2.1.1791988261 e Lua 5.5.1, no teste do adaptador de entrada do CampCrawler em LÖVE]`
+- **`/` devolve float no Lua 5.3+, e só o texto mostra.** `3*2/2` é `3` no LuaJIT e `3.0` no Lua 5.4 e 5.5; `4/2` é `2` no LuaJIT e `2.0` no Lua 5.5. O `==` continua verdadeiro, então só muda o que vira texto (`tostring`, `..`, `%s`), e `%d` com valor fracionário estoura no 5.3+: `string.format("%d", 3/2)` estoura no Lua 5.5 e sai `1`, calado, no LuaJIT. O jogo, no LuaJIT, nunca mostraria: só a suíte no Lua 5.x pega. No CampCrawler em Defold (D52, `squad.level_threshold`), a soma `base * passos + passos * (passos - 1) / 2` saiu `"2.0,5.0,9.0,14.0,20.0"`, e o teste que compara texto reprovou só no Lua 5.5. Remédio: `math.floor` em toda divisão cujo resultado é inteiro. `[medido: LuaJIT 2.1, Lua 5.4 e 5.5, no CampCrawler em Defold, 2026-10-16; LuaJIT 2.1.1791988261 e Lua 5.5.1, 2026-10-17]`
+
+### Código que só um dos dois carrega
+
+- **Lua 5.5 recusa atribuir à variável do `for`.** `for i = 1, 2 do i = i + 1 end` compila no LuaJIT e no Lua 5.4 e no 5.5.1 estoura "attempt to assign to const variable 'i'": o jogo roda, a suíte em Lua 5.5 não carrega. Remédio: variável local nova dentro do laço. `[medido: LuaJIT 2.1.1791988261, Lua 5.4, Lua 5.5.1, 2026-10-17]`
+
+### A suíte que roda nos dois
+
+- **`-joff` quebra teste que relança o intérprete.** No CampCrawler em LÖVE, a suíte em `luajit -joff` passou inteira antes do replay (367 testes, 13,4 s contra 6,8 s com o JIT); depois dele, levou ~15 s contra ~9 s e 6 casos de `test_reproduz_run` reprovaram, porque relançam o intérprete por `arg[-1]`, que vira `-joff`. Remédio: o teste acha o intérprete pelo menor índice negativo de `arg`, ou por variável de ambiente. `[medido: LuaJIT 2.1.1791988261, auditorias de 2026-10-17]`
+- **A ordem natural de `pairs` cai na das linhas e esconde quem depende dela.** No CampCrawler em LÖVE, o mutante que percorre por `pairs` as células do mostrado (chave `"x_y"`) na digital de determinismo escapou da suíte inteira em 10 de 150 rodadas: no processo da suíte a ordem saiu na das linhas, girada (`7_0 8_0 0_1 ...`, `0_0 1_0 2_0 ...`), e com o giro em zero a digital é a escrita; sozinho, o mesmo cálculo deu 60 digitais diferentes em 60 processos. A ordem que muda a cada execução não basta para provar a independência. Remédio: o teste da digital roda também com o `pairs` global trocado por um adversário (as chaves em ordem decrescente de tipo e texto) e exige a mesma digital; o mutante reprovou em 150 de 150, nos dois Luas, e o domínio deu a mesma. `[medido: LuaJIT 2.1.1792349434 e Lua 5.5.1, 2026-10-19; campcrawler-love e9d8785]`

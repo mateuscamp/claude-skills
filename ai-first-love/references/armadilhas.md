@@ -32,7 +32,8 @@ aqui. Medida que contradiz o lido reescreve a entrada, e o `SKILL.md` e o modelo
 dela mudam na mesma frente. Antes de confiar num item em outro sha, reproduza. Esta lista cresce
 com o uso: armadilha do LÖVE em que um projeto caiu e que ele resolveu entra aqui, com o número
 medido; a que vale para jogo em qualquer engine entra em `gerais-de-jogo.md`, na raiz do
-repositório das skills (seção Gerais, no fim).
+repositório das skills (seção Gerais de jogo, no fim), e a da linguagem, entre o LuaJIT do jogo e
+o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de Lua).
 
 ## Versão e binário
 
@@ -652,37 +653,15 @@ repositório das skills (seção Gerais, no fim).
   `meta/template/`; com só o binário no sha256, um diagnóstico desligado no `script/` passava.
   `[medido: LuaLS 3.18.0 do mason, a auditoria da R0.6 do CampCrawler; lido: script/library.lua:187 e script/version.lua:4-9 do 3.18.0]`
 
-## Lua: LuaJIT do jogo e Lua 5.x da suíte
+## Gerais de Lua: moram em `references/gerais-de-lua.md`
 
-- **`a and f() or g()` corta os vários retornos num só.** O idiom `table.unpack and
-  table.unpack(t, 2) or unpack(t, 2)`, para servir ao LuaJIT (sem `table.unpack` fora do modo de
-  compatibilidade 5.2) e ao Lua 5.x, devolve só o primeiro valor: a chamada que recebia `x, y`
-  recebe `x, nil`, e o erro sai longe da causa ("attempt to compare number with nil"). Remédio:
-  `local unpack_ = table.unpack or unpack` uma vez, e `unpack_(t, 2)` na chamada.
-  `[medido: LuaJIT 2.1.1791988261 e Lua 5.5.1, no teste do adaptador de entrada do CampCrawler]`
-
-- **`-joff` quebra teste que relança o intérprete.** No CampCrawler, a suíte em `luajit -joff`
-  passou inteira antes do replay (367 testes, 13,4 s contra 6,8 s com o JIT); depois dele, levou
-  ~15 s contra ~9 s e 6 casos de `test_reproduz_run` reprovaram, porque relançam o intérprete
-  por `arg[-1]`, que vira `-joff`. Remédio: o teste acha o intérprete pelo menor índice negativo
-  de `arg`, ou por variável de ambiente. `[medido: LuaJIT 2.1.1791988261, auditorias de 2026-10-17]`
-- **Lua 5.5 recusa atribuir à variável do `for`.** `for i = 1, 2 do i = i + 1 end` compila no
-  LuaJIT e no Lua 5.4 e no 5.5.1 estoura "attempt to assign to const variable 'i'": o jogo roda,
-  a suíte em Lua 5.5 não carrega. Remédio: variável local nova dentro do laço.
-  `[medido: LuaJIT 2.1.1791988261, Lua 5.4, Lua 5.5.1, 2026-10-17]`
-- **`/` devolve float no Lua 5.3+**: `4/2` é `2.0` no Lua 5.5 e `2` no LuaJIT, e
-  `string.format("%d", 3/2)` estoura no Lua 5.5 e sai `1`, calado, no LuaJIT. Remédio:
-  `math.floor` em toda divisão inteira (a lição do CampCrawler está na ai-first-defold, seção
-  Lua). `[medido: LuaJIT 2.1.1791988261 e Lua 5.5.1, 2026-10-17; LuaJIT 2.1, Lua 5.4 e 5.5 na ai-first-defold, 2026-10-16]`
-- **A ordem natural de `pairs` cai na das linhas e esconde quem depende dela.** No CampCrawler,
-  o mutante que percorre por `pairs` as células do mostrado (chave `"x_y"`) na digital de
-  determinismo escapou da suíte inteira em 10 de 150 rodadas: no processo da suíte a ordem saiu
-  na das linhas, girada (`7_0 8_0 0_1 ...`, `0_0 1_0 2_0 ...`), e com o giro em zero a digital
-  é a escrita; sozinho, o mesmo cálculo deu 60 digitais diferentes em 60 processos. A ordem que
-  muda a cada execução não basta para provar a independência. Remédio: o teste da digital roda
-  também com o `pairs` global trocado por um adversário (as chaves em ordem decrescente de tipo
-  e texto) e exige a mesma digital; o mutante reprovou em 150 de 150, nos dois Luas, e o
-  domínio deu a mesma. `[medido: LuaJIT 2.1.1792349434 e Lua 5.5.1, 2026-10-19; campcrawler-love e9d8785]`
+Ali estão as diferenças da linguagem entre o LuaJIT do jogo e o Lua 5.x da suíte, comuns à
+ai-first-defold: valor que muda calado entre os dois (os retornos que o `a and f() or g()` corta,
+o `/` que devolve float), código que só um dos dois carrega (a variável do `for`) e a suíte que
+roda nos dois (o `-joff` de quem relança o intérprete, a ordem natural do `pairs`). É cópia da
+fonte única `gerais-de-lua.md`, na raiz do repositório das skills. Não acrescente lição aqui: a
+fonte se edita num ramo em worktree, e o `distribuir.py --check-gerais` reprova item de lista ou
+subtítulo nesta seção.
 
 ## Gerais de jogo: moram em `references/gerais-de-jogo.md`
 
