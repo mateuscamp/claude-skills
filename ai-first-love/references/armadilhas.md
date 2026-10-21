@@ -111,8 +111,12 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   Código vindo da 11.5 traz `t.version = "11.5"`. Remédio: `t.version` igual ao pin, e o executor
   recusa `^This game indicates`. `[love:src/modules/love/boot.lua:379-391@b7daef0; love:src/common/version.h:33@b7daef0; trava sob Xvfb: medido@b7daef0, a linha saiu e a passada ficou presa até o prazo]`
 - **A prova toca som.** O áudio do LÖVE é o OpenAL Soft, que lê `ALSOFT_DRIVERS`; com
-  `ALSOFT_DRIVERS=null` no ambiente, a passada e a captura rodam mudas. Remédio: o executor monta
-  o ambiente por lista branca, com a variável nela. `[inferido: variável do OpenAL Soft, não lida pelo LÖVE]`
+  `ALSOFT_DRIVERS=null` no ambiente, a passada e a captura rodam mudas: o
+  `love.audio.getPlaybackDevice()` diz `No Output`, e o `newSource`, o `clone` e o `play` seguem
+  valendo (o `play` devolve verdadeiro e o `isPlaying` também), então a passada cobra o som tocado
+  num fato sem fazer barulho. Remédio: o executor monta o ambiente por lista branca, com a variável
+  nela, e a passada exige o dispositivo nulo num fato do boot (o nome tem espaço: troque-o antes de
+  pôr no fato). `[medido@b7daef0: sonda pelo tools/love e o fato AUDIO de toda passada do tools/smoke.py, CampCrawler, 21/10]`
 - **`require` ausente acha o arquivo no diretório atual.** O loader do LÖVE fica no searcher 2,
   e o `package.path` do Lua, com `./?.lua`, vem depois: a passada rodada da raiz do projeto
   aprova um módulo que o `.love` não leva, e o aparelho quebra ao abrir. Remédio: o `main.lua` e
@@ -420,6 +424,15 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   25×29), não pela opção. **E gerar o SDF na hora é caro:** a troca para japonês com as fontes
   novas levou 3,5 s só nos textos de uma tela e 19 s na tabela inteira (o exact, 11 ms e 61 ms);
   SDF viável pede glifo pré-gerado ou cache. `[love:src/modules/font/wrap_Font.cpp:67-104@b7daef0; love:src/modules/font/freetype/TrueTypeRasterizer.cpp:115-140@b7daef0; medido@b7daef0: sondas da folha de texto, CampCrawler R0.6.7 e .11]`
+- **A fonte CJK inteira pesa megabytes; o recorte carrega igual.** As Noto Sans KR, SC e TC
+  somam 18,7 MB (15,8 comprimidas), e o jogo usa poucas centenas de letras de cada. O `pyftsubset`
+  (fontTools) com as letras da tabela de idiomas, o ASCII de 32 a 126 (o número e o sinal que a
+  tela formata fora da tabela) e `--layout-features='*'` (a moldagem do HarfBuzz) deu 95, 133 e
+  141 KB, que o LÖVE 12 carrega pelo `love.font` e pelo `newFont` e desenha com `hasGlyphs`
+  verdadeiro; a mesma fonte e as mesmas letras dão o mesmo arquivo, byte a byte. Remédio: o
+  recorte no repositório, com o comando escrito ao lado e refeito sempre da fonte inteira, nunca do
+  recorte; o portão confere o `cmap` de cada recorte contra a tabela pela biblioteca padrão (o
+  fontTools fica só para refazer), e a letra nova reprova dizendo o comando. `[medido@b7daef0: o FONTE da passada sem vídeo e as capturas em ko, zh_CN e zh_TW pelo tools/smoke.py, CampCrawler, 21/10; medido: python-fonttools 4.67.0, duas corridas]`
 - **`newText` dispara o aviso de tela.** O tipo agora é `TextBatch` (`newTextBatch`); `newText`
   é apelido deprecado. `[love:src/modules/graphics/wrap_Graphics.cpp:2343-2347,4069,4200@b7daef0]`
 
@@ -638,6 +651,11 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   eventos. O `undefined-field` como erro pega o nome que o 12 não tem, no módulo e no método
   (`fun(self: love.Image, ...: any): ...any` o LuaLS aceita), num caminho que nenhuma passada
   roda; o portão refaz o dump e reprova a anotação velha. `[medido@b7daef0: tools/overlay.py e o mutante api, CampCrawler R0.6.5]`
+- **A vírgula do `fun` dentro de uma tabela anotada vira retorno.** Em
+  `---@param a { novo: fun(f: string, k: string): table, nome: fun(): string }`, o LuaLS lê
+  `table, nome` como a lista de retornos do `novo`, e o campo `nome` some: `undefined-field` no
+  `a.nome()`. Remédio: `table` com a forma no texto, ou uma `---@class` com um `---@field` por
+  linha. `[medido: LuaLS 3.18.0 do mason, CampCrawler, 21/10]`
 - **O `--check` sem arquivo diz que está tudo bem.** O LuaLS 3.18.0 com a pasta vazia, ou com o
   `ignoreDir` errado, responde "no problems found". Remédio: o executor confere o total da barra
   de progresso (`N/N`) contra os `.lua` que ele mesmo conta, os do jogo e os da biblioteca.
