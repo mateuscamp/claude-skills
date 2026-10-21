@@ -117,6 +117,12 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   num fato sem fazer barulho. Remédio: o executor monta o ambiente por lista branca, com a variável
   nela, e a passada exige o dispositivo nulo num fato do boot (o nome tem espaço: troque-o antes de
   pôr no fato). `[medido@b7daef0: sonda pelo tools/love e o fato AUDIO de toda passada do tools/smoke.py, CampCrawler, 21/10]`
+- **Sem dispositivo de som, o nome vem vazio, ou estoura.** Quando o OpenAL não abre (sem servidor
+  de som, driver desconhecido, sem sessão), o LÖVE imprime "Could not open device." e cai no áudio
+  nulo, cujo `getPlaybackDevice` devolve `""`; o do OpenAL estoura quando o nome falta. O jogo segue
+  mudo, mas quem põe o nome num fato que recusa valor vazio derruba o boot, num caso que a passada,
+  com `ALSOFT_DRIVERS=null`, nunca vê (CampCrawler: achado da auditoria). Remédio: `pcall` e um
+  valor declarado (`nenhum`), com o teste do nome vazio e do que estoura. `[lido: love:src/modules/audio/wrap_Audio.cpp:682-708@b7daef0; love:src/modules/audio/null/Audio.cpp:225-228@b7daef0; love:src/modules/audio/openal/Audio.cpp:399-406@b7daef0; medido@b7daef0: sonda pelo tools/love com ALSOFT_DRIVERS=nenhum e sem XDG_RUNTIME_DIR, nome vazio, CampCrawler, 21/10]`
 - **`require` ausente acha o arquivo no diretório atual.** O loader do LÖVE fica no searcher 2,
   e o `package.path` do Lua, com `./?.lua`, vem depois: a passada rodada da raiz do projeto
   aprova um módulo que o `.love` não leva, e o aparelho quebra ao abrir. Remédio: o `main.lua` e
