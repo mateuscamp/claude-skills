@@ -472,7 +472,12 @@ aprovação; o digest soma a árvore do jogo e, no porte, o domínio.
     primeiro que reprova, com o veredito de cada verificador, e a tabela mostra onde a previsão
     errou. Um teste prende cada trecho a uma ocorrência na árvore (o código que o apaga reprova, em
     vez de o mutante deixar de plantar), e os mutantes que a suíte deve pegar rodam no portão, com
-    o executor parando na 1ª falha: o verificador da suíte que apodrece reprova sozinho;
+    o executor parando na 1ª falha: o verificador da suíte que apodrece reprova sozinho. Cada
+    um desses começa pelo arquivo de teste previsto, escrito no catálogo antes de plantar, como os
+    elos: o veredito é o da ordem de sempre (o previsto só decide quando os arquivos de antes dele
+    carregam), e a previsão que erra só avisa. Sem isso, o tempo vai nos testes que passam antes
+    do que pega: no CampCrawler, o `--suite` foi de 32 a 7 s, e o portão inteiro de 44 a 32 s
+    (22/10);
 12. variantes cegas, escritas por outro agente que não leu testes, invariantes nem documentos:
     a que passa é a invariante que falta, e vai ao autor (no CampCrawler, 3 de 4 pegas; passou o
     texto meia linha abaixo na lista e no desenho juntos, que só uma invariante de contêiner na
