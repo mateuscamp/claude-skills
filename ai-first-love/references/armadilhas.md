@@ -390,6 +390,17 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   tabela reprovou por ambiente, sem linha `REPROVA`. Remédio: a ferramenta dos mutantes roda o
   portão com o `TMPDIR` dentro da cópia descartável, e as pastas somem com ela; o verificador que
   reprova sem `REPROVA` mostra o fim da saída. `[medido: o tools/mutantes.py do CampCrawler, 18/10]`
+- **A ferramenta que lê e grava PNG fora da pasta do jogo.** O `love.filesystem` só alcança a
+  fonte e a save, e o `newImageData(caminho)` não abre `assets/` nem `build/` de outro programa.
+  Remédio: um programa à parte no mesmo repositório (sem janela nem gráficos no `conf.lua`), com
+  os bytes pelo `io`: `newFileData(bytes, nome)` vira os bytes do arquivo, `newImageData(filedata)`
+  decodifica, o `getString()` do ImageData dá os bytes crus em `rgba8`, e
+  `newImageData(w, h, "rgba8", bytes)`, com o tamanho exato, mais o `encode("png")` gravam. Os
+  módulos do repositório se acham pela raiz, que o boot do programa acrescenta ao `package.path`
+  (o pai do `getSource()`). Sem o módulo window, o erro sai pelo `error_printer` e o handler padrão
+  volta sem abrir caixa: o processo termina, não prende sob Xvfb. No CampCrawler, as 47 imagens do
+  atlas foram e voltaram por ele sem pixel diferente.
+  `[love:src/modules/filesystem/wrap_Filesystem.cpp:107-111,450-451@b7daef0; love:src/modules/image/wrap_Image.cpp:58-77,87-99@b7daef0; love:src/modules/data/wrap_Data.cpp:40-50@b7daef0; love:src/modules/image/wrap_ImageData.cpp:237-260@b7daef0; love:src/modules/love/callbacks.lua:221-228@b7daef0; visto: o pixel-art/ do campcrawler-love f7a310e, 22/10]`
 
 ## Texto e fonte
 

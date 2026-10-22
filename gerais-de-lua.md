@@ -14,6 +14,7 @@ O jogo roda no LuaJIT do motor, e a suíte roda nele e num Lua 5.x de referênci
 ### Código que só um dos dois carrega
 
 - **Lua 5.5 recusa atribuir à variável do `for`.** `for i = 1, 2 do i = i + 1 end` compila no LuaJIT e no Lua 5.4 e no 5.5.1 estoura "attempt to assign to const variable 'i'": o jogo roda, a suíte em Lua 5.5 não carrega. Remédio: variável local nova dentro do laço. `[medido: LuaJIT 2.1.1791988261, Lua 5.4, Lua 5.5.1, 2026-10-17]`
+- **Operação de bit de 32 bits não tem forma comum aos dois.** O `~`, o `&` e o `>>` do 5.3+ não compilam no LuaJIT, e o `bit.*` do LuaJIT não existe no 5.x. O código que roda nos dois faz o xor e o and por uma tabela 16x16 de nibbles, o deslocamento por `math.floor(x / 2^k)` e o produto módulo 2^32 partido em metades de 16 bits: `1812433253 * x` passa de 2^53, e o double do LuaJIT perde o resto calado. No CampCrawler em LÖVE, o Mersenne Twister do Python feito assim deu os mesmos números do Python nos dois. `[medido: LuaJIT 2.1.1792349434 e Lua 5.5.1, 2026-10-22; campcrawler-love a2a5848]`
 
 ### A suíte que roda nos dois
 
