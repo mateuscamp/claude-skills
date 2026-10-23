@@ -569,21 +569,24 @@ com a outra (`~/love-lua/experimento-lancador/RESULTADO.md`).
   é o texto do erro de regex inválida, que é o da PCRE2. Os dois experimentos reprovaram todos os
   defeitos plantados no próprio Lua.
 - **Fora da caixa, por ora:** as extensões do executor do CampCrawler (captura externa sincronizada,
-  clique, redimensionar, escala, determinismo, TEXTO, FRASE, LAYOUT, AMOSTRA) entram para a migração
-  dele (do autor, 23/10: os projetos de antes, abaixo), cada uma com o caso dela na bancada do
-  `~/love-lua`. A caixa ainda não
+  clique, redimensionar, escala, determinismo, TEXTO, FRASE, LAYOUT, AMOSTRA) entram na caixa quando
+  um segundo projeto precisar, cada uma com o caso dela na bancada do `~/love-lua`; até lá ficam no
+  projeto que as usa, como extensão dele, sem editar a cópia da caixa (do autor, 23/10: "Fechado: na
+  caixa só o que é igual em todo projeto; as extensões ficam no projeto e entram na caixa quando um
+  segundo projeto precisar"). A caixa ainda não
   rodou dentro de um projeto de verdade: o primeiro projeto novo é essa prova, e um defeito que a
   bancada não pegou reabre a ADR.
 - **Os projetos de antes** (CampCrawler e BomberBoom em Python, Boomlitude em Lua com `os.execute`)
   migram para a caixa (do autor, 23/10: "retire essa frase da skill e vamos migrar", que tirou a de
-  antes, de que eles ficavam com a caixa deles). Até migrar, cada um segue com a sua. A ordem e o
+  antes, de que eles ficavam com a caixa deles). O Python do CampCrawler e do BomberBoom é herança do
+  padrão, não escolha de arquitetura (do autor, 23/10). Até migrar, cada um segue com a sua. A ordem e o
   caminho (do autor, 23/10, por múltipla escolha):
   - o BomberBoom primeiro ("BomberBoom primeiro"), porque o executor da caixa foi provado contra o
-    `smoke.py` dele; o CampCrawler depois, quando as extensões dele estiverem na caixa (recusado: os
-    dois juntos);
-  - as extensões do executor do CampCrawler nascem na caixa, no `~/love-lua` ("Na caixa"), cada uma
-    com o caso dela na bancada, provada contra o `smoke.py` dele (recusado: no CampCrawler, em Lua,
-    fora da caixa);
+    `smoke.py` dele (recusado: os dois juntos);
+  - o CampCrawler migra a caixa inteira, e as extensões do executor dele viram Lua no projeto, por
+    cima do executor da caixa, sem editar a cópia ("Caixa inteira e extensões em Lua"; recusados: só
+    o lançador e o lock, com o executor de hoje como extensão em Python; não migrar). O executor da
+    caixa ainda não tem ponto de extensão: criá-lo é mudança na caixa, no `~/love-lua`;
   - o que não é da caixa (mutantes, calibração, glifos, créditos, overlay, empacotador, LuaLS, sem
     rede) fica em Python como lateral declarada, por ora ("Laterais por ora"), sem importar a caixa:
     a que lê o lock ganha leitor próprio; cada uma vira Lua depois, uma por vez (recusado: tudo em
