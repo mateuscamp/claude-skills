@@ -535,6 +535,16 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   (no CampCrawler, `LAYOUT` com a célula contra o encaixe, 111 · min(w/1920, h/1080)); e a amostra
   confere a caixa do item dentro da captura antes de ler, com o item fora como falha nomeada.
   `[medido@b7daef0: tools/smoke.py --redimensiona do CampCrawler, 655c623]`
+- **A caixa do contorno passa da do item, e a amostra lê fora da captura.** O texto com contorno
+  (cópias deslocadas) se mede numa caixa alargada pela espessura, que no CampCrawler soma o vazio
+  da fonte acima do algarismo. O número que sobe de uma luta na linha de cima fica inteiro na
+  tela, e só essa caixa passa do topo: o `ImageData:getPixel` estoura (`Attempt to get
+  out-of-range pixel!`) e derruba a passada `[love:src/modules/image/wrap_ImageData.lua:395-403@b7daef0]`.
+  Dar falha nomeada ali é alarme falso, porque nada está cortado. Remédio: a falha de caixa fora
+  da captura fica para a caixa do próprio item; a que passa dela se recorta na captura antes de
+  ler, e a tinta se mede na parte visível. `[medido@b7daef0: tools/smoke.py do CampCrawler,
+  de68485: a passada do Deserto, que quebrava no quadro 301 com saída 3, chega ao FIM com o "-1"
+  medido e falhas=0]`
 - **Espelhar por escala negativa tira a imagem do retângulo do item.** `draw(img, quad, x, y, 0,
   -sx, sy)` leva o quad de x − w a x: a matriz faz x + sx · u, e sem origem nada o devolve
   `[love:src/common/Matrix.cpp:265-282@b7daef0]`. A lista diz [x, x + w], o desenho sai à esquerda,
