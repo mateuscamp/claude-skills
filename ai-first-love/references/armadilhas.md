@@ -699,6 +699,13 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   binário: a lógica está no `script/`, a versão no `changelog.md` e a biblioteca padrão no
   `meta/template/`; com só o binário no sha256, um diagnóstico desligado no `script/` passava.
   `[medido: LuaLS 3.18.0 do mason, a auditoria da R0.6 do CampCrawler; lido: script/library.lua:187 e script/version.lua:4-9 do 3.18.0]`
+- **O campo inexistente atrás de `if not x then` não reprova.** Dentro do galho, o LuaLS estreita o
+  `x` a nil, e o `x.campo` não vira `undefined-field`: o mutante que planta ali um nome que o 12 não
+  tem sai solto, e o defeito descrito nem estava plantado. Remédio: o caminho morto do mutante é um
+  que o tipo não estreita (um callback que nenhuma passada chama, como o desenho modal do
+  live-resize), e o mutante se vê pegar no `--tudo` antes de valer. `[medido: LuaLS 3.18.0 do mason,
+  a F1 do BomberBoom, 22/10: g.setDefaultFilterMode() atrás de if not g, solto; love.graphics.setDefaultFilterMode()
+  no setModalDrawCallback, pego]`
 
 ## Gerais de Lua: moram em `references/gerais-de-lua.md`
 
