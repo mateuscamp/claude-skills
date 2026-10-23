@@ -13,12 +13,14 @@ local VIDEO = os.getenv("<PROJETO>_VIDEO") -- o --video da passada: nenhum, gl o
 local default_handler = love.errorhandler -- o padrão já existe: o boot carrega callbacks.lua antes
 
 -- Saída, erro e log: o handler definido no main.lua chega tarde; o do conf.lua pega também o
--- erro do próprio conf.lua, que o boot relança depois de carregar os módulos.
+-- erro do próprio conf.lua, que o boot relança depois de carregar os módulos. O log da partida
+-- recebe o mesmo texto que a passada imprime, com o traceback (a última linha é a do handler, e sai).
 function love.errorhandler(msg)
+	local text = (debug.traceback("Error: " .. tostring(msg), 2):gsub("\n[^\n]+$", ""))
 	local log = package.loaded["platform.match_log"] -- achado tarde: pode não ter carregado
-	if log then log.error(msg) end
+	if log then log.error(text) end
 	if PASS then
-		print((debug.traceback("Error: " .. tostring(msg), 2):gsub("\n[^\n]+$", "")))
+		print(text)
 		return function() return 3 end -- código próprio: o portão separa erro de Lua de quit
 	end
 	return default_handler(msg) -- <decisão do autor: tela de erro ou seguir com a linha no log>

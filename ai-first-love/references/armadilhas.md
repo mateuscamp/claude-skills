@@ -177,8 +177,13 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   - com a janela fechada e graphics carregado, abre a janela e a tela azul de erro, que espera
     Escape (sai com 1) ou quit (`a or 1`).
 
-  Remédio: um `love.errorhandler` nosso, atribuído antes de qualquer `require`, que imprime o
-  traceback e grava no arquivo da partida. Devolver `nil` termina o laço do boot e sai com 1;
+  Remédio: um `love.errorhandler` nosso, atribuído antes de qualquer `require`, que monta o
+  traceback uma vez, o grava no arquivo da partida e imprime o mesmo texto: o esboço de antes
+  gravava só a mensagem, e o teste que lia o texto do handler passava com o traceback sumido ou
+  com o log guardando só a 1ª linha. Prove-o por comportamento: `loadfile("conf.lua", "t", env)`
+  (LuaJIT e Lua 5.5 aceitam o env) com um `love` falso, o `os.getenv` da passada, o `print` e o
+  log em `package.loaded` no `env`, e confira o que o log e a saída receberam e o 3 (BomberBoom,
+  F1, achado A2 da 2ª auditoria, 23/10). Devolver `nil` termina o laço do boot e sai com 1;
   devolver `function() return 3 end` sai com 3, e o portão distingue erro de Lua de quit (o erro
   plantado no `conf.lua` tem de sair com 3, não com 1). Passada sem janela desliga também
   `t.modules.window`. `[love:src/modules/love/callbacks.lua:217-352@b7daef0; love:src/modules/love/boot.lua:462-521@b7daef0; código de saída do handler nosso: medido@b7daef0, 3 com o erro plantado antes do love.conf]`
