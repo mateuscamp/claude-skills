@@ -400,7 +400,9 @@ bordas de cada item marcado com `probe`, a medida segue o `kind`: `rect`, a cor;
 texel do atlas vezes a cor do item; `text`, a fração de tinta contra o fundo (nunca o centro).
 O resumo se cobra com referência na regex
 (`AMOSTRA_RESUMO marcados=([1-9]\d*) amostrados=\1 falhas=0`), com o mínimo por vista num
-teste; item marcado sem ponto limpo sai com `motivo=sem_ponto`. A marcação escolhe, por papel,
+teste; item marcado sem ponto limpo sai com `motivo=sem_ponto`. A falha de caixa fora da captura é
+só a da caixa do próprio item; a que passa dela (a do contorno do texto) se recorta na captura antes
+de ler, e a tinta se mede na parte visível (armadilhas, Gráficos e pixel). A marcação escolhe, por papel,
 estado e tipo, o item com ponto a amostrar descoberto (o sprite pelo centro; o rect e o ladrilho
 que a vista declara opaco, por qualquer candidato): o item sob outro, como a porta sob a tropa
 parada, não tem ponto. O esperado da imagem lê o retângulo de quem empacotou o atlas, nunca o
