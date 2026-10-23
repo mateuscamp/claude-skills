@@ -165,7 +165,9 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   pelo prazo termina com o código de quem acabou o plano. Remédio: só o fato de fim do plano
   (`FIM`), num lugar só, chama `love.event.quit(0)`; o `love.run` do projeto devolve um código
   próprio para quit sem `FIM`; o executor reprova prazo e morte por sinal, qualquer que seja o
-  código. `[love:src/modules/event/sdl/Event.cpp:566-568@b7daef0; love:src/modules/love/callbacks.lua:180-183@b7daef0; SIGTERM vira quit: medido@b7daef0, o love.run do projeto devolveu o código do quit sem FIM ao SIGTERM aos 2 s]`
+  código. Quem mede esse código à mão com `timeout -s TERM N` lê 124, o do próprio `timeout`
+  quando o prazo vence, e não o do jogo: `timeout --preserve-status`, dentro do Xvfb, depois do
+  `tools/love --conferir` no mesmo comando (o `exe=`). `[love:src/modules/event/sdl/Event.cpp:566-568@b7daef0; love:src/modules/love/callbacks.lua:180-183@b7daef0; SIGTERM vira quit: medido@b7daef0, o love.run do projeto devolveu o código do quit sem FIM ao SIGTERM aos 2 s; o 124: medido@b7daef0, a F1 do BomberBoom, 22/10: 4 com --preserve-status, 124 sem ela]`
 - **O handler de erro padrão trava sob Xvfb.** O `love.errorhandler` (o `love.errhand` é
   apelido) imprime `Error: <msg>` e o traceback, e então:
   - sem o módulo window, retorna, e o processo sai com 1;
