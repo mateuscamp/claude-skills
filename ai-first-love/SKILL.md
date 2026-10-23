@@ -574,7 +574,8 @@ com a outra (`~/love-lua/experimento-lancador/RESULTADO.md`).
   rodou dentro de um projeto de verdade: o primeiro projeto novo é essa prova, e um defeito que a
   bancada não pegou reabre a ADR.
 - **Os projetos de antes** (CampCrawler e BomberBoom em Python, Boomlitude em Lua com `os.execute`)
-  ficam com a caixa deles (do autor, 23/10): a auditoria aponta o defeito, não propõe a migração.
+  migram para a caixa (do autor, 23/10: "retire essa frase da skill e vamos migrar", que tirou a de
+  antes, de que eles ficavam com a caixa deles). Até migrar, cada um segue com a sua.
 - **Abertos do autor:** consolidar a caixa numa pasta só, com as mensagens dela; a distribuição com
   manifesto (cada projeto guarda o sha256 de cada arquivo copiado e o commit da fonte, o portão
   reprova a cópia alterada, e o distribuidor aponta o projeto atrasado, como o `distribuir.py` faz
