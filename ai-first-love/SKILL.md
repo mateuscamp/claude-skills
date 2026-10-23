@@ -569,13 +569,25 @@ com a outra (`~/love-lua/experimento-lancador/RESULTADO.md`).
   é o texto do erro de regex inválida, que é o da PCRE2. Os dois experimentos reprovaram todos os
   defeitos plantados no próprio Lua.
 - **Fora da caixa, por ora:** as extensões do executor do CampCrawler (captura externa sincronizada,
-  clique, redimensionar, escala, determinismo, TEXTO, FRASE, LAYOUT, AMOSTRA) entram quando um
-  segundo projeto precisar, cada uma com o caso dela na bancada do `~/love-lua`. A caixa ainda não
+  clique, redimensionar, escala, determinismo, TEXTO, FRASE, LAYOUT, AMOSTRA) entram para a migração
+  dele (do autor, 23/10: os projetos de antes, abaixo), cada uma com o caso dela na bancada do
+  `~/love-lua`. A caixa ainda não
   rodou dentro de um projeto de verdade: o primeiro projeto novo é essa prova, e um defeito que a
   bancada não pegou reabre a ADR.
 - **Os projetos de antes** (CampCrawler e BomberBoom em Python, Boomlitude em Lua com `os.execute`)
   migram para a caixa (do autor, 23/10: "retire essa frase da skill e vamos migrar", que tirou a de
-  antes, de que eles ficavam com a caixa deles). Até migrar, cada um segue com a sua.
+  antes, de que eles ficavam com a caixa deles). Até migrar, cada um segue com a sua. A ordem e o
+  caminho (do autor, 23/10, por múltipla escolha):
+  - o BomberBoom primeiro ("BomberBoom primeiro"), porque o executor da caixa foi provado contra o
+    `smoke.py` dele; o CampCrawler depois, quando as extensões dele estiverem na caixa (recusado: os
+    dois juntos);
+  - as extensões do executor do CampCrawler nascem na caixa, no `~/love-lua` ("Na caixa"), cada uma
+    com o caso dela na bancada, provada contra o `smoke.py` dele (recusado: no CampCrawler, em Lua,
+    fora da caixa);
+  - o que não é da caixa (mutantes, calibração, glifos, créditos, overlay, empacotador, LuaLS, sem
+    rede) fica em Python como lateral declarada, por ora ("Laterais por ora"), sem importar a caixa:
+    a que lê o lock ganha leitor próprio; cada uma vira Lua depois, uma por vez (recusado: tudo em
+    Lua na migração).
 - **Abertos do autor:** consolidar a caixa numa pasta só, com as mensagens dela; a distribuição com
   manifesto (cada projeto guarda o sha256 de cada arquivo copiado e o commit da fonte, o portão
   reprova a cópia alterada, e o distribuidor aponta o projeto atrasado, como o `distribuir.py` faz
