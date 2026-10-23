@@ -56,9 +56,9 @@ Tudo do LÖVE nesta seção é lido no fonte até o projeto medir; a skill guard
   com `--check`. Nenhum caminho absoluto fixo: saída em `build/` ou `mktemp`, e um teste recusa
   `$HOME`, `~` e `XDG_*` em `tools/` fora das exceções declaradas.
 - O lançador (`tools/love`, `tools/lancador/`) e o executor das passadas (`tools/passada`,
-  `tools/executor/`) são a caixa básica da skill `ai-first-love` (seção 7), copiados do
-  `~/love-lua` no commit `<sha>`: não se editam aqui. Defeito ou melhoria vai para a fonte e desce
-  numa cópia nova; o que é deste projeto mora no `tools/love_projeto.lua`.
+  `tools/executor/`) vieram do modelo do portão em Lua da skill `ai-first-love` (seção 7), copiados
+  do `~/love-lua/caixa/` no commit `<sha>`, e são código deste projeto: corrigem-se e estendem-se
+  aqui. Defeito que valha para os outros projetos vira relato no `~/love-lua`.
 
 ### Código
 

@@ -52,9 +52,9 @@ Arquivos desta skill:
   suíte roda nos dois Luas.
 - `scripts/`: o executor da suíte, `run.lua` e `run_tests.sh` (os da ai-first-defold), e
   `test_fronteira.lua` (domínio e vistas sem `love`, e só o renderizador desenha). O lançador e o
-  executor das passadas não estão aqui: são a caixa básica em Lua, provada no b7daef0, que o
-  projeto novo copia do `~/love-lua` (seção 7). Portão e hook nascem no esqueleto, adaptados dos da
-  ai-first-defold.
+  executor das passadas não estão aqui: são o modelo do portão em Lua, provado no b7daef0, que o
+  projeto novo copia do `~/love-lua/caixa/` e passa a ser dele (seção 7). Portão e hook nascem no
+  esqueleto, adaptados dos da ai-first-defold.
 
 ## Por onde começar
 
@@ -69,7 +69,7 @@ Arquivos desta skill:
    `conf.lua` e o `love.run` dos esboços, parser de chaves, log da partida, robô por quadro com
    dt fixo que termina pelo plano, uma vista como lista de desenho, e o portão com uma passada
    (seções 2 e 3). Instale a suíte e a fronteira (`scripts/`) no mesmo passo. O lançador e o
-   executor das passadas vêm prontos da caixa básica (seção 7): copie, não reescreva.
+   executor das passadas vêm do modelo (seção 7): copie e adapte, não reescreva a partir do texto.
 3. Teste primeiro, visto falhar pelo motivo certo: regra nova em `modules/` começa por um teste
    da suíte; vista nova, pelas invariantes dela na suíte e pelo `--exigir` do fato que ela
    emite numa passada. A regra inteira está em "Testes e prova" no `assets/AGENTS-love.md`.
@@ -353,7 +353,7 @@ licença e terceiros). Um teste reprova `socket`, `https`, `enet`,
 linha do registro único (`CREDITS.md`: SPDX, onde, obrigação), e cabeçalho de terceiro fora de
 `vendor/` reprova.
 
-**Passadas.** O executor das passadas (no projeto novo, o `tools/passada` da caixa básica, seção 7;
+**Passadas.** O executor das passadas (no projeto novo, o `tools/passada` copiado do modelo, seção 7;
 nos de antes, o par do `smoke.py` da ai-first-defold) abre o jogo pelo
 lançador, com prazo, e o fato `TEMPO` de cada uma: em série enquanto a série medida couber no
 orçamento; acima dele, em paralelo, com uma tela por passada (o Xvfb com `-displayfd` pega o
@@ -522,64 +522,64 @@ um sintoma, procure-o lá.
 Lição nova de jogo vai no primeiro; diferença da linguagem entre o LuaJIT e o Lua 5.x, que vale
 também no Defold, no segundo; nunca na cópia.
 
-## 7. Padronização: a caixa básica
+## 7. Padronização: o portão em Lua
 
-**No projeto novo, a caixa vem pronta, em Lua** (do autor, 23/10; a ADR 0001,
-`~/love-lua/docs/adr/0001-caixa-basica-em-lua.md`). O lançador (`tools/love`), o `runtime.lock` e o
-executor das passadas (`tools/passada`) são o mesmo código em todo projeto novo, em LuaJIT: o
-agente copia, nunca reescreve a partir desta skill. Foi a reescrita a partir do texto que afastou
-as três caixas de antes e escondeu defeito: o lançador do Boomlitude passava `LD_AUDIT` e
-`LUA_INIT` ao jogo e o deixava órfão no SIGTERM, e ninguém viu, porque ninguém compara uma caixa
-com a outra (`~/love-lua/experimento-lancador/RESULTADO.md`).
+**No projeto novo, o portão é em Lua** (do autor, 23/10; ADR 0001, em `~/love-lua/docs/adr/`): o
+lançador (`tools/love`), o `runtime.lock` e o executor das passadas (`tools/passada`) são em
+LuaJIT, não em Python. **O código é do projeto** (ADR 0003): ele copia o modelo provado do
+`~/love-lua/caixa/` como ponto de partida, em vez de reescrevê-lo a partir desta seção, e dali em
+diante corrige, estende e cuida das dependências como código dele. Foi a reescrita a partir do texto
+que afastou as três caixas de antes e escondeu defeito: o lançador do Boomlitude passava `LD_AUDIT` e
+`LUA_INIT` ao jogo e o deixava órfão no SIGTERM, e ninguém viu, porque ninguém compara uma caixa com
+a outra (`~/love-lua/experimento-lancador/RESULTADO.md`).
 
-- **Onde está.** A fonte é o `main` do `~/love-lua`: o lançador em
-  `experimento-lancador/lua/` (`love` e `lancador/`), o executor em `experimento-executor/lua/`
-  (`passada` e `executor/`), cada um com um `projetos/<nome>.lua` de exemplo. É a versão provada,
-  ainda não consolidada: ela fala como o `smoke.py` (o `smoke:` e o `tools/smoke.py:` nas
-  mensagens, o `executor/py.lua` que imita o `repr` do Python), porque foi provada byte a byte
-  contra ele, e o executor carrega uma cópia do `lancador/`. A cópia no projeto diz, no commit, de
-  qual commit do `~/love-lua` veio.
-- **O critério do que é da caixa:** contrato com a máquina e não com o jogo, que devia ser igual em
-  todo projeto, cuja divergência ninguém vê, e já provado. Entram o lançador e o formato do lock
-  (`--conferir`, `--gravar-lock`, `--luals`); o executor (Xvfb por `-displayfd`, prazo, morte do
-  grupo, SIGTERM com limpeza, ambiente de lista branca, `--exigir`/`--recusar`/`--erro-esperado`
-  com a semântica do `re` do Python pela PCRE2, conferência do boot, JANELA em pixel, `--love`,
-  marca e poda das reprovadas); a imagem (XWD → PNG, leitura do PNG de referência e a diferença).
-- **O que é do projeto:** o `tools/love_projeto.lua`, só dados (o nome, o prefixo dos fatos e das
-  variáveis da passada, as chaves extras do lock, como a `mesa`, as ferramentas do portão, o modo
-  do autor, a tela do Xvfb, o prazo padrão); a lista de passadas e o roteiro paralelo do
-  `check.sh`; o catálogo de mutantes; as verificações do jogo; as citações de decisão. Padronizar
-  isso viraria uma camada de configuração que o agente atravessa para mudar uma conferência.
-- **A interface comum:** `tools/love .` para jogar (`--config=<projeto>.<chave>=<valor>` depois da
-  pasta), `tools/love --conferir`, `--gravar-lock`, `--luals`; `tools/passada --video=gl|nenhum
+- **Onde está o modelo.** No `main` do `~/love-lua`, em `caixa/`: `love` e `lancador/`, `passada` e
+  `executor/`, um `projetos/<nome>.lua` de exemplo e os testes, com o README de como copiar. Ele fala
+  como o `smoke.py` (o `smoke:` e o `tools/smoke.py:` nas mensagens, o `executor/py.lua` que imita o
+  `repr` do Python), porque foi provado byte a byte contra ele; a cópia do projeto pode mudar isso. O
+  commit do projeto diz de qual commit do `~/love-lua` o modelo veio.
+- **O que o portão faz, com o modelo ou sem ele** (contrato com a máquina, não com o jogo): o
+  lançador e o formato do lock (`--conferir`, `--gravar-lock`, `--luals`); o executor (Xvfb por
+  `-displayfd`, prazo, morte do grupo, SIGTERM com limpeza, ambiente de lista branca,
+  `--exigir`/`--recusar`/`--erro-esperado` com a semântica do `re` do Python pela PCRE2,
+  conferência do boot, JANELA em pixel, `--love`, marca e poda das reprovadas, a pasta da passada no
+  `TMPDIR` pelo caminho absoluto); a imagem (XWD → PNG, leitura do PNG de referência e a diferença).
+- **O que é de cada projeto:** os parâmetros (`tools/love_projeto.lua`: o nome, o prefixo dos fatos
+  e das variáveis da passada, as chaves extras do lock, como a `mesa`, as ferramentas do portão, o
+  modo do autor, a tela do Xvfb, o prazo padrão); a lista de passadas e o roteiro paralelo do
+  `check.sh`; o catálogo de mutantes; as verificações do jogo; as citações de decisão; e as extensões
+  do executor (as do CampCrawler: captura externa sincronizada, clique, redimensionar, escala,
+  determinismo, TEXTO, FRASE, LAYOUT, AMOSTRA), escritas no `tools/passada` do próprio projeto.
+- **A interface do modelo:** `tools/love .` para jogar (`--config=<projeto>.<chave>=<valor>` depois
+  da pasta), `tools/love --conferir`, `--gravar-lock`, `--luals`; `tools/passada --video=gl|nenhum
   [--prazo S] [--exigir RE] [--recusar RE] [--erro-esperado RE] [--love ARQUIVO]`. Sai com 2 antes
   do LÖVE (uso, lock, ambiente), 0 ou 1 pela passada, 143 no SIGTERM.
 - **Uma língua só.** Ferramenta em outra língua entra só como lateral declarada no projeto (o
-  `gerar_fontes.py` do Boomlitude, pelo fonttools), nunca na caixa, e nunca importa o código da
-  caixa: foi esse acoplamento que prendeu o CampCrawler e o BomberBoom ao Python (o `smoke.py`, o
+  `gerar_fontes.py` do Boomlitude, pelo fonttools), nunca no portão, e nunca importa o código dele:
+  foi esse acoplamento que prendeu o CampCrawler e o BomberBoom ao Python (o `smoke.py`, o
   `creditos.py`, o `overlay.py` e três testes importam o leitor do lock do `tools/love`).
-- **O FFI do LuaJIT** fica em três módulos (processo, PCRE2 e zlib), com teto de 188 linhas de
-  código, conferido pelo `lua/testes/ffi_spec.lua`, que reprova citando a ADR. O teto escrito antes
-  era 150; o autor o reviu depois de ver o resultado, e subir pede outra decisão dele. O resto
+- **O FFI do LuaJIT** fica, no modelo, em três módulos (processo, PCRE2 e zlib), com teto de 188
+  linhas de código, conferido pelo `caixa/testes/ffi_spec.lua`, que reprova citando a ADR; a cópia
+  leva o teste junto. O teto escrito antes era 150; o autor o reviu depois de ver o resultado. O resto
   carrega em Lua 5.x e entra na suíte de dois Luas.
 - **As provas** (no b7daef0, em cópias dos jogos, critérios escritos antes): o lançador igual ao
   `tools/love` em Python em 226 comparações, inclusive no LÖVE real sob Xvfb; o executor igual ao
   `smoke.py` do BomberBoom em 3.984 casos de julgamento byte a byte, nas 5 passadas e nos 13
-  mutantes do catálogo dele, em 13 casos de processo e na imagem do CampCrawler. A única diferença
-  é o texto do erro de regex inválida, que é o da PCRE2. Os dois experimentos reprovaram todos os
-  defeitos plantados no próprio Lua.
-- **Fora da caixa, por ora:** as extensões do executor do CampCrawler (captura externa sincronizada,
-  clique, redimensionar, escala, determinismo, TEXTO, FRASE, LAYOUT, AMOSTRA) entram quando um
-  segundo projeto precisar, cada uma com o caso dela na bancada do `~/love-lua`. A caixa ainda não
-  rodou dentro de um projeto de verdade: o primeiro projeto novo é essa prova, e um defeito que a
-  bancada não pegou reabre a ADR.
+  mutantes do catálogo dele, nos casos de processo e na imagem do CampCrawler. A única diferença é o
+  texto do erro de regex inválida, que é o da PCRE2. Depois das provas, um defeito que elas não
+  pegavam: `TMPDIR` relativo ou com `..` reprovava a passada (corrigido no modelo em 191947f).
+- **Defeito no portão de um projeto** vira relato no `~/love-lua` e, se for regra, linha desta
+  seção; o modelo recebe a correção, e cada projeto decide se a traz. Não há distribuição nem
+  manifesto.
 - **Os projetos de antes** (CampCrawler e BomberBoom em Python, Boomlitude em Lua com `os.execute`)
-  ficam com a caixa deles (do autor, 23/10): a auditoria aponta o defeito, não propõe a migração.
-- **Abertos do autor:** consolidar a caixa numa pasta só, com as mensagens dela; a distribuição com
-  manifesto (cada projeto guarda o sha256 de cada arquivo copiado e o commit da fonte, o portão
-  reprova a cópia alterada, e o distribuidor aponta o projeto atrasado, como o `distribuir.py` faz
-  com as Gerais); o comando que entrega o lock a quem não é Lua; fixar no lock a `libpcre2-8` e a
-  `libz` do sistema, que o pacman atualiza (cada atualização vira um commit por projeto).
+  trocam o portão pelo modelo quando o autor decide, no projeto: o BomberBoom trocou em 23/10 (o
+  PR #7 dele, do b7b6300). Trocar é copiar o modelo e levar para a cópia o que o projeto tinha a mais.
+- **Por que não padronizar mais agora.** O `~/love-lua` é onde se discute o que entra nesta skill;
+  com os jogos mais desenvolvidos, é de lá que sai a avaliação do que vale unificar, com evidência
+  (ADR 0003). Código igual em todo projeto, um encaixe para as extensões (provado em 23/10) e um
+  manifesto das cópias foram recusados: puxam o repositório para uma engine.
+- **Abertos do autor:** o comando que entrega o lock a quem não é Lua; fixar no lock a `libpcre2-8`
+  e a `libz` do sistema, que o pacman atualiza (cada atualização vira um commit por projeto).
 
 ## Convivência
 
