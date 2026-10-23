@@ -120,9 +120,11 @@ Tudo do LÖVE nesta seção é lido no fonte até o projeto medir; a skill guard
   `--config=<projeto>.<chave>=<valor>`, sobre `1..#args`. Chave desconhecida ou repetida,
   argumento solto e valor ruim estouram com o recebido; nenhum padrão calado; cada chave lida sai
   num fato `CONFIG chave= valor= origem=`. Os padrões moram numa tabela Lua do repositório. Toda
-  leitura de configuração mora nesse módulo; fora dele, só o `conf.lua` lê as duas variáveis que
-  o executor das passadas põe (`<PROJETO>_PASSADA` e `<PROJETO>_VIDEO`), e um teste estático,
-  que as conhece pelo nome, reprova qualquer outra leitura de argumento ou de ambiente.
+  leitura de configuração mora nesse módulo; fora dele, só o `conf.lua` (antes de qualquer
+  `require`) e um módulo da plataforma (`<platform/passada.lua>`, que o resto da plataforma lê) leem,
+  por nome, as duas variáveis que o executor das passadas põe (`<PROJETO>_PASSADA` e
+  `<PROJETO>_VIDEO`), e um teste estático, que conhece os dois arquivos e os nomes, reprova
+  qualquer outra leitura de argumento ou de ambiente.
 - **Sorteio:** gerador próprio com semente (não `math.random` nem `love.math.random`). A semente
   usada sai no log.
 - **Replay:** o log de ações registra toda passagem de estado que a regra aceita, e o replay

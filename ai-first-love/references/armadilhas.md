@@ -165,7 +165,9 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   pelo prazo termina com o código de quem acabou o plano. Remédio: só o fato de fim do plano
   (`FIM`), num lugar só, chama `love.event.quit(0)`; o `love.run` do projeto devolve um código
   próprio para quit sem `FIM`; o executor reprova prazo e morte por sinal, qualquer que seja o
-  código. `[love:src/modules/event/sdl/Event.cpp:566-568@b7daef0; love:src/modules/love/callbacks.lua:180-183@b7daef0; SIGTERM vira quit: medido@b7daef0, o love.run do projeto devolveu o código do quit sem FIM ao SIGTERM aos 2 s]`
+  código. Quem mede esse código à mão com `timeout -s TERM N` lê 124, o do próprio `timeout`
+  quando o prazo vence, e não o do jogo: `timeout --preserve-status`, dentro do Xvfb, depois do
+  `tools/love --conferir` no mesmo comando (o `exe=`). `[love:src/modules/event/sdl/Event.cpp:566-568@b7daef0; love:src/modules/love/callbacks.lua:180-183@b7daef0; SIGTERM vira quit: medido@b7daef0, o love.run do projeto devolveu o código do quit sem FIM ao SIGTERM aos 2 s; o 124: medido@b7daef0, a F1 do BomberBoom, 22/10: 4 com --preserve-status, 124 sem ela]`
 - **O handler de erro padrão trava sob Xvfb.** O `love.errorhandler` (o `love.errhand` é
   apelido) imprime `Error: <msg>` e o traceback, e então:
   - sem o módulo window, retorna, e o processo sai com 1;
@@ -175,8 +177,13 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   - com a janela fechada e graphics carregado, abre a janela e a tela azul de erro, que espera
     Escape (sai com 1) ou quit (`a or 1`).
 
-  Remédio: um `love.errorhandler` nosso, atribuído antes de qualquer `require`, que imprime o
-  traceback e grava no arquivo da partida. Devolver `nil` termina o laço do boot e sai com 1;
+  Remédio: um `love.errorhandler` nosso, atribuído antes de qualquer `require`, que monta o
+  traceback uma vez, o grava no arquivo da partida e imprime o mesmo texto: o esboço de antes
+  gravava só a mensagem, e o teste que lia o texto do handler passava com o traceback sumido ou
+  com o log guardando só a 1ª linha. Prove-o por comportamento: `loadfile("conf.lua", "t", env)`
+  (LuaJIT e Lua 5.5 aceitam o env) com um `love` falso, o `os.getenv` da passada, o `print` e o
+  log em `package.loaded` no `env`, e confira o que o log e a saída receberam e o 3 (BomberBoom,
+  F1, achado A2 da 2ª auditoria, 23/10). Devolver `nil` termina o laço do boot e sai com 1;
   devolver `function() return 3 end` sai com 3, e o portão distingue erro de Lua de quit (o erro
   plantado no `conf.lua` tem de sair com 3, não com 1). Passada sem janela desliga também
   `t.modules.window`. `[love:src/modules/love/callbacks.lua:217-352@b7daef0; love:src/modules/love/boot.lua:462-521@b7daef0; código de saída do handler nosso: medido@b7daef0, 3 com o erro plantado antes do love.conf]`
@@ -692,11 +699,20 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   relatório; outro código é o LuaLS que não rodou. Cada chamada grava o `log/` dentro da instalação:
   o `--logpath` desvia o `service.log`, mas o `middleScript.lua` vai a `ROOT/log` fixo; e o
   `--metapath` numa pasta própria faz o `meta/` gerado virar biblioteca dele e entrar na conta dos
-  arquivos lidos (no CampCrawler, 116 contra 98). Remédio: só o `--logpath`, numa pasta que o
+  arquivos lidos (no CampCrawler, 116 contra 98; no BomberBoom, com a biblioteca só da anotação e o
+  `--metapath` fora da árvore, o `meta/` saiu com 40 arquivos e a conta ficou em 35 nos dois: a soma
+  depende da configuração, e não se supõe). Remédio: só o `--logpath`, numa pasta que o
   `ignoreDir` ignora (o `build/`), e o resto declarado. E o lock fixa a árvore que decide, não o
   binário: a lógica está no `script/`, a versão no `changelog.md` e a biblioteca padrão no
   `meta/template/`; com só o binário no sha256, um diagnóstico desligado no `script/` passava.
-  `[medido: LuaLS 3.18.0 do mason, a auditoria da R0.6 do CampCrawler; lido: script/library.lua:187 e script/version.lua:4-9 do 3.18.0]`
+  `[medido: LuaLS 3.18.0 do mason, a auditoria da R0.6 do CampCrawler; lido: script/library.lua:187 e script/version.lua:4-9 do 3.18.0; o 35 nos dois: medido, LuaLS 3.18.0 do mason, a F1 do BomberBoom, 22/10]`
+- **O campo inexistente atrás de `if not x then` não reprova.** Dentro do galho, o LuaLS estreita o
+  `x` a nil, e o `x.campo` não vira `undefined-field`: o mutante que planta ali um nome que o 12 não
+  tem sai solto, e o defeito descrito nem estava plantado. Remédio: o caminho morto do mutante é um
+  que o tipo não estreita (um callback que nenhuma passada chama, como o desenho modal do
+  live-resize), e o mutante se vê pegar no `--tudo` antes de valer. `[medido: LuaLS 3.18.0 do mason,
+  a F1 do BomberBoom, 22/10: g.setDefaultFilterMode() atrás de if not g, solto; love.graphics.setDefaultFilterMode()
+  no setModalDrawCallback, pego]`
 
 ## Gerais de Lua: moram em `references/gerais-de-lua.md`
 
