@@ -474,6 +474,16 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   a passada com janela a confirma pelo `TEXTO`, com a fonte real. `[medido@b7daef0: no CampCrawler,
   a Vera Sans Mono Bold avança 1233 de 2048, e o "-1" a 48 px mediu 58,00 px pela Font, contra 57,8
   da conta; 62a9a57]`
+- **O locale do sistema some sob `C.UTF-8`.** `love.system.getPreferredLocales()` devolve a lista
+  vazia quando o ambiente tem `LANG=C.UTF-8`, que é o que a lista branca da passada fixa: o jogo que
+  detecta o idioma pelo sistema cai no padrão (o inglês) em toda passada, e a detecção nunca é
+  exercida. Com `LANG=de_DE.UTF-8` ela dá `de_DE`; com `pt_BR.UTF-8`, `pt_BR`; com `zh_TW.UTF-8`,
+  `zh_TW`. Remédio: o locale vazio cai num padrão declarado, e não estoura. A passada que prova a
+  detecção põe o `LANG` do idioma na lista branca, e a troca de idioma se prova pela entrada
+  (a tecla) com o fato do idioma escolhido e de onde veio (`via=sistema|tecla`), nunca pelo idioma
+  da máquina. O locale do BCP 47 com escrita (`zh-Hant-TW`) normaliza pela escrita antes do
+  território, ou cai no chinês simplificado.
+  `[medido@b7daef0: BomberBoom, F4, H1, o fato IDIOMA pelo tools/love sem vídeo, 24/10]`
 
 ## Gráficos e pixel
 
