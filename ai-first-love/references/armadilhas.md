@@ -361,6 +361,12 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   ponteiro entra de fora da janela a cada ação e volta a um ponto de espera fora dela (com a tela
   do Xvfb maior que a janela); o foco não depende de onde a ação anterior o deixou.
   `[inferido: o X11 só gera MotionNotify com o ponteiro movido; o desenho, medido@b7daef0 no CampCrawler, 38ae218]`
+- **O botão do mouse do X11 não é o do LÖVE.** No X11 o 2 é o do meio e o 3 é o direito; no
+  LÖVE o 2 é o direito e o 3 é o do meio. O executor que aperta o botão pelo número do jogo
+  (`xdotool click 2` para o pincel direito) chega ao jogo como o do meio, e a passada reprova ou,
+  pior, aprova calada se o jogo trata os dois igual. Remédio: o alvo leva o botão do jogo, o
+  executor traduz (1→1, 2→3, 3→2) e o jogo relata o botão que chegou, conferido contra o do alvo.
+  `[love:src/modules/event/sdl/Event.cpp:357-366@b7daef0; BomberBoom, T5 da F7, e98133a]`
 - **`love.handlers` estoura com evento desconhecido** (`Unknown event: <nome>`): robô que empurra
   nome errado cai alto, o que é bom. Callback novo do 12 (`exposed`, `occluded`,
   `localechanged`, `dropbegan`, `sensorupdated`, `audiodisconnected`, `themechanged`) chega sem
