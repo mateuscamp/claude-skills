@@ -395,6 +395,22 @@ timeout no meio da corrida deixava 7 Xvfb órfãos e 1 GB. Regras:
   com valor errado, exige o erro com o recebido e recusa o `INICIO`;
 - uma passada roda **o `.love` gerado, com o diretório atual numa pasta vazia fora da
   worktree**, e exige o `codigo=` da pasta.
+- **o portão que encosta no teto se mede passo a passo antes de cortar passada**: uma cópia
+  do roteiro em `build/` que imprime o tempo de cada passo, na série e no lote, três rodadas com a
+  máquina livre. No BomberBoom (F5, P0, 25/10), o portão dava de 38 a 40 s, e as passadas não
+  eram o problema: a suíte Python das ferramentas levava 16 s **em série** (um arquivo, 9,3 s).
+  Com ela rodando por arquivo, num processo cada, e em segundo plano junto da série, o portão caiu
+  para 22,5 s, e o `--rapido` de 23 para 5 s. A suíte que testa o próprio portão roda o `--rapido`:
+  solte-a depois do passo que ela reexecuta, ou ela se roda de novo a cada nível;
+- **a semente de uma passada vale para um caminho do robô, não para sempre**: qualquer quadro a
+  mais antes do andar (uma tela nova, a parada real no lugar da provisória) muda o caminho com a
+  mesma semente, e o evento exigido some. Escolha a semente pela simulação na suíte, sem LÖVE (a
+  mais curta que traz todos os fatos exigidos), e confira o tempo **no lote**, não sozinha: no
+  BomberBoom, a passada da toupeira levava 15 s sozinha e passava do prazo de 20 s no lote; e
+- **o clique de fora (xdotool) tira o determinismo do caminho**: o quadro em que o clique chega
+  varia entre execuções, e a mesma semente perdeu no quadro 3.114 numa e venceu no 3.738 noutra
+  (BomberBoom, I4 da F5). A passada que exige um evento de jogo raro anda pelo robô interno; o
+  clique de fora fica nas passadas que provam o toque.
 
 **Amostra de pixel.** Numa passada com janela, `captureScreenshot` com a variante de função (que
 recebe o `ImageData` e não engole a falha), nos quadros `PRONTO` e no último. No centro e nas
