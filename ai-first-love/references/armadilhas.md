@@ -347,6 +347,16 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   fora da janela entra como veio. Remédio: o robô empurra na unidade da lista, com o ponto preso
   na janela, lê o efeito pelo fato, e nada do jogo lê `love.mouse` nem `love.touch`.
   `[love:src/modules/event/Event.cpp:57-90@b7daef0; love:src/modules/event/sdl/Event.cpp:50-70,127-209,342@b7daef0; ordem no quadro: inferido; estado: pista 11.5 + inferido]`
+- **O robô que mira numa lista e toca na seguinte erra com a mesa em movimento.** O robô acha o
+  ponto do alvo na lista apresentada do quadro N, mas se o press só é empurrado no passo do N+1,
+  ele sai no pump do N+2 e o hit-test o confere contra a lista do N+1: o que andou nesse quadro
+  (a carta recém-comprada voando do monte ao descarte) cobre o alvo, e o toque acerta outro item.
+  Na mesa do Boomlitude, o toque pediu a `ouros_6` e acertou a `copas_8`. Remédio: resolver o
+  alvo e empurrar o press no mesmo passo, depois do present do N, para o pump do N+1 conferir
+  contra a mesma lista; o resto do gesto (mover, soltar) segue o dedo e pode ir quadro a quadro.
+  E a carta pega parte de onde está desenhada (a animação), não da colocação do domínio: o robô
+  mira o centro desenhado, e a pegada medida do domínio o fazia soltar no pouso vizinho.
+  `[medido@b7daef0: passada 2 do Boomlitude, ENTRADA certo=nao e LANCE planejado=nao, 15d9d90]`
 - **O evento empurrado não prova a conversão entre pixel e unidade.** O robô que empurra no centro
   do item, na unidade da lista, e confere o id que respondeu pega o hit-test deslocado; não pega o
   que mora entre o pixel da tela e a unidade, porque o `push` pula a conversão. No CampCrawler, a
@@ -514,6 +524,13 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   (`getPixelWidth`). Remédio: a amostra converte o retângulo do item para pixel, compara pela
   medida do `kind` (SKILL, seção 3, Amostra de pixel) e só vale sem aviso na saída.
   `[love:src/modules/graphics/wrap_Graphics.cpp:508-558@b7daef0; love:src/modules/graphics/opengl/Graphics.cpp:1215-1320@b7daef0]`
+- **Pedida depois do `present`, a captura sai no `present` seguinte.** O `captureScreenshot`
+  captura dentro do próximo `present`: o laço que desenha, apresenta e só então pede a amostra
+  recebe os pixels do quadro seguinte e os compara com a lista deste. Enquanto nada se move nesse
+  quadro de folga, aprova por sorte; no Boomlitude, com o robô agindo já no 2º quadro, a carta
+  recém-comprada cobriu o topo do monte e a amostra reprovou o render certo. Remédio: o laço pede
+  a captura depois de desenhar e antes do `present`, e a comparação usa a lista do mesmo quadro.
+  `[medido@b7daef0: AMOSTRA aprovado=nao no portão do Boomlitude, 15d9d90]`
 - **A borda de meio pixel o GL pinta, e o ponto do centro mente.** Um rect cuja borda cai em
   x,5 deixa a linha daquele pixel com o centro na própria borda; no b7daef0 (OpenGL, sob Xvfb) o
   GL a pintou: a moldura do alcance do CampCrawler, 9 de espessura centrada na divisa, foi de
