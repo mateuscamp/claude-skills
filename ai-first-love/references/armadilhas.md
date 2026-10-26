@@ -472,6 +472,14 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   de texto declara o contêiner (`wrap_w`), e a passada com janela mede cada texto pela fonte real
   contra ele. A quebra medindo a 0,6 do tamanho desenhado deu, na luta em japonês, a linha de
   1022 px contra o limite de 730. `[medido@b7daef0: tools/smoke.py do CampCrawler, 95529ed]`
+- **O `getWrap` não estoura a largura: o estouro da quebra é vertical.** A palavra mais larga
+  que o limite é cortada por caractere (como o japonês, acima), e a linha mais larga devolvida só
+  passa do `wrap_w` quando um glifo sozinho é mais largo que ele: o fato que compara só a largura
+  aprova qualquer texto. No Boomlitude, um rodapé de 150 caracteres sem espaço deu 624 de 624 px, e
+  a passada aprovou. Remédio: o fato do texto mede também a altura do bloco contra a altura
+  declarada do item. `n` linhas ocupam `(n − 1) × floor(getHeight × getLineHeight + 0,5) +
+  getHeight` (o avanço do `printf`, com dpiscale 1); com a medida, o mesmo rodapé deu 32 contra 24.
+  O portão recusa `estourou=sim`, com o `--exigir` de presença. `[love:src/modules/font/TextShaper.cpp:88-89,111-114@b7daef0; love:src/modules/graphics/Font.cpp:487,548@b7daef0; medido@b7daef0: passada 1 do Boomlitude com o rodapé plantado, ac42792]`
 
 - **O teto do medidor aproximado não serve à invariante de sobreposição.** Ele é largo de propósito
   (o intervalo que garante a quebra), e dois textos que não se tocam na tela se sobrepõem pelo teto:
