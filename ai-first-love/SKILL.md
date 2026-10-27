@@ -355,8 +355,9 @@ linha do registro único (`CREDITS.md`: SPDX, onde, obrigação), e cabeçalho d
 **Passadas.** O executor das passadas (no projeto novo, o `tools/passada` em Lua do projeto, seção 7;
 nos de antes, o par do `smoke.py` da ai-first-defold) abre o jogo pelo
 lançador, com prazo, e o fato `TEMPO` de cada uma: em série enquanto a série medida couber no
-orçamento; acima dele, em paralelo, com uma tela por passada (o Xvfb com `-displayfd` pega o
-display livre; ambiente e save no `mktemp -d` dela). Sem mudar a chamada da série: o roteiro
+orçamento; acima dele, em paralelo, com uma tela por passada (o Xvfb pedido pelo número, de :100
+em diante, e o lock dele recusa o ocupado; nunca o `-displayfd`, que toma o :0 da sessão:
+`references/gerais-de-jogo.md`; ambiente e save no `mktemp -d` dela). Sem mudar a chamada da série: o roteiro
 roda duas vezes, a 1ª soltando cada passada com a saída e o código num arquivo numerado na ordem
 dele, e a 2ª colhendo cada uma na mesma linha, com o veredito **na ordem do roteiro, não na de
 chegada** (o modo que para no 1º para no mesmo da série) e as comparações entre passadas no lugar
@@ -546,7 +547,7 @@ mantém. Nada vem de um lugar central nem volta para ele; o que vale para todo p
 seção diz.
 
 - **O que o portão faz** (contrato com a máquina, não com o jogo): o lançador e o formato do lock
-  (`--conferir`, `--gravar-lock`, `--luals`); o executor (Xvfb por `-displayfd`, prazo, morte do
+  (`--conferir`, `--gravar-lock`, `--luals`); o executor (Xvfb pelo número, sem `-displayfd`, prazo, morte do
   grupo, SIGTERM com limpeza e sem órfão, ambiente de lista branca, `--exigir`/`--recusar`/
   `--erro-esperado` com a semântica do `re` do Python pela PCRE2, conferência do boot, JANELA em
   pixel, `--love`, marca e poda das reprovadas, a pasta da passada no `TMPDIR` pelo caminho
