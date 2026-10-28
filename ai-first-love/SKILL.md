@@ -411,6 +411,20 @@ timeout no meio da corrida deixava 7 Xvfb órfãos e 1 GB. Regras:
   varia entre execuções, e a mesma semente perdeu no quadro 3.114 numa e venceu no 3.738 noutra
   (BomberBoom, I4 da F5). A passada que exige um evento de jogo raro anda pelo robô interno; o
   clique de fora fica nas passadas que provam o toque.
+- **o relatório do executor que corta a saída esconde o que o portão compara**: o executor mostra as 40
+  primeiras e as 40 últimas linhas, e o portão que relia esse relatório para comparar duas passadas (os ids de
+  cada repouso, com e sem vídeo) comparava um lado vazio quando a passada cresceu (2.106 linhas). O que o portão
+  compara sai por uma opção do executor (`--mostrar RE`), num bloco à parte, todo e em ordem, com prefixo
+  (BomberBoom, C1 da F8);
+- **o lote se ordena pela duração, e os mutantes não ocupam vaga de passada**: com o limite de passadas juntas, a
+  mais longa que entra por último fecha o portão. No BomberBoom, as duas de 19 s esperavam vaga até os 18 s (o
+  portão em 36 a 40 s); mais longas primeiro e o `--suite` fora da conta das vagas deram 31 a 35 s. A cópia de cada
+  mutante da suíte não precisa do `git add` (675 de 680 ms, com as fontes CJK): a suíte só lê o índice, que se
+  copia; e
+- **o robô não age quando a ação não pode valer**: com o clique de fora, o aperto chega uns quadros depois de
+  decidido; o robô que apertava sem bomba no orçamento (o autoplay de lá fazia isso, e o domínio recusava sem mudar
+  nada) teve o aperto caído no véu do fim do andar, e a soltura saiu como toque perdido, às vezes. O controle
+  do `--tudo` que reprova mostra a linha que reprovou: sem ela, a instabilidade não se reproduz à mão.
 
 **Amostra de pixel.** Numa passada com janela, `captureScreenshot` com a variante de função (que
 recebe o `ImageData` e não engole a falha), nos quadros `PRONTO` e no último. No centro e nas
