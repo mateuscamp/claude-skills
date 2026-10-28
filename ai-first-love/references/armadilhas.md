@@ -634,17 +634,22 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   que caiba a maior janela, a janela levada ao canto (`xdotool windowmove --sync <id> 0 0`) antes
   da captura, e a ferramenta recusa o arquivo de tamanho diferente do pedido. `[medido: ImageMagick 7.1.2-34 sob Xvfb, com o LÖVE b7daef0, capturas da mesa do Boomlitude, 26/10, 30e880f]`
 
-- **Sob o Xvfb, a GPU é a da máquina.** Com o driver da NVIDIA, o `getRendererInfo` sob o Xvfb
-  dá a placa (uma RTX 4070), não o Mesa: a passada e a captura desenham na GPU de quem roda, e o
-  que depende de driver diverge do CI (o Mesa). O lövetest do b7daef0, como o CI o roda (o
-  `testing/main.lua --all --isRunner --renderers opengl`, sob Xvfb), deu aqui 341 passam e 1 falha,
-  o array de `bool` em uniform do `Shader`, que o CI passa (342 e 0). Remédio: a tolerância e a
-  base de imagem são da máquina; lövetest no portão só com a falha local que o CI não teve
-  declarada. E o renderer da passada se lê no fato de início (o remédio do item "O portão e o autor
-  rodam renderers diferentes"), nunca se supõe: no Boomlitude, sem o `render=` no `INICIO`, a etapa 10 da mesa atribuiu ao llvmpipe uns 4 s a mais de uma passada com
-  o fundo desenhado, e a sonda depois deu a RTX 4070 (OpenGL 4.3.0 NVIDIA 615.78.08); os 4 s, de
-  poucas rodadas num dia em que o portão variou de 80 a 167 s, não ficaram provados como custo do
-  desenho. `[medido@b7daef0: getRendererInfo, CampCrawler R0.6.7 e .11; no Boomlitude, pelo lanca.lua sob Xvfb, 27/10, 9e2477d; o lövetest: o AppRun do lock conferido, CampCrawler R0.6.10; o caso: love:testing/tests/graphics.lua:892-895@b7daef0; o CI: lido no check-run test-report-linux-X64-opengl do b7daef0]`
+- **Sob o Xvfb, quem escolhe a GPU é o ambiente, não a máquina.** O GLX carrega o driver que o
+  `__GLX_VENDOR_LIBRARY_NAME` pede: com ele em `nvidia`, como na sessão do autor numa máquina com
+  placa NVIDIA, o `getRendererInfo` sob o Xvfb dá a placa (OpenGL "4.3.0 NVIDIA 615.78.08", RTX
+  4070); sem ele, como no `env -i` da passada, dá o Mesa (OpenGL "4.6 (Core Profile) Mesa
+  26.2.5", llvmpipe). Na mesma máquina e no mesmo Xvfb, a passada e a sonda avulsa rodam então
+  renderers diferentes. No Boomlitude, a sonda de 27/10 rodou o lançador com o ambiente da sessão,
+  deu a NVIDIA, e uma correção concluiu que as passadas desenhavam na GPU; elas sempre desenharam
+  no llvmpipe (corrigido em 28/10). O que depende de driver diverge entre os dois: o lövetest do
+  b7daef0, como o CI o roda (o `testing/main.lua --all --isRunner --renderers opengl`, sob Xvfb),
+  deu aqui 341 passam e 1 falha, o array de `bool` em uniform do `Shader`, que o CI passa (342 e
+  0); essa medida, como a do CampCrawler que deu a RTX 4070, não registrou o ambiente. Remédio: o
+  renderer de cada passada se lê no fato de início, com o ambiente dela (o `render=` e o
+  `dispositivo=` no `INICIO`, cobrados pelo executor: o remédio do item "O portão e o autor rodam
+  renderers diferentes"); a sonda que mede para a passada roda no ambiente da passada, nunca no da
+  sessão; a tolerância e a base de imagem são do renderer que a passada cobra; e o lövetest no
+  portão só com a falha local que o CI não teve declarada. `[medido@b7daef0: no Boomlitude, pelo lanca.lua sob Xvfb, com e sem o __GLX_VENDOR_LIBRARY_NAME=nvidia, 28/10, 68c57dc (a medida errada de 27/10: 9e2477d); getRendererInfo, CampCrawler R0.6.7 e .11, sem o ambiente registrado; o lövetest: o AppRun do lock conferido, CampCrawler R0.6.10; o caso: love:testing/tests/graphics.lua:892-895@b7daef0; o CI: lido no check-run test-report-linux-X64-opengl do b7daef0]`
 
 ## Rede, licença e terceiros
 
