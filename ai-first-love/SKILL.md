@@ -94,7 +94,10 @@ Arquivos desta skill:
    propósito entra numa lista de adaptados com o motivo e o **blob git que o motivo descreve**: sem
    o blob, o adaptado fica isento para sempre e o motivo envelhece calado (no Boomlitude, o do
    `gesto.lua` dizia "só acrescenta" depois de cinco mudanças da mesa, e a conferência, fora do
-   portão, deixou sete arquivos da apresentação divergirem sem registro; 0163818 e 8900fa6).
+   portão, deixou sete arquivos da apresentação divergirem sem registro; 0163818 e 8900fa6). A
+   correção que tocaria um arquivo copiado entra, quando dá, numa função nova num módulo novo: o
+   arquivo segue igual ao do antigo e fora dos adaptados (no Boomlitude, o `efeitos_do_lance.lua`
+   e a `conferencia_do_replay.lua`; c615f95 e 7dc179c).
 4. **Suposição de motor no domínio vai a um inventário**, sem mudar o domínio até o autor
    responder (no CampCrawler, uma pose que sobe em +y: o y do LÖVE desce); todo tipo de evento
    do domínio está no despacho da apresentação ou numa lista de ignorados, com teste.
@@ -316,6 +319,10 @@ diz também o que é só pista (11.5, wiki, memória). Citação de sha velho re
   `dominio_hash=` (os blobs que o `require` leu). A passada exige esse hash e o `exe=` do lock,
   e a do `.love`, o `codigo=` da pasta. Prova é processo novo, e cai se o `codigo=` mudou
   durante a corrida.
+- Versão de biblioteca ou ferramenta do sistema no lock envelhece calada: o gerenciador de pacotes
+  a sobe sem aviso (no Boomlitude, o pacman subiu o Mesa três horas depois do lock, e o fontTools
+  no dia de uma medida). A passada cobra do `INICIO` o `mesa=`, o `exe=` e o `love=` contra o
+  lock; o `love_sha=`, que o jogo copia do lock, não prova nada (3f067b9, f643e1c).
 - Trocar de sha é frente própria, com registro de decisão; medida do LÖVE é comando de `tools/`
   que grava o `exe=`; API existe se o dump rodado pelo binário do lock a lista. Compilar ou
   baixar o binário pede o sim do autor.
@@ -357,7 +364,8 @@ Verificação estática).
 
 **Sem rede, terceiros registrados.** O portão e o `--rapido` se relançam em
 `unshare --user --map-current-user --net` e reprovam interface além de `lo` em
-`/proc/self/net/dev`, ou passo pulado; baixar é só do preparo, fora do portão (armadilhas, Rede,
+`/proc/self/net/dev`, ou passo pulado (o Xvfb com `-nolisten local` sobe sob ele, pelo socket de
+arquivo: medido na passada 4 do Boomlitude, 61cc6d0); baixar é só do preparo, fora do portão (armadilhas, Rede,
 licença e terceiros). Um teste reprova `socket`, `https`, `enet`,
 `package.loadlib` e `openURL` no `.love`. Todo terceiro do artefato e do fonte fixado casa uma
 linha do registro único (`CREDITS.md`: SPDX, onde, obrigação), e cabeçalho de terceiro fora de
@@ -385,7 +393,13 @@ SIGTERM do `timeout` chega a toda passada: o executor o trata (o padrão do Pyth
 com um trap de TERM que sai pelo EXIT (o 2º SIGTERM, que o `timeout` manda ao grupo, matava o sh
 antes do trap). No CampCrawler (1cbea24, c59b615, ff91687, 4f2f770, ab16cd4): de 84 para 29 s em
 28 núcleos; todas juntas, 3,6 GB num tmpfs de 8; com 8 de cada vez, o mesmo tempo e 1,8 GB; um
-timeout no meio da corrida deixava 7 Xvfb órfãos e 1 GB. Regras:
+timeout no meio da corrida deixava 7 Xvfb órfãos e 1 GB. No Boomlitude, com o portão em Lua
+(3f933a3, b2fe0e5), de 107 para 33 s em 28 núcleos: cada passo num `setsid` próprio, para o TERM
+chegar ao bash dele; o encerrar espera cada grupo acabar; o roteiro apaga a própria pasta no TERM,
+porque o luajit do portão morre no mesmo grupo; o teste do TERM mede o tempo até a saída (sem
+isso, o mutante sem `setsid` passa: o `wait` espera o passo acabar sozinho); um caso de barreira
+prova que os passos correm juntos (sem ele, o máximo de 1 passa); e o portão interrompido não dá
+veredito por passo. Regras:
 - toda passada declara o vídeo (`--video=nenhum|gl|x11`; o `x11` é o de xdotool e
   redimensionar), e o ambiente se monta por **lista branca**, nunca por cópia do de fora: idioma
   fixo, `ALSOFT_DRIVERS=null`, `XDG_*` num `mktemp -d` (a passada exige `save=` e `log=` dentro

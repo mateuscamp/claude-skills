@@ -327,6 +327,16 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
 - **Wayland do autor, X11 da prova.** Com SDL3, o LÖVE tende a abrir em Wayland nativo, e toda
   prova roda em X11. Remédio: uma passada no backend do autor, ou forçar o mesmo nos dois; a
   passada declara o vídeo dela (`SDL_VIDEO_DRIVER` explícito, nunca herdado). `[inferido]`
+- **O `love.run` próprio tem de chamar o `love.quit` no quit.** O padrão o chama no evento `quit`
+  e só sai se ele não cancelar (`if c or not love.quit or not love.quit() then return a or 0, b
+  end`). O laço do projeto que sai direto no `quit` deixa o `love.quit` do jogo como código
+  morto: no Boomlitude, o `diario:fechar()` nunca rodava. Remédio: o laço chama o `love.quit` como
+  o padrão, e a passada o prova por um fato que ele emite (`DIARIO fechado=1`).
+  `[love:src/modules/love/callbacks.lua:180-183@b7daef0; Boomlitude 5231dc0]`
+- **Sob o Xvfb, o `getMode` relata vsync 0 para qualquer pedido.** No llvmpipe,
+  `love.window.getMode` devolveu `vsync = 0` com o pedido em 1, 0 e -1: cobrar o relatado aprova
+  por vacuidade. Remédio: o fato da janela leva o vsync pedido (`vsync_pedido=`), e a passada
+  cobra o pedido. `[medido@b7daef0: sonda pelo lanca.lua sob Xvfb, Boomlitude 8d1f48a]`
 
 ## Entrada
 
