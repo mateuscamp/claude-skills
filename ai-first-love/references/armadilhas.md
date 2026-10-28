@@ -293,6 +293,12 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   entre pixel e unidade (Entrada), com o `JANELA` na escala pedida e os pixels iguais às unidades
   vezes o dpi; com o pixel, que a escala do sistema não vaza (`JANELA` com dpi 1 e os pixels
   iguais às unidades). `[medido@b7daef0: tools/smoke.py --escala 2 do CampCrawler, 527058d e c2c6e94, e as capturas de 8ee2319; o porquê do tamanho: inferido]`
+- **Com o pixel literal, a densidade do sistema vem do `getNativeDPIScale`.** No item de cima, o
+  `getDPIScale` dá 1 com `usedpiscale = false`; o `love.window.getNativeDPIScale()` segue dando a
+  densidade do sistema (sob o Xvfb, 2 com o `SDL_VIDEO_X11_SCALING_FACTOR` em 2; 3 e 2,625 passam
+  pela captura que confere a densidade pedida). É o número para escalar o texto (o menor inteiro que
+  leva o corpo da fonte a um piso em pontos) sem sair do pixel. Remédio: o fato da janela leva as
+  duas, `escala=` (tem de dar 1) e `densidade=` (o nativo). No Android: inferido. `[medido@b7daef0: sonda da etapa 7 da mesa do Boomlitude; JANELA densidade=2.0000 escala=1.0000 na passada 4, 2ce3cee]`
 - **O toque do adb cai em outra célula.** Com `usedpiscale` (o padrão, ainda `true` no `main`),
   dimensões, mouse e toque chegam em unidades de DPI: um 1080×2400 com escala 2,75 vira ~393×873.
   O `adb shell input tap` é em pixel físico: calculado a partir dos fatos do jogo, toca a 2,75×
@@ -347,6 +353,16 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   fora da janela entra como veio. Remédio: o robô empurra na unidade da lista, com o ponto preso
   na janela, lê o efeito pelo fato, e nada do jogo lê `love.mouse` nem `love.touch`.
   `[love:src/modules/event/Event.cpp:57-90@b7daef0; love:src/modules/event/sdl/Event.cpp:50-70,127-209,342@b7daef0; ordem no quadro: inferido; estado: pista 11.5 + inferido]`
+- **O robô que mira numa lista e toca na seguinte erra com a mesa em movimento.** O robô acha o
+  ponto do alvo na lista apresentada do quadro N, mas se o press só é empurrado no passo do N+1,
+  ele sai no pump do N+2 e o hit-test o confere contra a lista do N+1: o que andou nesse quadro
+  (a carta recém-comprada voando do monte ao descarte) cobre o alvo, e o toque acerta outro item.
+  Na mesa do Boomlitude, o toque pediu a `ouros_6` e acertou a `copas_8`. Remédio: resolver o
+  alvo e empurrar o press no mesmo passo, depois do present do N, para o pump do N+1 conferir
+  contra a mesma lista; o resto do gesto (mover, soltar) segue o dedo e pode ir quadro a quadro.
+  E a carta pega parte de onde está desenhada (a animação), não da colocação do domínio: o robô
+  mira o centro desenhado, e a pegada medida do domínio o fazia soltar no pouso vizinho.
+  `[medido@b7daef0: passada 2 do Boomlitude, ENTRADA certo=nao e LANCE planejado=nao, 15d9d90]`
 - **O evento empurrado não prova a conversão entre pixel e unidade.** O robô que empurra no centro
   do item, na unidade da lista, e confere o id que respondeu pega o hit-test deslocado; não pega o
   que mora entre o pixel da tela e a unidade, porque o `push` pula a conversão. No CampCrawler, a
@@ -463,6 +479,16 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   recorte no repositório, com o comando escrito ao lado e refeito sempre da fonte inteira, nunca do
   recorte; o portão confere o `cmap` de cada recorte contra a tabela pela biblioteca padrão (o
   fontTools fica só para refazer), e a letra nova reprova dizendo o comando. `[medido@b7daef0: o FONTE da passada sem vídeo e as capturas em ko, zh_CN e zh_TW pelo tools/smoke.py, CampCrawler, 21/10; medido: python-fonttools 4.67.0, duas corridas]`
+- **Fonte bitmap só abre na própria strike, e o recorte dela sai mudo.** A Galmuri11 (hangul,
+  `Galmuri11Bitmap.ttf`, tabelas EBDT/EBLC) só tem a strike de 16 px: o `newFont` noutro tamanho
+  estoura com `FT_Set_Pixel_Sizes failed`. Com a escala de DPI ligada (o `usedpiscale` padrão), o
+  jogo caiu assim na troca para o coreano na densidade 2, em que nenhuma passada a 1 chegava (o
+  tamanho pedido vezes o `dpiscale` sai da strike: inferido). E o recorte pelo `fontTools.subset`
+  (o do gerador de fontes do jogo de origem) carrega, o `hasGlyphs` confirma a cobertura, e o
+  `print` não desenha nada, nem "ABC"; a fonte inteira desenha. Remédio: a fonte bitmap entra inteira (pesa pouco) e é pedida só
+  no tamanho da strike, com `dpiscale = 1` e o pixel literal (`usedpiscale = false`); escala, se
+  houver, é transform de desenho em múltiplo inteiro; e uma passada na densidade 2 troca para o
+  idioma dela. `[medido@b7daef0: a strike e o recorte mudo, sonda da R0.4 do Boomlitude, e345c19 e b3d9c11; a queda na passada 4 na densidade 2, 2ce3cee]`
 - **`newText` dispara o aviso de tela.** O tipo agora é `TextBatch` (`newTextBatch`); `newText`
   é apelido deprecado. `[love:src/modules/graphics/wrap_Graphics.cpp:2343-2347,4069,4200@b7daef0]`
 
@@ -472,6 +498,14 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   de texto declara o contêiner (`wrap_w`), e a passada com janela mede cada texto pela fonte real
   contra ele. A quebra medindo a 0,6 do tamanho desenhado deu, na luta em japonês, a linha de
   1022 px contra o limite de 730. `[medido@b7daef0: tools/smoke.py do CampCrawler, 95529ed]`
+- **O `getWrap` não estoura a largura: o estouro da quebra é vertical.** A palavra mais larga
+  que o limite é cortada por caractere (como o japonês, acima), e a linha mais larga devolvida só
+  passa do `wrap_w` quando um glifo sozinho é mais largo que ele: o fato que compara só a largura
+  aprova qualquer texto. No Boomlitude, um rodapé de 150 caracteres sem espaço deu 624 de 624 px, e
+  a passada aprovou. Remédio: o fato do texto mede também a altura do bloco contra a altura
+  declarada do item. `n` linhas ocupam `(n − 1) × floor(getHeight × getLineHeight + 0,5) +
+  getHeight` (o avanço do `printf`, com dpiscale 1); com a medida, o mesmo rodapé deu 32 contra 24.
+  O portão recusa `estourou=sim`, com o `--exigir` de presença. `[love:src/modules/font/TextShaper.cpp:88-89,111-114@b7daef0; love:src/modules/graphics/Font.cpp:487,548@b7daef0; medido@b7daef0: passada 1 do Boomlitude com o rodapé plantado, ac42792]`
 
 - **O teto do medidor aproximado não serve à invariante de sobreposição.** Ele é largo de propósito
   (o intervalo que garante a quebra), e dois textos que não se tocam na tela se sobrepõem pelo teto:
@@ -506,6 +540,13 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   (`getPixelWidth`). Remédio: a amostra converte o retângulo do item para pixel, compara pela
   medida do `kind` (SKILL, seção 3, Amostra de pixel) e só vale sem aviso na saída.
   `[love:src/modules/graphics/wrap_Graphics.cpp:508-558@b7daef0; love:src/modules/graphics/opengl/Graphics.cpp:1215-1320@b7daef0]`
+- **Pedida depois do `present`, a captura sai no `present` seguinte.** O `captureScreenshot`
+  captura dentro do próximo `present`: o laço que desenha, apresenta e só então pede a amostra
+  recebe os pixels do quadro seguinte e os compara com a lista deste. Enquanto nada se move nesse
+  quadro de folga, aprova por sorte; no Boomlitude, com o robô agindo já no 2º quadro, a carta
+  recém-comprada cobriu o topo do monte e a amostra reprovou o render certo. Remédio: o laço pede
+  a captura depois de desenhar e antes do `present`, e a comparação usa a lista do mesmo quadro.
+  `[medido@b7daef0: AMOSTRA aprovado=nao no portão do Boomlitude, 15d9d90]`
 - **A borda de meio pixel o GL pinta, e o ponto do centro mente.** Um rect cuja borda cai em
   x,5 deixa a linha daquele pixel com o centro na própria borda; no b7daef0 (OpenGL, sob Xvfb) o
   GL a pintou: a moldura do alcance do CampCrawler, 9 de espessura centrada na divisa, foi de
@@ -587,6 +628,11 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   janela, a janela de 1080x1920 abriu em x=420. Remédio: quem lê a tela por fora (a captura
   externa, o xdotool) soma a posição que o jogo relata (`love.window.getPosition()`), nunca supõe
   0,0. `[medido@b7daef0: tools/smoke.py do CampCrawler, 0061111]`
+- **A captura externa corta calada o que passa da tela do Xvfb.** Com a janela centrada pelo SDL
+  (item de cima) e depois crescida, o `import -window` do ImageMagick devolveu só a parte dentro da
+  tela, sem erro: a captura pedida em 3840x2160 saiu com 2240x1868. Remédio: uma tela do Xvfb em
+  que caiba a maior janela, a janela levada ao canto (`xdotool windowmove --sync <id> 0 0`) antes
+  da captura, e a ferramenta recusa o arquivo de tamanho diferente do pedido. `[medido: ImageMagick 7.1.2-34 sob Xvfb, com o LÖVE b7daef0, capturas da mesa do Boomlitude, 26/10, 30e880f]`
 
 - **Sob o Xvfb, a GPU é a da máquina.** Com o driver da NVIDIA, o `getRendererInfo` sob o Xvfb
   dá a placa (uma RTX 4070), não o Mesa: a passada e a captura desenham na GPU de quem roda, e o
@@ -594,7 +640,11 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   `testing/main.lua --all --isRunner --renderers opengl`, sob Xvfb), deu aqui 341 passam e 1 falha,
   o array de `bool` em uniform do `Shader`, que o CI passa (342 e 0). Remédio: a tolerância e a
   base de imagem são da máquina; lövetest no portão só com a falha local que o CI não teve
-  declarada. `[medido@b7daef0: getRendererInfo, CampCrawler R0.6.7 e .11; o lövetest: o AppRun do lock conferido, CampCrawler R0.6.10; o caso: love:testing/tests/graphics.lua:892-895@b7daef0; o CI: lido no check-run test-report-linux-X64-opengl do b7daef0]`
+  declarada. E o renderer da passada se lê no fato de início (o remédio do item "O portão e o autor
+  rodam renderers diferentes"), nunca se supõe: no Boomlitude, sem o `render=` no `INICIO`, a etapa 10 da mesa atribuiu ao llvmpipe uns 4 s a mais de uma passada com
+  o fundo desenhado, e a sonda depois deu a RTX 4070 (OpenGL 4.3.0 NVIDIA 615.78.08); os 4 s, de
+  poucas rodadas num dia em que o portão variou de 80 a 167 s, não ficaram provados como custo do
+  desenho. `[medido@b7daef0: getRendererInfo, CampCrawler R0.6.7 e .11; no Boomlitude, pelo lanca.lua sob Xvfb, 27/10, 9e2477d; o lövetest: o AppRun do lock conferido, CampCrawler R0.6.10; o caso: love:testing/tests/graphics.lua:892-895@b7daef0; o CI: lido no check-run test-report-linux-X64-opengl do b7daef0]`
 
 ## Rede, licença e terceiros
 

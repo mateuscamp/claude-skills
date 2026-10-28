@@ -88,7 +88,13 @@ Arquivos desta skill:
    autor decidir), nunca do checkout vivo: uma ferramenta confere o servido contra o
    `git ls-tree` dele, com contagem > 0, e sai com erro, nunca pula, se faltar caminho, sha ou
    lista; o `CODIGO` leva `dominio=` e `dominio_hash=` (seção 3). Como o LÖVE alcança a pasta
-   se **mede no esqueleto** (armadilhas, Lançamento e argumentos).
+   se **mede no esqueleto** (armadilhas, Lançamento e argumentos). Quando o código do motor antigo
+   vem copiado para cá (o antigo congelado, e a cópia editada aqui, como no Boomlitude), a mesma
+   ferramenta confere a cópia contra o `ls-tree` no portão inteiro, e o arquivo que diverge de
+   propósito entra numa lista de adaptados com o motivo e o **blob git que o motivo descreve**: sem
+   o blob, o adaptado fica isento para sempre e o motivo envelhece calado (no Boomlitude, o do
+   `gesto.lua` dizia "só acrescenta" depois de cinco mudanças da mesa, e a conferência, fora do
+   portão, deixou sete arquivos da apresentação divergirem sem registro; 0163818 e 8900fa6).
 4. **Suposição de motor no domínio vai a um inventário**, sem mudar o domínio até o autor
    responder (no CampCrawler, uma pose que sobe em +y: o y do LÖVE desce); todo tipo de evento
    do domínio está no despacho da apresentação ou numa lista de ignorados, com teste.
@@ -100,6 +106,11 @@ Arquivos desta skill:
    (transitório), saída em `build/` ou `mktemp`. A memória do agente não segue a pasta sozinha.
    Nenhum `AGENTS.md` ou `CLAUDE.md` de outro projeto entre a home e o projeto: um `CLAUDE.md`
    acima faz o Claude Code ignorar o `AGENTS.md` do projeto.
+8. **O portão do motor antigo é inventário.** Cada passo dele ganha um par no portão novo, ou sai
+   com o motivo escrito. No Boomlitude, o portão do pino rodava o `--check` de quatro geradores; o
+   daqui nasceu sem o das cartas e o das fontes (o dos sons seguiu na suíte; o das faíscas, do
+   Defold, saiu), e a prévia das cartas, levada com os documentos congelados, deixou o `--check`
+   das cartas vermelho desde a R0.1 sem que portão nenhum o visse (dd945b9).
 
 **Projeto existente**: audite medindo e mostre a tabela ao usuário.
 
@@ -566,7 +577,10 @@ seção diz.
   pixel, `--love`, marca e poda das reprovadas, a pasta da passada no `TMPDIR` pelo caminho
   absoluto); a imagem (XWD → PNG, leitura do PNG de referência e a diferença). Cada item tem defeito
   real atrás: o lançador do Boomlitude passava `LD_AUDIT` e `LUA_INIT` ao jogo e o deixava órfão no
-  SIGTERM, e o `TMPDIR` relativo ou com `..` reprovava a passada.
+  SIGTERM, e o `TMPDIR` relativo ou com `..` reprovava a passada. Variante do Boomlitude: lá, o
+  lock se grava em duas ferramentas, o LÖVE pelo `gravar_lock.lua` e o ferramental pelo
+  `ferramental.lua --gravar`, e não pelo `--gravar-lock` do lançador. Quem grava uma parte do lock
+  lê o lock atual e mantém a outra, com teste: o `gravar_lock.lua` apagava as ferramentas (0163818).
 - **A interface:** `tools/love .` para jogar (`--config=<projeto>.<chave>=<valor>` depois da
   pasta), `tools/love --conferir`, `--gravar-lock`, `--luals`; `tools/passada --video=gl|nenhum
   [--prazo S] [--exigir RE] [--recusar RE] [--erro-esperado RE] [--love ARQUIVO]`. Sai com 2 antes
