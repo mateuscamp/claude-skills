@@ -387,6 +387,11 @@ o Lua 5.x da suíte, em `gerais-de-lua.md`, também na raiz (seção Gerais de L
   ponteiro entra de fora da janela a cada ação e volta a um ponto de espera fora dela (com a tela
   do Xvfb maior que a janela); o foco não depende de onde a ação anterior o deixou.
   `[inferido: o X11 só gera MotionNotify com o ponteiro movido; o desenho, medido@b7daef0 no CampCrawler, 38ae218]`
+- **O `mousemoved` não diz o botão.** O callback recebe `x, y, dx, dy, istouch`, sem o botão
+  apertado: o "pairar sem botão" não se decide por ele. Remédio: o adaptador guarda os botões
+  apertados pelos `mousepressed` e `mousereleased`, todos e não só o 1, sem ler `love.mouse`. No
+  Boomlitude, guardar só o 1 deixava a dica aberta no clique do botão 2.
+  `[love:src/modules/love/callbacks.lua:43@b7daef0; Boomlitude 186630f]`
 - **O botão do mouse do X11 não é o do LÖVE.** No X11 o 2 é o do meio e o 3 é o direito; no
   LÖVE o 2 é o direito e o 3 é o do meio. O executor que aperta o botão pelo número do jogo
   (`xdotool click 2` para o pincel direito) chega ao jogo como o do meio, e a passada reprova ou,

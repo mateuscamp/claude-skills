@@ -228,7 +228,10 @@ mostrado sem função, userdata nem metatable; a suíte a constrói com `love` a
 6. **Fato de tela sai da lista, não do domínio.** `LAYOUT` e `TEXTO` saem dos itens desenhados,
    com o valor que o domínio escolheu ao lado (`esperado=`), e o portão exige os dois iguais
    (`references/gerais-de-jogo.md`, fato que prova o que a tela mostra). Emitir o valor do
-   domínio no lugar do mostrado aprova sem provar o desenho (CampCrawler, D36).
+   domínio no lugar do mostrado aprova sem provar o desenho (CampCrawler, D36). Nem o
+   argumento de quem pediu o desenho: no Boomlitude, o `FAISCA tinta=` repetia a tinta pedida ao
+   `emitir`, e a partícula plantada em branco passava nas passadas; o fato lê agora a cor do item
+   da lista contra a da raridade (5eebc66).
 7. **A lista é autorrelato.** Desenho e toque vêm do mesmo código: uma conta de layout errada
    aprova os dois juntos. Fecha-se por fora (seção 3): a **amostra de pixel** prova que o render
    desenhou o que a lista diz; o **xdotool**, que o toque do sistema chega ao item (a conversão
@@ -486,7 +489,11 @@ hit-test) e prova a entrada, não o layout; o aparelho fica com o adb. Só ele p
 o pixel e a unidade, e só na escala forçada: em escala 1 a conversão é a identidade (armadilhas,
 Entrada); com a unidade em pixel, a mesma passada prova que a escala não vaza. O redimensionar também se prova por ele (`xdotool windowsize`), não pelo
 `updateMode`, com o robô parado até o tamanho chegar; e o layout não refeito depois de ampliar
-só um fato de geometria pega (armadilhas, Laço, tempo e janela; Gráficos e pixel).
+só um fato de geometria pega (armadilhas, Laço, tempo e janela; Gráficos e pixel). O
+mouse real e o robô de dentro não se misturam: o `mousemoved` do xdotool cai na mesma fila que o
+arraste empurrado e muda o encaixe da carta na mão, e com ele o lance. A prova de fora do pairar
+move o mouse com o jogo parado depois do plano, mantido aberto por um robô de teclas com atraso
+que a run não alcança, e cobra antes, pela fila, o pairar do robô (Boomlitude 89f8c71).
 
 **Texto medido.** Cada vista exporta os pares (chave do texto, caixa) que desenha; a bancada da
 passada com janela mede todos com a fonte real, em todo idioma e tamanho, e emite
@@ -496,6 +503,10 @@ Uma fonte por escrita, sem fallback, num cache com dono (armadilhas, Texto e fon
 mínima, que o CampCrawler pôs antes da bancada: o item de texto declara o contêiner (`wrap_w`), e
 cada quadro amostrado mede cada texto pela fonte real contra ele e contra a caixa que a vista deu
 (`TEXTO largura= caixa= limite=`); o medidor aproximado da suíte não decide o estouro da quebra.
+Quando a vista do jogo mede com a mesma fonte e a mesma conta do `TEXTO`, o `estouro=` vira
+tautologia: só reprova a caixa menor que o texto, e a folgada passa. Cobre também a igualdade com
+o que a vista deu (a altura da caixa igual à do texto medido): no Boomlitude, o jogo com o medidor
+aproximado deixava a dica 2 a 2,4 vezes mais alta, e tudo passava (92857b0).
 
 **Captura para o autor.** Uma ferramenta abre o jogo sob Xvfb com o robô, nos tamanhos e
 arranjos da constante, e grava as capturas: o olhar fica repetível, sem substituir o aparelho.
@@ -503,7 +514,9 @@ Base, referência e fixture nunca se regravam para o portão passar.
 
 **Hook Stop.** O `hook_portao.sh` da ai-first-defold é o modelo: roda o `--rapido` (suíte,
 fronteira, `loadfile`, requires e LuaLS, sem rede) só quando algo mudou desde a última
-aprovação; o digest soma a árvore do jogo e, no porte, o domínio.
+aprovação; o digest soma a árvore do jogo e, no porte, o domínio. Ele lê do stdin
+o JSON que o Claude Code manda (o `stop_hook_active`): rodado à mão sem entrada, fica preso no
+`cat`. À mão: `echo '{}' | <hook>` (Boomlitude, 28/10).
 
 **Prove que o portão reprova antes de confiar nele.** Plante, rode e restaure:
 1. `local L = love` numa vista, `require("ffi")` no domínio, `require("plat" .. "form.render")`
