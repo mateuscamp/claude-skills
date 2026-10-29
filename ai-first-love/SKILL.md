@@ -197,7 +197,10 @@ mostrado sem função, userdata nem metatable; a suíte a constrói com `love` a
    `present`) responde: o item de cima com `hit`, alfa > 0 e centro na janela que contém o ponto;
    dali em diante só circula a ação (`kind`, `id`, `target`), nunca x e y. Alvo coberto ou em
    parte fora da janela: decisão do autor, declarada na tela (um modal é um item de tela inteira
-   com `hit` e sem `target`). O **robô** acha o alvo pelo `id` na lista apresentada (até K
+   com `hit` e sem `target`). No Boomlitude, o painel modal (a escolha de recompensa, o fim
+   da run) é uma vista própria, apresentada por cima da mesa como mais uma lista na pilha das
+   apresentadas; o véu é esse item de tela inteira: o adaptador engole o press nele, e o pairar para
+   nele (75c59cf). O **robô** acha o alvo pelo `id` na lista apresentada (até K
    quadros; o plano é Lua puro, com teste) e só entra por `love.event.push`, com a tupla inteira
    (`"mousepressed", x, y, 1, false, 1`) e o ponto preso na janela, pela fila e pelos
    `love.handlers` da entrada real; nunca chama o adaptador, e nada do jogo lê `love.mouse` nem
@@ -231,7 +234,9 @@ mostrado sem função, userdata nem metatable; a suíte a constrói com `love` a
    domínio no lugar do mostrado aprova sem provar o desenho (CampCrawler, D36). Nem o
    argumento de quem pediu o desenho: no Boomlitude, o `FAISCA tinta=` repetia a tinta pedida ao
    `emitir`, e a partícula plantada em branco passava nas passadas; o fato lê agora a cor do item
-   da lista contra a da raridade (5eebc66).
+   da lista contra a da raridade (5eebc66). E o `igual` que compara o mostrado com a mesma
+   função que o desenhou só prova a cópia: compare-o com as chaves que o domínio escolheu,
+   traduzidas à parte (e36be97).
 7. **A lista é autorrelato.** Desenho e toque vêm do mesmo código: uma conta de layout errada
    aprova os dois juntos. Fecha-se por fora (seção 3): a **amostra de pixel** prova que o render
    desenhou o que a lista diz; o **xdotool**, que o toque do sistema chega ao item (a conversão
@@ -494,6 +499,8 @@ mouse real e o robô de dentro não se misturam: o `mousemoved` do xdotool cai n
 arraste empurrado e muda o encaixe da carta na mão, e com ele o lance. A prova de fora do pairar
 move o mouse com o jogo parado depois do plano, mantido aberto por um robô de teclas com atraso
 que a run não alcança, e cobra antes, pela fila, o pairar do robô (Boomlitude 89f8c71).
+Uma tecla real chega ao `love.keypressed` sob Xvfb, sem gerenciador de janelas, por `xdotool
+windowfocus --sync <id> key F1` (medido no Boomlitude, f08e06a).
 
 **Texto medido.** Cada vista exporta os pares (chave do texto, caixa) que desenha; a bancada da
 passada com janela mede todos com a fonte real, em todo idioma e tamanho, e emite
@@ -506,7 +513,12 @@ cada quadro amostrado mede cada texto pela fonte real contra ele e contra a caix
 Quando a vista do jogo mede com a mesma fonte e a mesma conta do `TEXTO`, o `estouro=` vira
 tautologia: só reprova a caixa menor que o texto, e a folgada passa. Cobre também a igualdade com
 o que a vista deu (a altura da caixa igual à do texto medido): no Boomlitude, o jogo com o medidor
-aproximado deixava a dica 2 a 2,4 vezes mais alta, e tudo passava (92857b0).
+aproximado deixava a dica 2 a 2,4 vezes mais alta, e tudo passava (92857b0). O aproximado da
+suíte é o limite de cima: afirma que o texto cabe na caixa, mas não que um painel alto cabe na
+janela; para a composição, a suíte usa também um medidor de limite de baixo (uma linha por
+parágrafo), e o "cabe" fica com a medida da fonte real. A medida que agrega por painel conta os
+itens medidos e exige a conta, senão aprova vazia, e na falha mostra a saída do programa (Boomlitude,
+75c59cf, f08e06a e a0da581).
 
 **Captura para o autor.** Uma ferramenta abre o jogo sob Xvfb com o robô, nos tamanhos e
 arranjos da constante, e grava as capturas: o olhar fica repetível, sem substituir o aparelho.
