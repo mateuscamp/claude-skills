@@ -424,6 +424,18 @@ class Generate(Fixture):
         self.assertEqual(sorted(os.listdir(destination)),
                          ["ai-first-defold.skill", "ai-first-defold.zip", "alheio.antigo"])
 
+    def test_code_audit_has_no_loose_markdown_and_leftover_goes(self):
+        self.write("code-audit/SKILL.md", SKILL_MD.replace(b"ai-first-defold", b"code-audit"))
+        self.commit("code-audit")
+        destination = os.path.join(self.tmp, "destino")
+        os.makedirs(destination)
+        with open(os.path.join(destination, "code-audit-skill.md"), "wb") as handle:
+            handle.write(b"sobra\n")
+        _, result = self.generate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(sorted(os.listdir(destination)),
+                         ["ai-first-defold.skill", "ai-first-defold.zip", "code-audit.skill", "code-audit.zip"])
+
 
 if __name__ == "__main__":
     unittest.main()

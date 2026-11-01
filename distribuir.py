@@ -5,12 +5,11 @@ Skill é toda pasta de primeiro nível do ref que tem `SKILL.md`. Sem opção, g
 `--destino` (por padrão `~/Documentos/Skills`), para cada skill:
 
 - `<skill>.zip`, de `git archive --format=zip --prefix=<skill>/ <ref>:<skill>`;
-- `<skill>.skill/<skill>/`, de `git archive --prefix=<skill>/ <ref>:<skill> | tar -x`;
-- `code-audit-skill.md`, cópia do `SKILL.md` da code-audit.
+- `<skill>.skill/<skill>/`, de `git archive --prefix=<skill>/ <ref>:<skill> | tar -x`.
 
-O que difere é sobrescrito, sem guardar o anterior: toda versão está no histórico do git. Um
-`<nome>.antigo` deixado por versões anteriores deste script sai. Não toca em nenhuma outra entrada
-do destino.
+O que difere é sobrescrito, sem guardar o anterior: toda versão está no histórico do git. O que
+versões anteriores deste script geravam e ele não gera mais (`<nome>.antigo`,
+`code-audit-skill.md`) sai. Não toca em nenhuma outra entrada do destino.
 
 As Gerais são lições com uma fonte na raiz e uma cópia igual em cada skill que as usa (cada skill
 sai num zip próprio, então a cópia mora dentro dela), uma linha de SHARED_LESSONS para cada:
@@ -61,10 +60,11 @@ import zipfile
 from typing import NamedTuple
 
 CODEX_DESCRIPTION_MAX = 1024
-# Skill que também sai como .md solto no destino, com o nome que o documento de origem tinha.
-LOOSE_MARKDOWN = {"code-audit": "code-audit-skill.md"}
 # Cópia anterior que este script guardava até 2026-11-01; o git já guarda toda versão.
 LEGACY_BACKUP_SUFFIX = ".antigo"
+# Cópia solta do SKILL.md da code-audit, no caminho onde ela nasceu (22/09/2026), gerada até
+# 2026-11-01: ninguém mais lia o caminho, e o mesmo conteúdo está no zip e na pasta.
+LEGACY_LOOSE_FILES = ("code-audit-skill.md",)
 # Lições de jogo que valem em qualquer engine: uma fonte na raiz e uma cópia igual em cada skill
 # de motor. A lista é explícita: skill de motor nova entra acrescentando o nome aqui.
 GENERAL_LESSONS_SOURCE = "gerais-de-jogo.md"
@@ -368,10 +368,6 @@ def check_copies(repo, ref, skills, destination):
             (f"{skill}.zip", compare_zip(os.path.join(destination, f"{skill}.zip"), tree)),
             (f"{skill}.skill/", compare_folder(os.path.join(destination, f"{skill}.skill"), tree)),
         ]
-        if skill in LOOSE_MARKDOWN:
-            name = LOOSE_MARKDOWN[skill]
-            content = tree[f"{skill}/SKILL.md"][0]
-            targets.append((name, compare_file(os.path.join(destination, name), content)))
         problems += [f"{os.path.join(destination, n)} difere do {ref}: {why}" for n, why in targets if why]
     return problems
 
@@ -628,17 +624,13 @@ def generate_folder(args, skill, tree, workdir):
     install(new_path, final, workdir)
 
 
-def generate_markdown(args, skill, tree, workdir):
-    name = LOOSE_MARKDOWN[skill]
-    final, content = os.path.join(args.destino, name), tree[f"{skill}/SKILL.md"][0]
-    if compare_file(final, content) is None:
-        remove_legacy_backup(final)
-        print(f"igual: {final}")
-        return
-    new_path = os.path.join(workdir, name)
-    with open(new_path, "wb") as handle:
-        handle.write(content)
-    install(new_path, final, workdir)
+def remove_legacy_loose_files(destination):
+    """Apaga o que versões anteriores deste script geravam solto e ele não gera mais."""
+    for name in LEGACY_LOOSE_FILES:
+        for path in (os.path.join(destination, name), os.path.join(destination, name + LEGACY_BACKUP_SUFFIX)):
+            if os.path.lexists(path):
+                remove_entry(path)
+                print(f"apagado: {path}")
 
 
 def run_generate(args, skills):
@@ -656,10 +648,9 @@ def run_generate(args, skills):
             tree = expected_tree(args.repo, args.ref, skill)
             generate_zip(args, skill, tree, workdir)
             generate_folder(args, skill, tree, workdir)
-            if skill in LOOSE_MARKDOWN:
-                generate_markdown(args, skill, tree, workdir)
     finally:
         shutil.rmtree(workdir)
+    remove_legacy_loose_files(args.destino)
     remote_problems, note = check_remote(args.repo, args.ref)
     for problem in remote_problems:
         print(f"aviso: {problem}")
