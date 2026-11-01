@@ -11,8 +11,8 @@ silêncio propriedade desconhecida em `.tscn` e aceita chave errada em dicionár
 duas coisas: **como escrever** o projeto para que esses erros não nasçam, e **como verificar**
 para que os que nascerem virem reprovação antes de o agente dizer "terminei".
 
-O método geral (contrato, posse, determinismo, ADR, fitness function, risco) está na skill
-**jogos-ai-first**. Aqui fica o que é do motor e as lições de jogo dos projetos irmãos, na forma do
+O método de decisão (escolha de engine, experimento com critério de parada, risco) está na skill
+**jogos-ai-first**. Aqui ficam o contrato, a posse, o determinismo, o que é do motor e as lições de jogo dos projetos irmãos, na forma do
 motor.
 
 Arquivos desta skill:

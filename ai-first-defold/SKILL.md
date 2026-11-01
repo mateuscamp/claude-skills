@@ -12,8 +12,8 @@ atlas inexistente só falha quando aquele caminho roda; o headless às vezes par
 skill dá duas coisas: **como escrever** o projeto para que esses erros não nasçam, e **como
 verificar** para que os que nascerem virem reprovação antes de o agente dizer "terminei".
 
-O método geral (contrato, posse, determinismo, ADR, fitness function, risco) está na skill
-**jogos-ai-first**. Aqui fica o que é do motor e as lições de jogo dos projetos irmãos, na forma
+O método de decisão (escolha de engine, experimento com critério de parada, risco) está na skill
+**jogos-ai-first**. Aqui ficam o contrato, a posse, o determinismo, o que é do motor e as lições de jogo dos projetos irmãos, na forma
 do motor. A referência viva é o CampCrawler
 (ex-Mineboom, `~/defold/campcrawler`, D23–D27 no `IMPLEMENTATION_PLAN.md`); as armadilhas pagas antes estão no
 BomberBoom (`~/defold/bomberboom-df/docs/PEGADINHAS.md`).
