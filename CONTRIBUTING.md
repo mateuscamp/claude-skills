@@ -85,8 +85,9 @@ Gera as cópias de `~/Documentos/Skills` a partir do `main`, só com a bibliotec
 
 - `<skill>.zip` e `<skill>.skill/<skill>/` para cada pasta com `SKILL.md`, e o
   `code-audit-skill.md`;
-- o que difere vai antes para `<nome>.antigo`, e o `<nome>.antigo` que já existia sai (mesmo
-  feito à mão); nenhuma outra entrada de Documentos é tocada.
+- o que difere é sobrescrito, sem guardar o anterior: toda versão está no histórico do git. Um
+  `<nome>.antigo` deixado por versões anteriores do script sai; nenhuma outra entrada de
+  Documentos é tocada.
 - se as Gerais de jogo ou de Lua do `main` têm problema (seção acima), lista e recusa sem
   escrever nada.
 

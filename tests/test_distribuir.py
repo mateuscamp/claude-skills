@@ -400,6 +400,30 @@ class Generate(Fixture):
         zips = [n for n in os.listdir(destination) if n.endswith(".zip")] if os.path.isdir(destination) else []
         self.assertEqual(zips, [])
 
+    def test_regenerating_overwrites_without_keeping_previous(self):
+        self.generate()
+        self.write("ai-first-defold/SKILL.md", SKILL_MD + b"\nlinha nova\n")
+        self.commit("defold muda")
+        destination, result = self.generate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(sorted(os.listdir(destination)), ["ai-first-defold.skill", "ai-first-defold.zip"])
+        with zipfile.ZipFile(os.path.join(destination, "ai-first-defold.zip")) as archive:
+            self.assertIn(b"linha nova", archive.read("ai-first-defold/SKILL.md"))
+        folder_copy = os.path.join(destination, "ai-first-defold.skill", "ai-first-defold", "SKILL.md")
+        with open(folder_copy, "rb") as handle:
+            self.assertIn(b"linha nova", handle.read())
+
+    def test_removes_previous_copy_left_by_old_versions(self):
+        destination = os.path.join(self.tmp, "destino")
+        os.makedirs(os.path.join(destination, "ai-first-defold.skill.antigo", "ai-first-defold"))
+        for name in ("ai-first-defold.zip.antigo", "alheio.antigo"):
+            with open(os.path.join(destination, name), "wb") as handle:
+                handle.write(b"x")
+        _, result = self.generate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(sorted(os.listdir(destination)),
+                         ["ai-first-defold.skill", "ai-first-defold.zip", "alheio.antigo"])
+
 
 if __name__ == "__main__":
     unittest.main()
