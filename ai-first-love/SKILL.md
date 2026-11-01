@@ -460,6 +460,39 @@ veredito por passo. Regras:
   nada) teve o aperto caído no véu do fim do andar, e a soltura saiu como toque perdido, às vezes. O controle
   do `--tudo` que reprova mostra a linha que reprovou: sem ela, a instabilidade não se reproduz à mão.
 
+**Roteiro de passada, ao lado do robô.** O robô em código continua: a estratégia (a rota, o "perde até a tropa
+cair", a escolha que depende do estado) é Lua com teste. O roteiro é um acréscimo para a decisão pequena, a que
+hoje pede uma chave `bot_*` nova só para alcançar um estado (trocar o idioma, capturar o mesmo estado em vários
+idiomas, seguir quadro a quadro depois de um aviso). Ele é uma chave com passos em ordem: `toque:<id>` (o item da
+lista apresentada), `ate:<FATO>:<campo>=<valor>:<n>` (o fato do log, em até n quadros, com o n obrigatório),
+`quadros:<n>` e `captura`. Sem `if`, laço nem variável: pedir um deles quer dizer que o caso é estratégia, e vai ao
+robô. Regras:
+- validação estrita no boot, como a de toda chave: passo desconhecido, vazio ou com número ruim estoura com o
+  recebido e o esperado;
+- **o `ate` casa pelo nome do fato e por campos inteiros, nunca por padrão livre**: num protótipo, o
+  `ate MOEDA_SUMIU id=1` casou o `id=10` 481 quadros depois, e o roteiro passou provando outra coisa
+  (love-lua, experimento-sonda);
+- o id fora da lista apresentada, o `ate` que não casa na janela e o roteiro que sobra quando o robô acaba viram um
+  fato de falha que nomeia o passo (o número e o texto) e a janela pedida, nunca o quadro absoluto; a passada sai
+  sem `FIM`;
+- o toque sai no quadro em que o robô agiria, pelo mesmo `love.event.push` no centro do item; a espera e a captura
+  andam a cada quadro, sem tomar esse lugar. Fora dele, a volta cai em outros quadros, e a referência PNG não
+  bate;
+- o `love.run` e o adaptador de entrada não mudam: o laço passa ao robô as linhas de fato do quadro de antes, e a
+  captura entra pela mesma amostra que segura o quadro para a captura externa.
+
+No CampCrawler (b2c7fe4, PR #54, o piloto B do experimento-sonda do love-lua), o leitor tem 189 linhas. A passada
+em alemão, com os 21 passos no lugar da chave `bot_language`, aprovou com o mesmo veredito e a mesma PNG, em 0,93 a
+0,99× do tempo (mediana de 5, alternadas). Com o botão de idioma renomeado, o roteiro reprova com
+`ROTEIRO_FALHA passo=2 texto=toque:button_language motivo=fora_da_lista`, e a chave antiga cai num erro de Lua que
+não diz o passo. Seis mutantes caem: cinco na suíte, um na passada. O mesmo estado nos dez idiomas e o bruxo quadro
+a quadro (30 quadros seguidos) couberam numa abertura cada. Os limites medidos:
+- a luta pausada pede uma abertura por idioma, porque ali a vez é do robô;
+- o item presente que não pega o toque reprova sem nomear o passo;
+- o roteiro cabe no fato `CONFIG`, uns 3.900 bytes;
+- a repetição fica com quem chama: os 21 passos saem de um `for` no portão. Se o roteiro passar a pedir lógica, é
+  ali que ela aparece.
+
 **Amostra de pixel.** Numa passada com janela, `captureScreenshot` com a variante de função (que
 recebe o `ImageData` e não engole a falha), nos quadros `PRONTO` e no último. No centro e nas
 bordas de cada item marcado com `probe`, a medida segue o `kind`: `rect`, a cor; `image`, o
