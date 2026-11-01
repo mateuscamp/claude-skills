@@ -214,7 +214,7 @@ herda o raciocínio que produziu o erro.
 | Ferramenta | O que faz | Quando roda |
 |---|---|---|
 | code-audit | confere as alegações do diff com evidência, o vermelho dos testes novos numa cópia descartável e os riscos de cadeia (lockfile, workflow, symlink) | todo diff, antes do PR |
-| `/code-review` | caça defeito de correção no diff, no nível de esforço pedido | diff que toca domínio, fronteira de ADR ou dono de dado; nível high ou acima |
+| `/code-review` | caça defeito de correção no diff, no nível de esforço pedido | diff que toca domínio, fronteira de ADR ou dono de dado; no nível de esforço da sessão, nunca abaixo de high |
 
 - **A `/code-review` levanta, a code-audit confere.** Cada achado da revisão
   entra na code-audit como alegação a conferir, no formato da seção 4.1 dela, e
@@ -227,11 +227,20 @@ herda o raciocínio que produziu o erro.
 - **A `/code-review` é do Claude Code.** O Codex e o claude.ai não a têm; neles a
   code-audit roda sozinha, e o contrato do agente diz isso para ele não travar
   procurando a ferramenta.
-- **O nível mínimo se mede antes de virar regra.** A `/code-review` custa o que
-  o par custa, e só entra onde acrescenta ao que já roda. Para subir o nível ou
-  estendê-la a todo diff, rode-a no nível candidato em dois ou três PRs já
-  auditados pela code-audit: se não achar nada que a code-audit não achou, a
-  regra fica onde está.
+- **A revisão roda no esforço da sessão, com piso.** Quem revisa não pensa menos
+  do que quem escreveu: sessão em xhigh revisa em xhigh, em max revisa em max, e
+  o piso high segura o diff de risco numa sessão em medium. O nível vai sempre
+  explícito na chamada, porque a `/code-review` sem nível reaproveita o último
+  digitado, e é assim que uma sessão em max acaba revisada em high sem ninguém
+  decidir. O agente que não vê o nível da própria sessão pergunta ao humano; não
+  chuta. O `ultra` fica fora do espelho: roda na nuvem, é cobrado à parte e só o
+  humano o dispara.
+- **O piso e o escopo se medem antes de virar regra.** O espelho segue uma
+  decisão que o humano já tomou para aquela tarefa; o piso vale para toda
+  tarefa, por isso se mede. A `/code-review` custa o que o par custa, e só entra
+  onde acrescenta ao que já roda. Para subir o piso ou estendê-la a todo diff,
+  rode-a no nível candidato em dois ou três PRs já auditados pela code-audit: se
+  não achar nada que a code-audit não achou, a regra fica onde está.
 
 ## Enforcement
 
