@@ -62,6 +62,10 @@ mesmo dia.
 | Segurança | dependência vulnerável | `pip-audit` | CVE conhecido acima do severidade X |
 | Segurança | rota sem autenticação | teste que varre o router | rota pública não declarada |
 | Posse do dado | só o dono referencia a tabela | teste de grep sobre o nome da tabela | módulo estranho toca a tabela |
+| Fronteira de contexto | outro contexto só entra pela API publicada | teste `ast` (`CONTEXTOS` no asset) | contexto importa o interno do vizinho |
+| Anticorrupção | SDK do fornecedor só na ACL | teste `ast` (`ACL` no asset) | import do fornecedor fora de `acl/` |
+| Linguagem ubíqua | nome usa o termo do glossário do contexto | teste `ast` (`SINONIMOS_PROIBIDOS` no asset) | sinônimo proibido num nome |
+| Coesão de contexto | commits que tocam mais de um contexto | `git log --name-only`, agendado | proporção acima do alvo do ADR |
 | Contrato | consumidor e provedor concordam | `schemathesis`, snapshot de OpenAPI | schema mudou sem versionar |
 | Legibilidade por agente | tamanho de arquivo, nomes, tipos | teste próprio + `mypy` | ver seção abaixo |
 
@@ -86,6 +90,12 @@ DEPENDENCIAS_PERMITIDAS = {
     "interface":   {"aplicacao", "dominio"},
 }
 ```
+
+Com contextos delimitados (`references/dominio-e-contextos.md`), o grafo vale
+dentro de cada contexto, e entre contextos a única porta é `<contexto>/api.py`:
+`CONTEXTOS` e `API_PUBLICADA` no asset. O asset também resolve o import
+relativo, porque `from ..infra import x` passa por qualquer checagem que só olhe
+o import absoluto.
 
 Com `import-linter`, a mesma coisa em declaração:
 

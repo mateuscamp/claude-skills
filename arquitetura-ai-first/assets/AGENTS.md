@@ -21,14 +21,37 @@ Arquitetura: <estilo> · Quantum: <n> unidade(s) deployável(is). ADRs em `docs/
 
 Rodar `<make check>` antes de declarar qualquer tarefa concluída.
 
-## Fronteiras (ADR-<NNNN>)
+## Contextos e fronteiras (ADR-<NNNN>)
 
-- `dominio/` não importa nada de `infra/`, `interface/` ou de terceiros.
-- `aplicacao/` importa apenas `dominio/`.
-- `infra/` implementa as portas definidas em `dominio/`; a direção nunca inverte.
-- <Módulo X> é o único que escreve na tabela `<tabela>`. Ler de outro módulo: via
-  API pública de <X>, nunca por SQL direto.
-- Fronteira nova exige ADR antes do código.
+| Contexto | Subdomínio | Padrão | Testes |
+|---|---|---|---|
+| `<vendas>/` | núcleo | modelo de domínio, portas e adaptadores | pirâmide |
+| `<cadastro>/` | suporte | transaction script, 3 camadas | fluxo pela API, banco real |
+| `<pagamento>/` | genérico | `<produto>` atrás de `<pagamento>/acl/` | contrato do adaptador |
+
+- Outro contexto só entra por `<contexto>/api.py`. Nunca importar o interno de
+  outro contexto.
+- No núcleo: `dominio/` não importa `infra/`, `interface/` nem terceiros;
+  `aplicacao/` importa apenas `dominio/`; `infra/` implementa as portas de
+  `dominio/`. Uma transação grava um agregado só.
+- Regra de negócio do núcleo que não está escrita: perguntar, não inferir.
+- SDK de `<fornecedor>` só em `<contexto>/acl/`, que traduz para o modelo do
+  contexto.
+- Subdomínio genérico (auth, cobrança, criptografia) não se escreve: pergunte
+  qual produto usar.
+- <Contexto X> é o único que escreve na tabela `<tabela>`. Ler de outro
+  contexto: via `api.py` de <X>, nunca por SQL direto.
+- Contexto novo, ou padrão novo num contexto, exige ADR antes do código.
+
+## Linguagem
+
+| Contexto | Termo | Não usar |
+|---|---|---|
+| `<vendas>` | `<Pedido>` | `<Order>`, `<Compra>` |
+
+- Termo novo do negócio: perguntar o nome e acrescentar aqui antes do código.
+- O mesmo termo pode significar outra coisa em outro contexto; vale a linha do
+  contexto.
 
 ## Estilo de código
 
@@ -134,6 +157,8 @@ listado e ignora o resto.>
 - Timeout explícito em toda chamada de rede.
 - Retry com backoff em <quais integrações>.
 - Idempotência em <quais endpoints/consumidores>.
+- Evento sai pela outbox, gravado na mesma transação do estado. Nunca
+  `commit()` seguido de `publish()`.
 - Fallback quando <qual dependência> estiver indisponível.
 - Rate limit em <quais rotas>.
 
@@ -149,5 +174,5 @@ listado e ignora o resto.>
 <árvore de 10-15 linhas mostrando as fronteiras reais do projeto>
 ```
 
-Caminhos previsíveis: para `src/<camada>/<modulo>.py` existe
-`tests/<camada>/test_<modulo>.py`.
+Caminhos previsíveis: para `src/<contexto>/<camada>/<modulo>.py` existe
+`tests/<contexto>/<camada>/test_<modulo>.py`.

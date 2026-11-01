@@ -43,7 +43,9 @@ princípio que mais economiza contexto na prática.
 
 **3. Nome grepável.** "Pesquisável" passou a ser a propriedade mais importante
 de um nome. `UserRegistrationValidator` traz três matches; `Manager` traz
-cinquenta e obriga o agente a ler todos.
+cinquenta e obriga o agente a ler todos. No código de negócio, o nome certo é o
+termo do glossário do contexto: sinônimo divide os matches ao meio
+(`references/dominio-e-contextos.md`, "Linguagem ubíqua").
 
 **4. Comentário de proveniência — a inversão.** A regra antiga era que
 comentário em excesso é code smell. Ela se inverteu, e por um motivo estrutural:
