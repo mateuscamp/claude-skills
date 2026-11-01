@@ -3,10 +3,10 @@
 Ler na etapa 10, e sempre que o pedido for sobre como o agente deve mudar código
 neste repositório — "o agente escreve teste que sempre passa", "refatorou e
 quebrou", "como faço o agente trabalhar com teste primeiro", "vale usar dois
-agentes". Template pronto em `assets/AGENTS.md` (seções Ciclo de mudança,
-Refatoração e Par de agentes). Como os testes se distribuem entre as camadas
-(ciclo duplo com teste funcional, pirâmide, dublês, erro deliberado):
-`testes-em-camadas.md`.
+agentes", "quem revisa o diff". Template pronto em `assets/AGENTS.md` (seções
+Ciclo de mudança, Revisão antes do PR, Refatoração e Par de agentes). Como os
+testes se distribuem entre as camadas (ciclo duplo com teste funcional,
+pirâmide, dublês, erro deliberado): `testes-em-camadas.md`.
 
 A fronteira arquitetural protege a estrutura entre sessões. O ciclo de mudança
 protege o comportamento dentro de cada sessão. Sem o segundo, a fitness function
@@ -20,6 +20,7 @@ fica verde enquanto o sistema faz a coisa errada com a estrutura certa.
 - [Onde TDD se adapta](#onde-tdd-se-adapta)
 - [Refatoração](#refatoração)
 - [Par de agentes (opcional)](#par-de-agentes-opcional)
+- [Revisão antes do PR](#revisão-antes-do-pr)
 - [Enforcement](#enforcement)
 
 ## Por que TDD pesa mais com agente
@@ -201,6 +202,36 @@ mesma janela de contexto **não é par** — herda o raciocínio que produziu o 
 - **Custo declarado:** cerca do dobro de token e de tempo de parede. Usar onde
   erro custa caro (domínio, fronteira, dado); não em boilerplate, glue ou
   configuração.
+
+## Revisão antes do PR
+
+Sem segundo agente escrevendo, ainda sobra o navegador: a code-audit e, no
+Claude Code, a `/code-review`, rodadas num subagente ou noutra sessão com o
+diff, a especificação e os ADRs. Valem as regras do par acima: contexto
+separado, desacordo vira teste. Revisar na mesma janela em que o código nasceu
+herda o raciocínio que produziu o erro.
+
+| Ferramenta | O que faz | Quando roda |
+|---|---|---|
+| code-audit | confere as alegações do diff com evidência, o vermelho dos testes novos numa cópia descartável e os riscos de cadeia (lockfile, workflow, symlink) | todo diff, antes do PR |
+| `/code-review` | caça defeito de correção no diff, no nível de esforço pedido | diff que toca domínio, fronteira de ADR ou dono de dado; nível high ou acima |
+
+- **A `/code-review` levanta, a code-audit confere.** Cada achado da revisão
+  entra na code-audit como alegação a conferir, no formato da seção 4.1 dela, e
+  sai confirmado, parcial ou sem suporte. As duas em paralelo dão dois
+  relatórios sobrepostos, e quanto mais alto o nível da `/code-review`, mais
+  achados incertos ela traz de propósito: sem a conferência, eles chegam ao
+  humano como fato.
+- **Revisão não autoriza correção.** Nem o `--fix` da `/code-review` nem o modo
+  resolver da code-audit rodam sem o sim do humano.
+- **A `/code-review` é do Claude Code.** O Codex e o claude.ai não a têm; neles a
+  code-audit roda sozinha, e o contrato do agente diz isso para ele não travar
+  procurando a ferramenta.
+- **O nível mínimo se mede antes de virar regra.** A `/code-review` custa o que
+  o par custa, e só entra onde acrescenta ao que já roda. Para subir o nível ou
+  estendê-la a todo diff, rode-a no nível candidato em dois ou três PRs já
+  auditados pela code-audit: se não achar nada que a code-audit não achou, a
+  regra fica onde está.
 
 ## Enforcement
 

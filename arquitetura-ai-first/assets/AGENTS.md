@@ -75,6 +75,18 @@ Rodar `<make check>` antes de declarar qualquer tarefa concluída.
 - Exceção declarada, nunca silenciosa: spike em `<spikes/>` não é mergeado;
   código legado ganha teste de caracterização antes da mudança.
 
+## Revisão antes do PR
+
+- Todo diff: a code-audit, em modo auditoria. Ela confere o vermelho dos testes
+  novos numa cópia descartável.
+- Diff que toca <`dominio/`, fronteira de ADR, dono de dado>: antes dela, a
+  `/code-review` no nível high ou acima. A code-audit confere cada achado dela;
+  achado sem evidência não entra no relatório.
+- Sem a `/code-review` no ambiente (ela é do Claude Code), a code-audit sozinha.
+- Revisão em contexto separado (subagente ou outra sessão): o diff, a
+  especificação e os ADRs, nunca o raciocínio de quem implementou.
+- Achado não se corrige, nem por `--fix`, sem o sim do humano.
+
 ## Testes
 
 - F.I.R.S.T: rápido, independente, repetível, autoverificável, escrito antes.
