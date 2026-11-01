@@ -83,10 +83,10 @@ a linha deles.
 
 Gera as cópias de `~/Documentos/Skills` a partir do `main`, só com a biblioteca padrão do Python:
 
-- `<skill>.zip` e `<skill>.skill/<skill>/` para cada pasta com `SKILL.md`, e o
-  `code-audit-skill.md`;
-- o que difere é sobrescrito, sem guardar o anterior: toda versão está no histórico do git. Um
-  `<nome>.antigo` deixado por versões anteriores do script sai; nenhuma outra entrada de
+- `<skill>.zip` e `<skill>.skill/<skill>/` para cada pasta com `SKILL.md`;
+- o que difere é sobrescrito, sem guardar o anterior: toda versão está no histórico do git. O que
+  versões anteriores do script geravam e ele não gera mais (`<nome>.antigo` e o
+  `code-audit-skill.md`, a cópia solta do `SKILL.md` da code-audit) sai; nenhuma outra entrada de
   Documentos é tocada.
 - se as Gerais de jogo ou de Lua do `main` têm problema (seção acima), lista e recusa sem
   escrever nada.

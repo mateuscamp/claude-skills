@@ -19,8 +19,8 @@ Esta é uma adaptação das regras de `pr-audit`, `iss-audit` e
 `github-resolution` descritas no artigo de Fabio Akita. Não é a reprodução dos
 arquivos originais. A primeira versão, de 22/09/2026, nasceu como
 `~/Documentos/Skills/code-audit-skill.md` e é o primeiro commit deste arquivo
-(14aa026); aquela cópia passa a ser gerada daqui pelo `distribuir.py` do
-repositório das skills. A regra de TDD entrou em 2026-10-16, a pedido do autor.
+(14aa026). Aquela cópia solta foi gerada daqui pelo `distribuir.py` até
+2026-11-01; hoje a skill sai só como zip e pasta, como as outras. A regra de TDD entrou em 2026-10-16, a pedido do autor.
 
 ## 1. Escolher o modo e respeitar a autorização
 
