@@ -103,8 +103,11 @@ Rodar `<make check>` antes de declarar qualquer tarefa concluída.
 - Todo diff: a code-audit, em modo auditoria. Ela confere o vermelho dos testes
   novos numa cópia descartável.
 - Diff que toca <`dominio/`, fronteira de ADR, dono de dado>: antes dela, a
-  `/code-review` no nível high ou acima. A code-audit confere cada achado dela;
-  achado sem evidência não entra no relatório.
+  `/code-review` no nível de esforço desta sessão, nunca abaixo de high, com o
+  nível sempre explícito na chamada (sem ele, ela reaproveita o último
+  digitado). Não vê o nível da sessão? Pergunte; não chute. `ultra` só o humano
+  dispara. A code-audit confere cada achado dela; achado sem evidência não entra
+  no relatório.
 - Sem a `/code-review` no ambiente (ela é do Claude Code), a code-audit sozinha.
 - Revisão em contexto separado (subagente ou outra sessão): o diff, a
   especificação e os ADRs, nunca o raciocínio de quem implementou.

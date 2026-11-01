@@ -122,11 +122,11 @@ arquitetural.
     único de teste, formato de log e de erro, categorias de código defensivo
     exigidas, e o **ciclo de mudança**: TDD (vermelho visto falhando na
     asserção antes do código), refatoração com os dois chapéus separados, a
-    revisão antes do PR (code-audit em todo diff, `/code-review` high onde o
-    risco pede) e, se houver segundo agente, o par ping-pong. Com mais de uma
-    camada testável, o ciclo duplo: o teste funcional da história é o critério
-    de pronto. Curto, imperativo, orientado a ação — cada linha custa token em
-    toda iteração.
+    revisão antes do PR (code-audit em todo diff; `/code-review` onde o risco
+    pede, no esforço da sessão e nunca abaixo de high) e, se houver segundo
+    agente, o par ping-pong. Com mais de uma camada testável, o ciclo duplo: o
+    teste funcional da história é o critério de pronto. Curto, imperativo,
+    orientado a ação — cada linha custa token em toda iteração.
     Regras e template: `references/legibilidade-para-agentes.md` ·
     `references/tdd-e-refatoracao.md` · `references/testes-em-camadas.md` · `assets/AGENTS.md`.
 
