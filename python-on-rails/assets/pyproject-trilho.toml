@@ -53,6 +53,8 @@ failOnWarnings = true             # sem isso, warning sai com código 0 e o agen
 [tool.pytest.ini_options]
 addopts = ["--strict-markers", "--strict-config", "-ra"]
 xfail_strict = true          # xfail que passa reprova: não vira esconderijo
+# Sem o registro, `pytest -m "not e2e"` do portão não roda nada e sai com 4 (--strict-markers).
+markers = ["e2e: teste funcional (navegador ou servidor vivo); fora do make check, roda no make e2e"]
 testpaths = ["tests"]
 filterwarnings = ["error"]   # depreciação vira falha hoje, não quebra amanhã
 

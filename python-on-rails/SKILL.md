@@ -1,6 +1,6 @@
 ---
 name: python-on-rails
-description: Trilhos AI-first para projeto Python escrito por agente - o que vale em todo projeto (uv com lock, ruff, basedpyright estrito, pytest com TDD, portão único `make check` no agente, no hook Stop e no CI, dados tipados, erros explícitos, config validada na partida, logging, uv audit, supressão só com motivo), o padrão com desvio declarado (src/, domínio puro com import-linter), o que se decide por projeto (concorrência, Hypothesis, formato de log) e as referências de FastAPI e Django. Use sempre que o projeto for Python maior que um script - novo, existente ou auditoria - e quando o assunto for pyproject, uv, ruff, basedpyright, pyright, ty, Any, type ignore, noqa, pytest, Hypothesis, portão, make check, pydantic, dict solto, except amplo, variável de ambiente, logging, print, vulnerabilidade, import-linter, asyncio, FastAPI, Django ou "o agente desligou a regra para passar". Complementa a arquitetura-ai-first (método, ADR, TDD) e a code-audit (auditoria).
+description: Trilhos AI-first para projeto Python escrito por agente - o que vale em todo projeto (uv com lock, ruff, basedpyright estrito, pytest com TDD, portão único `make check` no agente, no hook Stop e no CI, dados tipados, erros explícitos, config validada na partida, logging, uv audit, supressão só com motivo), o padrão com desvio declarado (src/, domínio puro com import-linter), o que se decide por projeto (concorrência, Hypothesis, formato de log) e as referências de FastAPI e Django. Use sempre que o projeto for Python maior que um script - novo, existente ou auditoria - e quando o assunto for pyproject, uv, ruff, basedpyright, pyright, ty, Any, type ignore, noqa, pytest, Hypothesis, portão, make check, pydantic, dict solto, except amplo, mock, teste funcional, e2e, variável de ambiente, logging, print, vulnerabilidade, import-linter, asyncio, FastAPI, Django ou "o agente desligou a regra para passar". Complementa a arquitetura-ai-first (método, ADR, TDD) e a code-audit (auditoria).
 ---
 
 # Python on Rails
@@ -76,7 +76,7 @@ desvios não declarados entram como achado, e os declarados se conferem contra o
 | basedpyright no modo `recommended`, com `failOnWarnings`. Sem `Any`, sem `dict`/`list` sem parâmetro de tipo | portão |
 | Supressão só com regra nomeada e motivo na mesma linha: `# pyright: ignore[regra]  # motivo: ...` | ruff `PGH`, basedpyright e grep do portão |
 | pytest com TDD visto falhar, xfail estrito e warning virando erro. O ciclo está na arquitetura-ai-first | portão, code-audit |
-| Portão único: `make check` no agente, no hook Stop e no CI, o mesmo comando | hook Stop, CI |
+| Portão único: `make check` no agente, no hook Stop e no CI, o mesmo comando. Os testes funcionais (`e2e`) ficam no `make e2e`, obrigatório no CI | hook Stop, CI |
 | Dados tipados: nenhum `dict` solto atravessando funções. Borda com validação, miolo com `dataclass(frozen=True, slots=True)` | basedpyright (`reportAny`, `reportUnknown*`) |
 | Erros explícitos: exceção de domínio própria, sem `except` amplo, `raise from`, `match` exaustivo com `assert_never` | ruff `BLE`, `S110`, `TRY` e basedpyright |
 | Config lida num lugar, na partida, validada num objeto tipado. Segredo como `SecretStr`, nunca no log | revisão: só um módulo lê o ambiente |
@@ -144,6 +144,7 @@ Ler sob demanda, nunca todas de uma vez:
 |---|---|
 | `references/padroes-de-codigo.md` | Escrever ou revisar código: dados tipados, erros, config, logging, domínio puro |
 | `references/desvios-e-decisoes.md` | Sair de um padrão ou tomar uma decisão de projeto |
+| `references/testes.md` | Teste funcional, marcador `e2e`, dublê, `Mock`, Playwright, teste sumido da coleta |
 | `references/concorrencia.md` | O projeto usa ou vai usar asyncio, threads ou processos |
 | `references/fastapi.md` | Projeto FastAPI |
 | `references/django.md` | Projeto Django |

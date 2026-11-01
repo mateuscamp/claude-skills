@@ -41,7 +41,11 @@ fronteiras). Curto e imperativo: cada linha é relida a cada query. Apagar o que
 
 ### Testes
 
-- pytest. Fake de borda (relógio, rede, disco) injetado por `Protocol`, nunca `mock.patch` do
-  próprio módulo sob teste.
+- pytest. Fake de borda (relógio, rede, disco) é uma classe tipada que cumpre o `Protocol` e
+  guarda o que recebeu, injetada. `Mock` reprova no portão (`reportAny`): não suprima para usar.
+- Nunca trocar por dublê o que está definido no módulo sob teste.
+- Teste funcional: `@pytest.mark.e2e`, roda com `make e2e`. O da história em curso leva
+  `@pytest.mark.xfail(raises=AssertionError, reason="FT em curso: <história>")`, um por vez.
+- Sem `time.sleep` em teste. Esperar com `expect` do Playwright ou um helper com prazo constante.
 - Hypothesis onde a regra vale para toda entrada (cálculo, parser, ida e volta de serialização).
 - Warning em teste é erro (`filterwarnings = error`): corrija a causa, não filtre.

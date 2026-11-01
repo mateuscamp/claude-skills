@@ -4,7 +4,9 @@ Ler na etapa 10, e sempre que o pedido for sobre como o agente deve mudar códig
 neste repositório — "o agente escreve teste que sempre passa", "refatorou e
 quebrou", "como faço o agente trabalhar com teste primeiro", "vale usar dois
 agentes". Template pronto em `assets/AGENTS.md` (seções Ciclo de mudança,
-Refatoração e Par de agentes).
+Refatoração e Par de agentes). Como os testes se distribuem entre as camadas
+(ciclo duplo com teste funcional, pirâmide, dublês, erro deliberado):
+`testes-em-camadas.md`.
 
 A fronteira arquitetural protege a estrutura entre sessões. O ciclo de mudança
 protege o comportamento dentro de cada sessão. Sem o segundo, a fitness function
@@ -53,6 +55,12 @@ fica verde enquanto o sistema faz a coisa errada com a estrutura certa.
    comportamento (seção abaixo). Rodar a suíte a cada passo.
 4. **Fechar o ciclo.** `make check` verde e commit. Commit por ciclo, ou por
    grupo pequeno de ciclos, é o ponto de volta quando o próximo der errado.
+   Antes do commit, o erro deliberado (`testes-em-camadas.md`): uma versão
+   errada plausível tem que derrubar algum teste.
+
+Com teste funcional, este é o ciclo **interno**: o funcional da história fica
+vermelho por vários ciclos e só ele diz quando a história está pronta
+(`testes-em-camadas.md`, "Ciclo duplo").
 
 Bug segue o mesmo ciclo: **primeiro** o teste de regressão que reproduz o
 defeito, visto falhando; depois a correção. Correção sem o vermelho prévio não
@@ -69,15 +77,25 @@ São as saídas que o agente encontra quando o verde demora:
 - Editar a asserção para casar com o resultado obtido. Se o teste estava
   errado, isso é uma decisão: dizer no relatório, corrigir o teste e voltar ao
   vermelho.
-- `skip`, `xfail`, comentar ou apagar teste para ficar verde.
+- `skip`, `xfail`, comentar ou apagar teste para ficar verde. Renomear o teste
+  para fora da coleta (`_test_x`, `xtest_x`, `DONT_test_x`) é o mesmo, e escapa
+  do grep. A única exceção é o teste funcional em curso, com falha esperada
+  estrita e restrita à asserção (`testes-em-camadas.md`).
 - Asserção enfraquecida: `assert resultado` no lugar de
   `assert resultado == esperado`, `assert len(x) > 0` no lugar do conteúdo.
-- Mock do próprio sujeito sob teste, ou de função do mesmo módulo. Fake é para
-  a borda (rede, banco, relógio, filesystem), injetado — nunca para o que está
-  sendo testado.
+- Trocar por dublê o próprio sujeito sob teste, ou uma função **definida** no
+  mesmo módulo. Fake é para a borda (rede, banco, relógio, filesystem),
+  injetado — nunca para o que está sendo testado. Substituir o nome que o módulo
+  importou de uma borda é outra coisa: é ali que um patch deve mirar. Dublê
+  entre camadas do próprio código só como desvio declarado
+  (`testes-em-camadas.md`, "Dublês").
 - `try/except` dentro do teste engolindo a falha.
 - Teste que depende da ordem, do relógio real ou de semente aleatória não
   fixada.
+- Espera fixa (`sleep`) em teste: espera explícita com prazo numa constante, e
+  aumentar o prazo é decisão declarada.
+- Teste de constante: asserção que reafirma um valor literal do código ou o
+  texto literal de um template, sem lógica no meio.
 
 ## Onde TDD se adapta
 
@@ -85,7 +103,8 @@ TDD não é dogma; exceção existe, mas é **declarada**, nunca silenciosa.
 
 | Situação | Adaptação |
 |---|---|
-| Spike exploratório (API desconhecida, protótipo de viabilidade) | Branch ou diretório marcado como spike. Aprendido o caminho, o código é descartado e reescrito com o ciclo. Spike não é mergeado. |
+| Spike exploratório (API desconhecida, protótipo de viabilidade) | Branch ou diretório marcado como spike. Aprendido o caminho, o código é descartado e reescrito com o ciclo. Spike não é mergeado. Roteiro do de-spike em `testes-em-camadas.md`. |
+| Teste funcional da história, vermelho por vários ciclos | Falha esperada estrita, restrita à asserção, com motivo que nomeia a história. Um por vez. `testes-em-camadas.md`. |
 | Código legado sem teste | Teste de **caracterização** primeiro (fixa o comportamento atual, inclusive o estranho), depois a mudança com o ciclo. |
 | Integração com infra real (banco, fila, API externa) | Domínio com TDD puro atrás de porta; o adaptador ganha teste de contrato contra a infra real, em job separado. |
 | Saída visual ou textual grande | Teste de aprovação/snapshot, com o snapshot revisado por humano na primeira vez. |
@@ -194,8 +213,9 @@ relatório.
 | Teste junto com código | todo PR que muda `src/` muda `tests/` | atômica, acionada no PR | `src/` mudou e `tests/` não, sem rótulo `refactor` |
 | Teste sem dente | mutation testing (`mutmut`, `cosmic-ray`, Stryker em TS) | holística, CI agendado | mutation score abaixo do alvo, ou caiu em relação à última medição |
 | Teste desligado | grep por `skip`/`xfail`/`.only` | atômica, pre-commit e CI | ocorrência sem motivo e issue no mesmo marcador |
+| Teste sumido da coleta | contagem de testes coletados contra a da base do PR (`pytest --collect-only -q`) | atômica, acionada no PR | a contagem caiu e o PR não apaga teste de forma declarada |
 | Refatoração pura | commit `refactor:` não altera asserção | atômica, acionada no PR | diff de `tests/` com linha de `assert` alterada |
-| Cobertura do diff | `diff-cover` sobre o relatório de cobertura | atômica, CI | linhas novas abaixo de N% cobertas |
+| Cobertura do diff | `diff-cover` sobre o relatório de cobertura **de ramo** | atômica, CI | linhas ou ramos novos abaixo de N% cobertos |
 
 Mutation testing é a única dessas que mede o que importa — se os testes pegam
 uma mudança de comportamento. Cobertura mede só se a linha rodou. Por isso

@@ -40,7 +40,8 @@ if grep -q '^\[tool.importlinter\]' pyproject.toml; then
 fi
 
 etapa "testes"
-uv run --locked pytest
+# Os funcionais (`e2e`) ficam no `make e2e`: navegador deixaria o hook Stop lento demais.
+uv run --locked pytest -m "not e2e"
 
 if ! $rapido; then
   etapa "dependências com vulnerabilidade conhecida"
