@@ -8,8 +8,9 @@ Skill é toda pasta de primeiro nível do ref que tem `SKILL.md`. Sem opção, g
 - `<skill>.skill/<skill>/`, de `git archive --prefix=<skill>/ <ref>:<skill> | tar -x`;
 - `code-audit-skill.md`, cópia do `SKILL.md` da code-audit.
 
-Antes de trocar o que difere, guarda o anterior em `<nome>.antigo`; um `<nome>.antigo` que já
-exista sai, feito por este script ou à mão. Não toca em nenhuma outra entrada do destino.
+O que difere é sobrescrito, sem guardar o anterior: toda versão está no histórico do git. Um
+`<nome>.antigo` deixado por versões anteriores deste script sai. Não toca em nenhuma outra entrada
+do destino.
 
 As Gerais são lições com uma fonte na raiz e uma cópia igual em cada skill que as usa (cada skill
 sai num zip próprio, então a cópia mora dentro dela), uma linha de SHARED_LESSONS para cada:
@@ -62,7 +63,8 @@ from typing import NamedTuple
 CODEX_DESCRIPTION_MAX = 1024
 # Skill que também sai como .md solto no destino, com o nome que o documento de origem tinha.
 LOOSE_MARKDOWN = {"code-audit": "code-audit-skill.md"}
-BACKUP_SUFFIX = ".antigo"
+# Cópia anterior que este script guardava até 2026-11-01; o git já guarda toda versão.
+LEGACY_BACKUP_SUFFIX = ".antigo"
 # Lições de jogo que valem em qualquer engine: uma fonte na raiz e uma cópia igual em cada skill
 # de motor. A lista é explícita: skill de motor nova entra acrescentando o nome aqui.
 GENERAL_LESSONS_SOURCE = "gerais-de-jogo.md"
@@ -570,40 +572,48 @@ def run_check_general(args):
 # --- geração -----------------------------------------------------------------------------------
 
 def remove_entry(path):
-    """Apaga um .antigo gerado por este script: arquivo, link ou pasta (sem seguir link)."""
+    """Apaga uma entrada deste script no destino: arquivo, link ou pasta (sem seguir link)."""
     if os.path.islink(path) or os.path.isfile(path):
         os.remove(path)
     elif os.path.isdir(path):
         shutil.rmtree(path)
 
 
-def install(new_path, final):
-    """Põe new_path em final; o que havia em final vira final.antigo."""
-    backup = final + BACKUP_SUFFIX
-    if os.path.lexists(final):
+def remove_legacy_backup(final):
+    """Apaga o final.antigo que versões anteriores deste script deixaram."""
+    backup = final + LEGACY_BACKUP_SUFFIX
+    if os.path.lexists(backup):
         remove_entry(backup)
-        os.rename(final, backup)
-        print(f"escrito: {final} (o anterior ficou em {backup})")
-    else:
-        print(f"escrito: {final}")
+        print(f"apagado: {backup}")
+
+
+def install(new_path, final, workdir):
+    """Põe new_path em final; o que havia em final vai para a pasta de trabalho e sai com ela."""
+    remove_legacy_backup(final)
+    if os.path.lexists(final):
+        # Renomear em vez de apagar antes: final nunca fica ausente por mais que dois renames.
+        os.rename(final, os.path.join(workdir, os.path.basename(final) + ".anterior"))
     os.rename(new_path, final)
+    print(f"escrito: {final}")
 
 
 def generate_zip(args, skill, tree, workdir):
     final = os.path.join(args.destino, f"{skill}.zip")
     if compare_zip(final, tree) is None:
+        remove_legacy_backup(final)
         print(f"igual: {final}")
         return
     new_path = os.path.join(workdir, f"{skill}.zip")
     content = git(args.repo, "archive", "--format=zip", f"--prefix={skill}/", f"{args.ref}:{skill}").stdout
     with open(new_path, "wb") as handle:
         handle.write(content)
-    install(new_path, final)
+    install(new_path, final, workdir)
 
 
 def generate_folder(args, skill, tree, workdir):
     final = os.path.join(args.destino, f"{skill}.skill")
     if compare_folder(final, tree) is None:
+        remove_legacy_backup(final)
         print(f"igual: {final}")
         return
     new_path = os.path.join(workdir, f"{skill}.skill")
@@ -615,19 +625,20 @@ def generate_folder(args, skill, tree, workdir):
     archive.stdout.close()
     if archive.wait() != 0 or extract.returncode != 0:
         sys.exit(f"erro: git archive | tar -x da skill {skill} falhou")
-    install(new_path, final)
+    install(new_path, final, workdir)
 
 
 def generate_markdown(args, skill, tree, workdir):
     name = LOOSE_MARKDOWN[skill]
     final, content = os.path.join(args.destino, name), tree[f"{skill}/SKILL.md"][0]
     if compare_file(final, content) is None:
+        remove_legacy_backup(final)
         print(f"igual: {final}")
         return
     new_path = os.path.join(workdir, name)
     with open(new_path, "wb") as handle:
         handle.write(content)
-    install(new_path, final)
+    install(new_path, final, workdir)
 
 
 def run_generate(args, skills):
