@@ -11,6 +11,10 @@ agente e lido por agente. Duas disciplinas costuradas: a **decisão registrada**
 (o que impede a erosão entre uma sessão e a próxima). A saída é sempre uma
 recomendação, com o custo declarado e a condição que a inverte.
 
+A auditoria de diff, PR e issue, inclusive a conferência do teste visto falhar,
+fica na skill **code-audit**. Aqui fica quando ela roda: na fitness function
+que esta skill escreve (etapa 9) e no contrato do agente (etapa 10).
+
 ## Premissas que mudam o desenho
 
 1. **Não existe best practice, existe trade-off.** Toda opção paga em alguma
@@ -101,17 +105,22 @@ arquitetural.
    onde roda (pre-commit, CI, produção), e a condição exata de falha. Se não dá
    para automatizar, escrever a checagem manual com cadência e responsável.
    Decisão sem enforcement é intenção — o agente vai violá-la na terceira sessão
-   sem nenhuma má-fé. Catálogo por característica, com código:
+   sem nenhuma má-fé. Quando a checagem entra no repositório nesta sessão, a
+   code-audit confere o vermelho dela (seção 4.4 da code-audit) antes de a
+   decisão fechar: fitness function que nunca reprovou não é enforcement.
+   Catálogo por característica, com código:
    `references/fitness-functions.md` · `assets/test_arquitetura.py` · `assets/workflow-arquitetura.yml`.
 
 10. **Traduzir para o contrato do agente.** Converter a fronteira em regras no
     `AGENTS.md`/`CLAUDE.md`: quem pode importar quem, nomes grepáveis, comando
     único de teste, formato de log e de erro, categorias de código defensivo
     exigidas, e o **ciclo de mudança**: TDD (vermelho visto falhando na
-    asserção antes do código), refatoração com os dois chapéus separados e, se
-    houver segundo agente, o par ping-pong. Com mais de uma camada testável,
-    o ciclo duplo: o teste funcional da história é o critério de pronto. Curto,
-    imperativo, orientado a ação — cada linha custa token em toda iteração.
+    asserção antes do código), refatoração com os dois chapéus separados, a
+    revisão antes do PR (code-audit em todo diff, `/code-review` high onde o
+    risco pede) e, se houver segundo agente, o par ping-pong. Com mais de uma
+    camada testável, o ciclo duplo: o teste funcional da história é o critério
+    de pronto. Curto, imperativo, orientado a ação — cada linha custa token em
+    toda iteração.
     Regras e template: `references/legibilidade-para-agentes.md` ·
     `references/tdd-e-refatoracao.md` · `references/testes-em-camadas.md` · `assets/AGENTS.md`.
 
@@ -213,7 +222,7 @@ Ler sob demanda, nunca todas de uma vez:
 | `references/adr.md` | Etapa 8 — registrar, numerar, substituir |
 | `references/fitness-functions.md` | Etapa 9 — converter driver em checagem executável |
 | `references/legibilidade-para-agentes.md` | Etapa 10 — regras do repo para o agente |
-| `references/tdd-e-refatoracao.md` | Etapa 10 — ciclo TDD, refatoração, par de agentes e o enforcement deles |
+| `references/tdd-e-refatoracao.md` | Etapa 10 — ciclo TDD, refatoração, par de agentes, revisão antes do PR e o enforcement deles |
 | `references/testes-em-camadas.md` | Etapa 10 — ciclo duplo com teste funcional, pirâmide, onde cada camada roda, dublês, erro deliberado, spike |
 
 Assets prontos para copiar: `assets/ADR-template.md`, `assets/AGENTS.md`,
