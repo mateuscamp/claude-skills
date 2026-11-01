@@ -64,6 +64,9 @@ How the repository itself is maintained (branches, generated copies, the Codex l
 - `jogos-ai-first` and `arquitetura-ai-first` distill their decision method from *Fundamentals of
   Software Architecture* and *Software Architecture: The Hard Parts* (Richards, Ford, Sadalage,
   Dehghani).
+- The layered-testing references of `arquitetura-ai-first` and `python-on-rails` (double-loop TDD,
+  the test pyramid, test doubles, functional tests) adapt *Test-Driven Development with Python*,
+  3rd edition (Harry Percival), freely readable at obeythetestinggoat.com.
 - `code-audit` adapts the `pr-audit`, `iss-audit` and `github-resolution` rules described in an
   article by Fabio Akita; it is an adaptation, not a copy of the original files.
 

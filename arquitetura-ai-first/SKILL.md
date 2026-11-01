@@ -1,6 +1,6 @@
 ---
 name: arquitetura-ai-first
-description: Governa decisão de arquitetura em projeto backend ou full stack construído com agentes de IA — extrai drivers antes de tecnologia, mede o quantum atual, faz análise de trade-off sobre as dimensões emaranhadas, fecha em ADR numerado, converte cada decisão em fitness function executável no CI e traduz a fronteira resultante em regra no AGENTS.md que o agente relê a cada iteração, inclusive o ciclo TDD e de refatoração. Use sempre que o usuário for iniciar, estruturar, revisar ou justificar a estrutura de um projeto de software — "como estruturo esse projeto", "monólito ou microserviço", "vale separar esse serviço", "qual banco uso", "fila ou chamada direta", "como divido os módulos", "esse acoplamento me incomoda", "isso escala?", "escreve o AGENTS.md desse repo", "o agente está fazendo bagunça no projeto", "o agente escreve teste que sempre passa", "TDD com agente" — inclusive quando ele não usar as palavras arquitetura, trade-off, ADR ou fitness function.
+description: Governa decisão de arquitetura em projeto backend ou full stack construído com agentes de IA — extrai drivers antes de tecnologia, mede o quantum atual, faz análise de trade-off sobre as dimensões emaranhadas, fecha em ADR numerado, converte cada decisão em fitness function executável no CI e traduz a fronteira resultante em regra no AGENTS.md que o agente relê a cada iteração, inclusive o ciclo TDD e de refatoração. Use sempre que o usuário for iniciar, estruturar, revisar ou justificar a estrutura de um projeto de software — "como estruturo esse projeto", "monólito ou microserviço", "vale separar esse serviço", "qual banco uso", "fila ou chamada direta", "como divido os módulos", "esse acoplamento me incomoda", "isso escala?", "escreve o AGENTS.md desse repo", "o agente está fazendo bagunça no projeto", "o agente escreve teste que sempre passa", "TDD com agente", "mock demais", "teste ponta a ponta" — inclusive quando ele não usar as palavras arquitetura, trade-off, ADR ou fitness function.
 ---
 
 # Arquitetura AI-first
@@ -109,9 +109,11 @@ arquitetural.
     único de teste, formato de log e de erro, categorias de código defensivo
     exigidas, e o **ciclo de mudança**: TDD (vermelho visto falhando na
     asserção antes do código), refatoração com os dois chapéus separados e, se
-    houver segundo agente, o par ping-pong. Curto, imperativo, orientado a
-    ação — cada linha custa token em toda iteração. Regras e template:
-    `references/legibilidade-para-agentes.md` · `references/tdd-e-refatoracao.md` · `assets/AGENTS.md`.
+    houver segundo agente, o par ping-pong. Com mais de uma camada testável,
+    o ciclo duplo: o teste funcional da história é o critério de pronto. Curto,
+    imperativo, orientado a ação — cada linha custa token em toda iteração.
+    Regras e template: `references/legibilidade-para-agentes.md` ·
+    `references/tdd-e-refatoracao.md` · `references/testes-em-camadas.md` · `assets/AGENTS.md`.
 
 11. **Próximo passo único.** Uma tarefa para a próxima sessão. Uma. Lista de
     próximos passos equivale a nenhum próximo passo.
@@ -212,6 +214,7 @@ Ler sob demanda, nunca todas de uma vez:
 | `references/fitness-functions.md` | Etapa 9 — converter driver em checagem executável |
 | `references/legibilidade-para-agentes.md` | Etapa 10 — regras do repo para o agente |
 | `references/tdd-e-refatoracao.md` | Etapa 10 — ciclo TDD, refatoração, par de agentes e o enforcement deles |
+| `references/testes-em-camadas.md` | Etapa 10 — ciclo duplo com teste funcional, pirâmide, onde cada camada roda, dublês, erro deliberado, spike |
 
 Assets prontos para copiar: `assets/ADR-template.md`, `assets/AGENTS.md`,
 `assets/test_arquitetura.py`, `assets/workflow-arquitetura.yml`.

@@ -107,3 +107,5 @@ para essa extração vai escrito no ADR do desvio.
 - `pytest-django` com `@pytest.mark.django_db` só nos testes que tocam o banco. O teste de
   regra de domínio não precisa de banco, e isso é o sinal de que a regra está no lugar certo.
 - Fixture de dados criada no teste, não por `fixtures/*.json` compartilhado *(prática)*.
+- E-mail: a fixture `mailoutbox`, não patch. O settings precisa de `MAILERS` no Django 6.1, ou
+  o aviso de depreciação reprova o teste. Teste funcional com `live_server`: `references/testes.md`.

@@ -14,6 +14,8 @@ Arquitetura: <estilo> · Quantum: <n> unidade(s) deployável(is). ADRs em `docs/
 
 - Setup: `<scripts/bootstrap.sh>` — idempotente, roda em máquina limpa.
 - Testes: `<make test>` — headless, sem setup manual, sem credencial.
+- Testes funcionais: `<make e2e>` — fora do hook Stop; sempre no CI e antes do
+  commit que fecha a história.
 - Checagem completa (lint + tipos + fronteiras): `<make check>`.
 - Rodar local: `<make dev>`.
 
@@ -58,10 +60,17 @@ Rodar `<make check>` antes de declarar qualquer tarefa concluída.
    suíte inteira.
 3. Refatorar com a suíte verde (seção abaixo). Depois `<make check>` e commit.
 
+- Antes do commit, erro deliberado: troque a implementação por uma versão errada
+  plausível. Se nenhum teste falha, falta teste.
+- História com teste funcional: ele é escrito primeiro e é o critério de pronto.
+  Enquanto vermelho, fica com falha esperada estrita, restrita à asserção, e o
+  motivo nomeando a história. Um por vez.
+
 - Bug: primeiro o teste de regressão que reproduz, visto falhando; depois o fix.
 - O relatório da tarefa mostra a linha de falha do vermelho e o resumo do verde.
-- Proibido para ficar verde: mudar asserção, `skip`/`xfail`, apagar teste,
-  asserção mais fraca, mockar o próprio sujeito sob teste, `try/except` no teste.
+- Proibido para ficar verde: mudar asserção, `skip`/`xfail`, apagar ou renomear
+  teste para fora da coleta, asserção mais fraca, mockar o próprio sujeito sob
+  teste, `try/except` no teste, `sleep` fixo, aumentar prazo de espera sem dizer.
   Teste estava errado? Dizer no relatório e voltar ao vermelho.
 - Exceção declarada, nunca silenciosa: spike em `<spikes/>` não é mergeado;
   código legado ganha teste de caracterização antes da mudança.
@@ -70,7 +79,10 @@ Rodar `<make check>` antes de declarar qualquer tarefa concluída.
 
 - F.I.R.S.T: rápido, independente, repetível, autoverificável, escrito antes.
 - I/O externo (API, banco, filesystem, relógio) com fake nomeado e injetado, não
-  com stub inline. Nunca fake do que está sendo testado.
+  com stub inline. Nunca fake do que está sendo testado. Dublê entre camadas do
+  próprio código só com o motivo no docstring e a suposição testada embaixo.
+- Setup maior que o teste ou muitos dublês: refatore o código, não o teste.
+- Não teste constante nem texto literal de template.
 - A suíte inteira roda em menos de <N> segundos. Passou disso, é bug de teste.
 
 ## Refatoração
