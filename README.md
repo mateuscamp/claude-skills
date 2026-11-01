@@ -31,12 +31,13 @@ The engine skills share two single-source lesson files ([`gerais-de-jogo.md`](ge
 and [`gerais-de-lua.md`](gerais-de-lua.md)) that [`distribuir.py`](distribuir.py) copies into
 each skill and checks for drift, with its own test suite in [`tests/`](tests/).
 
-### Software architecture and code review
+### Software engineering
 
 | Skill | What it does |
 |---|---|
 | [`arquitetura-ai-first`](arquitetura-ai-first/SKILL.md) | Architecture decisions for agent-built backends and full-stack apps: drivers before technology, trade-off analysis, numbered ADRs, each decision turned into an executable fitness function in CI and a rule in `AGENTS.md`, including TDD and refactoring with an agent. |
 | [`code-audit`](code-audit/SKILL.md) | Audits PRs, local diffs and bug reports with verifiable evidence; evidence outranks the author's description, even when the author is another agent. Fixing is a separate mode that requires explicit approval. |
+| [`python-on-rails`](python-on-rails/SKILL.md) | Rails for agent-written Python: what holds in every project (uv with a lockfile, a fixed ruff rule set, strict basedpyright that fails on warnings, pytest with tests seen failing first, a single `make check` gate shared by the agent, the Stop hook and CI, typed data, explicit errors, config validated at startup, dependency audit, suppressions only with a written reason), what is a default with a declared exit (`src/` layout, a pure domain enforced by import-linter), what each project decides, and FastAPI and Django references, all measured on throwaway projects. |
 
 ### Fiction editing
 
@@ -73,8 +74,8 @@ How the repository itself is maintained (branches, generated copies, the Codex l
 ## Resumo em português
 
 Skills próprias do Claude Code, escritas em português e usadas no dia a dia. Quatro são de jogo
-feito por agente (`jogos-ai-first`, que é o método, e uma por motor: Godot, Defold e LÖVE), duas
-de engenharia (`arquitetura-ai-first` e `code-audit`) e duas de revisão de ficção
+feito por agente (`jogos-ai-first`, que é o método, e uma por motor: Godot, Defold e LÖVE), três
+de engenharia (`arquitetura-ai-first`, `code-audit` e `python-on-rails`) e duas de revisão de ficção
 (`revisao-de-capitulo` e `revisao-de-livro`). A ideia comum é fazer o agente provar sozinho o que
 hoje só uma pessoa consegue verificar. Cada lição traz a data e o projeto em que foi medida. A
 operação do repositório está no [`CONTRIBUTING.md`](CONTRIBUTING.md).
