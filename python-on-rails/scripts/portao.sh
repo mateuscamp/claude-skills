@@ -23,9 +23,12 @@ uv run --locked ruff check .
 
 etapa "supressão sem motivo"
 # Toda supressão diz por quê na mesma linha: `# noqa: S603  # motivo: ...`.
-# Supressão de arquivo inteiro (`# ruff: noqa`, `# pyright: basic`) segue a mesma regra.
-padrao='noqa|pyright: *(ignore|basic|standard|off)|type: *ignore'
-if sem_motivo="$(git ls-files '*.py' | xargs -r grep -nE "$padrao" | grep -v 'motivo:')"; then
+# Supressão de arquivo inteiro (`# ruff: noqa`, `# pyright: basic`, `# pyright: reportX=false`,
+# também em lista: `# pyright: strict, reportX=false`) segue a mesma regra. Arquivo novo, ainda
+# sem `git add`, também conta: é com ele que o hook Stop dispara.
+padrao='noqa|pyright: *(ignore|basic|standard|off|[^#]*=)|type: *ignore'
+if sem_motivo="$(git ls-files --cached --others --exclude-standard '*.py' \
+    | xargs -r grep -nE "$padrao" | grep -v 'motivo:')"; then
   printf '%s\n' "$sem_motivo"
   echo "Supressão sem '# motivo:' na mesma linha. Corrija o código ou escreva o motivo."
   exit 1

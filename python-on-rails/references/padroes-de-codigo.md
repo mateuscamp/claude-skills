@@ -161,8 +161,13 @@ valor = lib.coisa()  # pyright: ignore[reportUnknownVariableType]  # motivo: lib
 
 - `# type: ignore` está desligado (`enableTypeIgnoreComments = false`). Só vale
   `# pyright: ignore[regra]`, que diz qual regra está calando.
-- O portão reprova qualquer `noqa`, `pyright: ignore` ou supressão de arquivo sem `motivo:` na
-  mesma linha.
+- O portão reprova qualquer `noqa`, `pyright: ignore` ou supressão de arquivo (`# ruff: noqa`,
+  `# pyright: basic`, `# pyright: reportX=false`) sem `motivo:` na mesma linha, inclusive em
+  arquivo novo ainda sem `git add`.
+- A supressão de arquivo do basedpyright não aceita comentário depois da diretiva: com
+  `# motivo:` na mesma linha, ele reprova a própria diretiva e a regra continua ligada (medido
+  em 2026-11-01, basedpyright 1.40.2). Na prática ela não passa no portão: cale a linha com
+  `# pyright: ignore[regra]  # motivo: ...`. O `# ruff: noqa: T201  # motivo: ...` funciona.
 - Supressão desnecessária também reprova (`reportUnnecessaryTypeIgnoreComment`, ruff `RUF100`).
 
 ## O que o portão pega que o agente não espera
