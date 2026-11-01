@@ -97,6 +97,11 @@ Se nenhum desintegrador tem evidência, a resposta é não quebrar. Se um
 desintegrador é forte e um integrador é forte, o conflito é a decisão — e é ele
 que vai para o ADR, não a conclusão limpa.
 
+Onde cortar, quando o saldo manda quebrar: o contexto delimitado é o limite mais
+largo válido, o agregado é o mais estreito, e o subdomínio é a fronteira segura
+na maioria dos casos (`dominio-e-contextos.md`, "Quando o contexto vira
+serviço").
+
 ## Dado: quebrar ou manter junto
 
 **Desintegradores de dado:** controle de mudança (quantos serviços quebram
@@ -109,7 +114,9 @@ quantum indesejado) · otimização por tipo de banco.
 referencial, chave estrangeira) · transação de banco (atomicidade real).
 
 O caminho de decomposição é incremental e cada passo é reversível se feito
-nessa ordem: analisar e criar domínios de dado → atribuir tabelas aos domínios →
+nessa ordem: analisar e criar domínios de dado (um por subdomínio, o conjunto
+de casos de uso que opera sobre os mesmos dados; ver `dominio-e-contextos.md`) →
+atribuir tabelas aos domínios →
 separar conexões por domínio → mover schemas para servidores separados →
 cortar para bancos independentes. Parar em qualquer degrau é uma decisão
 legítima, e o degrau em que se parou merece um ADR.
@@ -143,6 +150,10 @@ Padrões de consistência eventual, do mais simples ao mais acoplado:
 sincronização em background (simples, mas o dono do dado fica ambíguo) ·
 requisição orquestrada (fluxo claro, latência somada) · baseada em evento
 (desacoplada, exige entrega garantida e idempotência em todo consumidor).
+Entrega garantida quer dizer outbox: o evento é gravado na mesma transação do
+estado. E saga não conserta agregado mal cortado: operação que exige
+consistência forte pertence a um agregado só (`dominio-e-contextos.md`,
+"Agregado e outbox").
 
 ## Contratos
 

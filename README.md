@@ -35,7 +35,7 @@ each skill and checks for drift, with its own test suite in [`tests/`](tests/).
 
 | Skill | What it does |
 |---|---|
-| [`arquitetura-ai-first`](arquitetura-ai-first/SKILL.md) | Architecture decisions for agent-built backends and full-stack apps: drivers before technology, trade-off analysis, numbered ADRs, each decision turned into an executable fitness function in CI and a rule in `AGENTS.md`, including TDD and refactoring with an agent. |
+| [`arquitetura-ai-first`](arquitetura-ai-first/SKILL.md) | Architecture decisions for agent-built backends and full-stack apps: drivers before technology, module boundaries drawn from subdomains and bounded contexts, trade-off analysis, numbered ADRs, each decision turned into an executable fitness function in CI and a rule in `AGENTS.md`, including TDD and refactoring with an agent. |
 | [`code-audit`](code-audit/SKILL.md) | Audits PRs, local diffs and bug reports with verifiable evidence; evidence outranks the author's description, even when the author is another agent. Fixing is a separate mode that requires explicit approval. |
 | [`python-on-rails`](python-on-rails/SKILL.md) | Rails for agent-written Python: what holds in every project (uv with a lockfile, a fixed ruff rule set, strict basedpyright that fails on warnings, pytest with tests seen failing first, a single `make check` gate shared by the agent, the Stop hook and CI, typed data, explicit errors, config validated at startup, dependency audit, suppressions only with a written reason), what is a default with a declared exit (`src/` layout, a pure domain enforced by import-linter), what each project decides, and FastAPI and Django references, all measured on throwaway projects. |
 
@@ -67,6 +67,9 @@ How the repository itself is maintained (branches, generated copies, the Codex l
 - The layered-testing references of `arquitetura-ai-first` and `python-on-rails` (double-loop TDD,
   the test pyramid, test doubles, functional tests) adapt *Test-Driven Development with Python*,
   3rd edition (Harry Percival), freely readable at obeythetestinggoat.com.
+- The domain reference of `arquitetura-ai-first` (subdomain types, ubiquitous language, bounded
+  contexts, context map, the tactical decision tree and the test shape per pattern) adapts
+  *Learning Domain-Driven Design* (Vlad Khononov).
 - `code-audit` adapts the `pr-audit`, `iss-audit` and `github-resolution` rules described in an
   article by Fabio Akita; it is an adaptation, not a copy of the original files.
 

@@ -1,6 +1,6 @@
 ---
 name: arquitetura-ai-first
-description: Governa decisão de arquitetura em projeto backend ou full stack construído com agentes de IA — extrai drivers antes de tecnologia, mede o quantum atual, faz análise de trade-off sobre as dimensões emaranhadas, fecha em ADR numerado, converte cada decisão em fitness function executável no CI e traduz a fronteira resultante em regra no AGENTS.md que o agente relê a cada iteração, inclusive o ciclo TDD e de refatoração. Use sempre que o usuário for iniciar, estruturar, revisar ou justificar a estrutura de um projeto de software — "como estruturo esse projeto", "monólito ou microserviço", "vale separar esse serviço", "qual banco uso", "fila ou chamada direta", "como divido os módulos", "esse acoplamento me incomoda", "isso escala?", "escreve o AGENTS.md desse repo", "o agente está fazendo bagunça no projeto", "o agente escreve teste que sempre passa", "TDD com agente", "mock demais", "teste ponta a ponta" — inclusive quando ele não usar as palavras arquitetura, trade-off, ADR ou fitness function.
+description: Governa decisão de arquitetura em projeto backend ou full stack feito com agentes de IA — extrai drivers antes de tecnologia, mede o quantum atual, desenha módulos por subdomínio e contexto delimitado (DDD), analisa o trade-off das dimensões emaranhadas, fecha em ADR, converte cada decisão em fitness function no CI e traduz a fronteira em regra no AGENTS.md que o agente relê, inclusive TDD e refatoração. Use sempre que for iniciar, estruturar, revisar ou justificar a estrutura de um projeto de software — "como estruturo esse projeto", "monólito ou microserviço", "vale separar esse serviço", "qual banco uso", "fila ou chamada direta", "como divido os módulos", "bounded context", "compro pronto ou construo", "esse acoplamento me incomoda", "isso escala?", "escreve o AGENTS.md desse repo", "o agente está fazendo bagunça no projeto", "o agente escreve teste que sempre passa", "TDD com agente", "mock demais", "teste ponta a ponta" — mesmo sem as palavras arquitetura, trade-off, ADR ou fitness function.
 ---
 
 # Arquitetura AI-first
@@ -79,6 +79,12 @@ arquitetural.
    previsão. Sem evidência, a decisão é "não distribuir" e a conversa vira
    desenho de componentes dentro do monólito. Distribuir por antecipação cobra
    o preço da rede hoje pelo benefício de um problema que talvez nunca chegue.
+   Os componentes saem do domínio: classificar os subdomínios (núcleo, suporte,
+   genérico), traçar os contextos pela linguagem e escolher, por subdomínio, o
+   padrão de lógica, a arquitetura e a forma da suíte. O núcleo leva a regra
+   vinda do humano e o rigor todo; o genérico se compra e fica atrás de uma
+   ACL; o suporte vai no padrão mais simples que serve. Tipos, contextos, mapa
+   de integração e árvore tática: `references/dominio-e-contextos.md`.
 
 5. **Achar as dimensões emaranhadas.** Listar os pontos de acoplamento que a
    decisão toca, usando a pergunta simples: *se alguém mudar X, Y é forçado a
@@ -210,6 +216,11 @@ Seções vazias são omitidas, não preenchidas com "N/A" — exceto **Drivers**
 13. **Least worst.** O alvo nunca é a melhor arquitetura; é a menos ruim para
     esses drivers, neste ano, com esse time. Dizer isso quando o usuário estiver
     procurando a solução ótima.
+14. **O padrão segue o subdomínio, não o sistema.** Portas e adaptadores onde
+    há modelo de domínio; transaction script ou active record no suporte; o
+    genérico, comprado e atrás de ACL. Layout único para tudo é complexidade
+    acidental de um lado e dívida do outro, e é o que o agente aplica quando
+    ninguém declarou o padrão de cada contexto.
 
 ## Referências
 
@@ -218,12 +229,13 @@ Ler sob demanda, nunca todas de uma vez:
 | Arquivo | Ler quando |
 |---|---|
 | `references/drivers-e-caracteristicas.md` | Etapa 2 — extrair e medir drivers |
+| `references/dominio-e-contextos.md` | Etapa 4 — subdomínios, linguagem, contextos, mapa de integração, padrão e suíte por subdomínio, agregado e outbox |
 | `references/analise-de-tradeoffs.md` | Etapas 5-7 — dimensões, matriz, tabelas de decisão |
 | `references/adr.md` | Etapa 8 — registrar, numerar, substituir |
 | `references/fitness-functions.md` | Etapa 9 — converter driver em checagem executável |
 | `references/legibilidade-para-agentes.md` | Etapa 10 — regras do repo para o agente |
 | `references/tdd-e-refatoracao.md` | Etapa 10 — ciclo TDD, refatoração, par de agentes, revisão antes do PR e o enforcement deles |
-| `references/testes-em-camadas.md` | Etapa 10 — ciclo duplo com teste funcional, pirâmide, onde cada camada roda, dublês, erro deliberado, spike |
+| `references/testes-em-camadas.md` | Etapa 10 — ciclo duplo com teste funcional, forma da suíte por padrão, onde cada camada roda, dublês, erro deliberado, spike |
 
 Assets prontos para copiar: `assets/ADR-template.md`, `assets/AGENTS.md`,
 `assets/test_arquitetura.py`, `assets/workflow-arquitetura.yml`.

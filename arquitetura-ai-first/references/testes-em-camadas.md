@@ -1,4 +1,4 @@
-# Testes em camadas: ciclo duplo, pirâmide e dublês
+# Testes em camadas: ciclo duplo, forma da suíte e dublês
 
 Ler na etapa 10 quando o sistema tem mais de uma camada testável (web, API, CLI
 com I/O), e sempre que o pedido for "o agente diz que está pronto e não
@@ -16,7 +16,7 @@ um agente.
 
 - [Ciclo duplo](#ciclo-duplo)
 - [Outside-in](#outside-in)
-- [A pirâmide é a meta](#a-pirâmide-é-a-meta)
+- [A forma da suíte segue o padrão](#a-forma-da-suíte-segue-o-padrão)
 - [Onde cada camada roda](#onde-cada-camada-roda)
 - [Dublês](#dublês)
 - [Teste com dente](#teste-com-dente)
@@ -56,13 +56,33 @@ um agente.
   taxa e validação contra entrada hostil não aparecem no FT do caminho feliz:
   entram como testes próprios, de propósito.
 
-## A pirâmide é a meta
+## A forma da suíte segue o padrão
 
-- Muitos unitários, alguns de integração, poucos FTs. Teste de aceitação é
-  qualquer teste preso a um critério de aceite, em qualquer camada. Cobrir todo
-  comportamento com FT não se sustenta: fica lento, instável e caro de manter.
-- **Toda regra de negócio tem teste unitário**, sem banco nem rede. A
-  integração fica nas bordas, e o FT só no caminho principal de cada história.
+- A forma depende de onde a lógica mora, e o padrão de cada contexto está
+  declarado na seção Contextos do `assets/AGENTS.md`. A tabela vem de Vlad
+  Khononov, *Learning Domain-Driven Design*, cap. 10
+  (`dominio-e-contextos.md`, "Padrão por subdomínio"):
+
+  | Padrão do contexto | Forma | O peso vai para |
+  |---|---|---|
+  | modelo de domínio, com ou sem event sourcing | pirâmide | unitário no agregado e no objeto de valor, sem dublê |
+  | active record | diamante | integração do serviço com o registro, com banco real |
+  | transaction script | pirâmide invertida | o fluxo de ponta a ponta pela API ou pelo comando, com banco real |
+
+- **A pirâmide é a meta onde há modelo de domínio:** muitos unitários, alguns de
+  integração, poucos FTs. Teste de aceitação é qualquer teste preso a um
+  critério de aceite, em qualquer camada. Cobrir todo comportamento com FT não
+  se sustenta: fica lento, instável e caro de manter.
+- **Toda regra de negócio tem teste na camada em que mora.** No modelo de
+  domínio, unitário, sem banco nem rede; a integração fica nas bordas, e o FT só
+  no caminho principal de cada história. No transaction script não existe
+  unidade sem banco: com o banco num dublê, o teste só confere as chamadas que o
+  script faz e fica preso à implementação ([Dublês](#dublês)). O teste certo é o
+  do fluxo, com banco real.
+- **O "ponta a ponta" do transaction script não é o FT de navegador.** É a
+  chamada pela API ou pelo comando, com banco real, dentro do processo de teste,
+  rápida o bastante para o `make check` e o hook Stop. O navegador continua fora
+  do hook ([Onde cada camada roda](#onde-cada-camada-roda)).
 - No começo, um teste que passa pelo framework e pelo banco (o "unitário" do
   Django é de integração) é aceitável. O custo dele cresce com as tabelas e as
   relações. Combine cedo, enquanto a suíte é rápida, a **linha vermelha**: o
@@ -72,7 +92,8 @@ um agente.
   funcional puro (decide e calcula, sem I/O, testado sem dublê nenhum) de uma
   casca imperativa fina (lê, chama o núcleo e grava), coberta por poucos testes
   integrados. Afrouxar o prazo ou trocar teste integrado por mock só esconde o
-  sintoma.
+  sintoma. Transaction script que ficou lento de testar porque acumulou regra é
+  o sinal de trocar o padrão do contexto (`dominio-e-contextos.md`, "Evolução").
 
 ## Onde cada camada roda
 
