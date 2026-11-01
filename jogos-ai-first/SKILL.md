@@ -1,6 +1,6 @@
 ---
 name: "jogos-ai-first"
-description: Método para desenvolver jogos quando quem escreve o código é um agente - contrato AI-first do projeto, padrões de posse, determinismo e observabilidade, e a governança arquitetural (ADR, matriz de risco, fitness function, análise de trade-off qualitativa, portão com critério de parada) derivada de Fundamentals of Software Architecture e Software Architecture - The Hard Parts. Use sempre que o assunto for começar, planejar, auditar ou decidir alguma coisa num projeto de jogo, em Godot, Defold, Unity ou engine própria; quando aparecer animação, tween, entrada, toque, semente, RNG, teste headless, prova de cena, "passou nos testes mas quebrou no aparelho" ou "bug que não dá erro nenhum"; e quando for preciso escolher engine, definir escopo, decidir se vale construir, registrar uma decisão, montar matriz de risco, escrever fitness function ou fazer análise de trade-off - inclusive em projeto técnico que não seja jogo.
+description: Método para decidir num projeto de jogo quando quem escreve o código é um agente - a regra zero (o gargalo é o que só uma pessoa verifica), a escolha de engine pela medição do mesmo jogo em Godot, Unity e Defold, o início de projeto pelo que o faz parar, o experimento refutável com critério de parada fixado antes, a matriz de risco e a caixa de decisão do agente. Use ao começar ou planejar um jogo, escolher ou trocar de engine, decidir se vale construir, definir escopo e portão de fase, montar matriz de risco, escrever critério de parada ou rodar um experimento antes de adotar uma prática; e, num motor sem skill própria (Unity, engine própria), também para o contrato AI-first do projeto. Os padrões de código e verificação de Godot, Defold e LÖVE estão nas skills ai-first-godot, ai-first-defold e ai-first-love; ADR, fitness function e trade-off em profundidade, na arquitetura-ai-first.
 ---
 
 # Jogos AI-first
@@ -51,32 +51,15 @@ Leia `references/licoes-medidas.md` quando precisar dos números, das ressalvas 
 citar a evidência. Ele também registra o que a medição **não** concluiu, e isso importa
 tanto quanto o resto.
 
-## Os padrões que fecham o ciclo
+## Os padrões que fecham o ciclo moram na skill do motor
 
-São o contrato mínimo de um projeto de jogo AI-first. `assets/CONTRATO.md` é a versão
-copiável, para colocar na raiz do projeto e apontar a partir de `AGENTS.md` e
-`CLAUDE.md`.
-
-1. **Domínio isolado.** A regra do jogo não importa cena, entrada, áudio, GPU, janela
-   nem relógio global. É a única forma de o agente testar sem subir engine.
-2. **Aleatoriedade injetada.** Toda regra que sorteia recebe uma semente e passa por um
-   gerador único. Nenhuma engine garante reprodutibilidade entre plataformas; sem isso
-   não existe reprodução de defeito.
-3. **Entrada normalizada em um ponto.** Mouse, toque, teclado e controle viram uma ação
-   de domínio num único adapter. O domínio nunca recebe dois eventos físicos
-   equivalentes.
-4. **Um dono por propriedade animada.** Outro fluxo pede uma intenção ao proprietário;
-   não inicia um segundo tween. Composição deliberada existe, mas precisa ser declarada
-   e justificada, nunca silenciosa.
-5. **Log estruturado como prova.** Uma linha por fato verificável, com campos. Texto
-   livre é para pessoas e não é evidência.
-6. **Comando de teste e comando de prova de cena versionados no repositório.**
-7. **Perfil de plataforma antes do aparelho.** Diferenças semânticas conhecidas do alvo
-   precisam ser executáveis no desktop; o aparelho físico continua tendo poder de veto.
-8. **Falha explícita.** Conflito de posse, nome ou contrato impede a execução e nomeia
-   os dois sítios envolvidos. Ambiguidade vira aviso explicado, nunca adivinhação.
-
-Antes de declarar uma tarefa concluída, percorra `assets/EVIDENCIA.md`.
+Domínio isolado, aleatoriedade injetada, entrada normalizada num ponto, um dono por propriedade
+animada, log estruturado como prova, comandos de teste e de prova versionados, perfil de plataforma
+e falha explícita: é o contrato mínimo de um jogo AI-first. Em Godot, Defold e LÖVE, ele está na
+skill do motor (`ai-first-godot`, `ai-first-defold`, `ai-first-love`), na forma concreta dele, e é
+lá que se lê. Num motor sem skill própria, `assets/CONTRATO.md` é a versão copiável, para a raiz do
+projeto, apontada a partir de `AGENTS.md` e `CLAUDE.md`. Antes de declarar uma tarefa concluída,
+percorra `assets/EVIDENCIA.md`.
 
 ## A caixa de decisão do agente
 
@@ -120,6 +103,8 @@ Para decisão pequena, use só os passos 1, 2 e 6.
 10. **ADR.** Contexto, decisão, consequências e como conferir conformidade.
     `assets/ADR.md` é o modelo.
 
+ADR, fitness function e análise de trade-off em projeto de software, com o modelo e os exemplos,
+estão na `arquitetura-ai-first`; aqui ficam o experimento com parada, o risco e a ordem do ciclo.
 `references/governanca.md` detalha cada passo, com o mecanismo original de cada livro
 e as armadilhas que eles nomeiam. Leia antes de auditar um projeto, de fixar pesos de
 uma comparação, de escrever a primeira ADR de um projeto novo ou quando estiver

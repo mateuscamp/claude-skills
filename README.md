@@ -22,7 +22,7 @@ flipper-boom, Boomlitude and others), not copied from a style guide.
 
 | Skill | What it does |
 |---|---|
-| [`jogos-ai-first`](jogos-ai-first/SKILL.md) | Engine-agnostic method and governance: the project's AI-first contract, ownership, determinism and observability patterns, plus ADRs, risk matrix, fitness functions and trade-off analysis. Grounded in a measured study of one agent building the same mobile game in Godot, Unity and Defold. |
+| [`jogos-ai-first`](jogos-ai-first/SKILL.md) | Engine-agnostic decision method: the zero rule (the bottleneck is what only a person can verify), engine choice, project start by stop gates, refutable experiments with stop criteria fixed in advance, risk matrix and the agent's decision box. The code and verification patterns live in each engine skill; ADRs and fitness functions in depth, in `arquitetura-ai-first`. Grounded in a measured study of one agent building the same mobile game in Godot, Unity and Defold. |
 | [`ai-first-godot`](ai-first-godot/SKILL.md) | Godot 4: engine-free domain in `RefCounted`, a single input adapter, seeded RNG, JSON event logs, and a verification gate that imports, compiles everything, runs the specs and reads the log instead of trusting the exit code. |
 | [`ai-first-defold`](ai-first-defold/SKILL.md) | Defold: pure-Lua domain, engine-free test suite on LuaJIT and Lua 5.x, LuaLS, `bob` builds, robot-driven runs, Automation Bridge and editor API scripts. |
 | [`ai-first-love`](ai-first-love/SKILL.md) | LÖVE (love2d): the scene as a **draw list**, so visual bugs become data the agent can test (layout invariants, pixel sampling, per-frame replay and diff), plus a custom `love.run`, headless passes under Xvfb and Android notes. |

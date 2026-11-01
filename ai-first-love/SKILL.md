@@ -22,8 +22,8 @@ errado), sem erro nenhum. Esta skill dá **a cena como lista de desenho**, para 
 dado que o agente lê e testa; **como escrever**, para que os mudos não nasçam; e **como
 verificar**, para que os que nascerem reprovem antes do "terminei".
 
-O método geral (contrato, posse, determinismo, ADR, fitness function, risco) está na
-**jogos-ai-first**. A referência viva é a reescrita do CampCrawler em LÖVE (repositório próprio,
+O método de decisão (escolha de engine, experimento com critério de parada, risco) está na
+**jogos-ai-first**; o contrato, a posse e o determinismo estão aqui, na forma do motor. A referência viva é a reescrita do CampCrawler em LÖVE (repositório próprio,
 que por ora consome o domínio do jogo em Defold); as lições do Defold estão na `ai-first-defold`.
 
 **O que diverge do uso comum do LÖVE se diz.** Boa parte desta skill diverge de propósito do
