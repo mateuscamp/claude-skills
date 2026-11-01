@@ -25,10 +25,15 @@ etapa "supressão sem motivo"
 # Toda supressão diz por quê na mesma linha: `# noqa: S603  # motivo: ...`.
 # Supressão de arquivo inteiro (`# ruff: noqa`, `# pyright: basic`, `# pyright: reportX=false`,
 # também em lista: `# pyright: strict, reportX=false`) segue a mesma regra. Arquivo novo, ainda
-# sem `git add`, também conta: é com ele que o hook Stop dispara.
+# sem `git add`, também conta: é com ele que o hook Stop dispara. Sem caixa: o ruff aceita `# NOQA`.
+# A lista vai com -z, porque espaço no nome partia o arquivo em dois. A etapa decide pelas linhas
+# achadas, não pelo código de saída: com pipefail, um lote do xargs sem achado, ou um arquivo
+# rastreado já apagado (daí o -s), fazia a etapa aprovar calada.
+git rev-parse --is-inside-work-tree > /dev/null  # fora do git a lista viria vazia: reprova
 padrao='noqa|pyright: *(ignore|basic|standard|off|[^#]*=)|type: *ignore'
-if sem_motivo="$(git ls-files --cached --others --exclude-standard '*.py' \
-    | xargs -r grep -nE "$padrao" | grep -v 'motivo:')"; then
+sem_motivo="$(git ls-files -z --cached --others --exclude-standard '*.py' \
+    | xargs -0 -r grep -sHniE "$padrao" | grep -iv 'motivo:' || true)"
+if [[ -n "$sem_motivo" ]]; then
   printf '%s\n' "$sem_motivo"
   echo "Supressão sem '# motivo:' na mesma linha. Corrija o código ou escreva o motivo."
   exit 1
