@@ -161,13 +161,20 @@ valor = lib.coisa()  # pyright: ignore[reportUnknownVariableType]  # motivo: lib
 
 - `# type: ignore` está desligado (`enableTypeIgnoreComments = false`). Só vale
   `# pyright: ignore[regra]`, que diz qual regra está calando.
-- O portão reprova qualquer `noqa`, `pyright: ignore` ou supressão de arquivo (`# ruff: noqa`,
-  `# pyright: basic`, `# pyright: reportX=false`) sem `motivo:` na mesma linha, em qualquer caixa
-  (`# NOQA` também cala o ruff) e inclusive em arquivo novo ainda sem `git add`.
-- A supressão de arquivo do basedpyright não aceita comentário depois da diretiva: com
-  `# motivo:` na mesma linha, ele reprova a própria diretiva e a regra continua ligada (medido
-  em 2026-11-01, basedpyright 1.40.2). Na prática ela não passa no portão: cale a linha com
-  `# pyright: ignore[regra]  # motivo: ...`. O `# ruff: noqa: T201  # motivo: ...` funciona.
+- O portão reprova, sem `motivo:` na mesma linha, toda forma de calar o ruff ou o basedpyright:
+  `noqa` (`# NOQA` também cala o ruff), `# ruff: disable[...]`, `# isort: skip`, `skip_file` e
+  `off`, todo `# pyright:` que não seja `# pyright: strict` sozinho na linha (`basic`,
+  `reportX=false`, em lista, com tab), `cast(` e `@no_type_check`. Vale para `.py` e `.pyi`,
+  inclusive arquivo novo ainda sem `git add`.
+- A linha de base do basedpyright (`.basedpyright/baseline.json`, de `--writebaseline`) cala de
+  uma vez todo erro listado nela, e o portão reprova enquanto ela existir.
+- Três diretivas não aceitam comentário depois delas, e com `# motivo:` na mesma linha param de
+  valer: a de arquivo do basedpyright (`basic`, `reportX=false`), que ele reprova como inválida;
+  e `# isort: skip_file` e `# isort: off`, que o ruff ignora, devolvendo o I001 (medido em
+  2026-11-01, ruff 0.17.3 e basedpyright 1.40.2). Na prática nenhuma delas passa no portão: cale a
+  linha com `# pyright: ignore[regra]  # motivo: ...` ou, na ordem de import, com
+  `# noqa: I001  # motivo: ...` na primeira linha do bloco. `# ruff: noqa: T201` e
+  `# ruff: disable[T201]` aceitam o motivo.
 - Supressão desnecessária também reprova (`reportUnnecessaryTypeIgnoreComment`, ruff `RUF100`).
 
 ## O que o portão pega que o agente não espera
