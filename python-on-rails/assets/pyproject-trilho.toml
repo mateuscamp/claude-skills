@@ -1,8 +1,9 @@
 # Trilho python-on-rails: colar no pyproject.toml do projeto e trocar <pacote>.
-# Validado em 2026-11-01 com uv 0.11.9, ruff 0.15.12, basedpyright 1.40.2, pytest 9.2.
+# Validado em 2026-11-03 com uv 0.11.9, ruff 0.17.3, basedpyright 1.40.2, pytest 9.2.
 # Ferramentas entram no lock, não no sistema:
 #   uv add --dev ruff basedpyright pytest import-linter
-# Afrouxar qualquer linha daqui é desvio: exige ADR (ver references/desvios-e-decisoes.md).
+# Afrouxar qualquer linha daqui é desvio: exige ADR e registro (ver references/desvios-e-decisoes.md).
+# O scripts/conferir_trilho.py da skill compara o projeto com este arquivo e reprova o afrouxamento.
 
 [tool.ruff]
 line-length = 100
@@ -34,12 +35,21 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "ANN401"]  # assert, número mágico e Any de fixture em teste
+"src/<pacote>/config.py" = ["TID251"]        # o único módulo que lê o ambiente
 
 [tool.ruff.lint.mccabe]
 max-complexity = 8
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
+
+# Config lida num lugar só: fora do config.py, ler o ambiente reprova. Repassar o ambiente a um
+# subprocesso é legítimo e leva `# noqa: TID251  # motivo: ...`.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"os.environ".msg = "Só o config.py lê o ambiente; o resto recebe o objeto de config."
+"os.environb".msg = "Só o config.py lê o ambiente; o resto recebe o objeto de config."
+"os.getenv".msg = "Só o config.py lê o ambiente; o resto recebe o objeto de config."
+"os.getenvb".msg = "Só o config.py lê o ambiente; o resto recebe o objeto de config."
 
 [tool.basedpyright]
 typeCheckingMode = "recommended"  # o modo mais estrito pensado para uso diário
@@ -67,4 +77,9 @@ include_external_packages = true
 name = "domínio não conhece infra, config nem biblioteca de borda"
 type = "forbidden"
 source_modules = ["<pacote>.dominio"]
-forbidden_modules = ["<pacote>.infra", "<pacote>.config", "pydantic", "httpx"]
+# Borda do projeto mais a stdlib que faz E/S. `datetime` fica de fora: o tipo é legítimo no domínio
+# (o `Relogio`), e `datetime.now` ali é achado de revisão.
+forbidden_modules = [
+  "<pacote>.infra", "<pacote>.config", "pydantic", "httpx",
+  "os", "socket", "subprocess", "urllib", "http",
+]

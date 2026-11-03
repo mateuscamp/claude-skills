@@ -44,6 +44,11 @@ testpaths = ["<apps>"]
 Sem `python_files`, o pytest não coleta o `tests.py` que o `startapp` cria e diz "no tests ran",
 com código de saída diferente de zero.
 
+Quem lê o ambiente aqui é o `config/settings.py`, e o `manage.py`, o `asgi.py` e o `wsgi.py` fazem
+`os.environ.setdefault`. Todos entram em `per-file-ignores` com `TID251`. Cada linha acima que
+afrouxa aparece no `conferir_trilho` com a chave dela: registre todas sob o mesmo ADR de layout
+(`desvios-e-decisoes.md`).
+
 ## Arquivos que o Django gera: corrigir uma vez, na criação
 
 O `startproject` e o `startapp` geram código que reprova no portão. Corrija tudo no primeiro

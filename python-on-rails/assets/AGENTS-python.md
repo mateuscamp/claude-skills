@@ -10,8 +10,12 @@ fronteiras). Curto e imperativo: cada linha é relida a cada query. Apagar o que
   Dependência nova exige justificativa no relatório: o que faz que a stdlib não faz, quem mantém.
   Confira o nome exato do pacote antes de adicionar.
 - Portão: `make check`. Rode antes de dizer "pronto" e mostre a saída. O hook Stop roda o mesmo.
-- Proibido mexer em `[tool.ruff]`, `[tool.basedpyright]`, `[tool.pytest]`, `[tool.importlinter]`
-  ou acrescentar ignore/exclude/linha de base. Regra parece errada? Diga no relatório e pare.
+- Proibido mexer em `[tool.ruff]`, `[tool.basedpyright]`, `[tool.pytest]`, `[tool.importlinter]`,
+  `[tool.trilhos]`, `scripts/portao.sh`, `Makefile`, hook e CI, criar `ruff.toml`,
+  `pyrightconfig.json` ou `pytest.ini`, ou acrescentar ignore/exclude/linha de base. Regra parece
+  errada? Diga no relatório e pare.
+- `trilhos: pare` ou achado `[humano]`: não conserte, não crie ADR e não edite o registro de
+  desvios. Relate o achado e pare. Mudar o portão é decisão humana.
 - Supressão só com regra e motivo na mesma linha:
   `# pyright: ignore[reportX]  # motivo: <por quê>` · `# noqa: S603  # motivo: <por quê>`.
   `cast` também é supressão. Antes de suprimir, tente corrigir o tipo.
@@ -35,6 +39,7 @@ fronteiras). Curto e imperativo: cada linha é relida a cada query. Apagar o que
 ### Config e log
 
 - Só `<pacote>/config.py` lê variável de ambiente, uma vez, na partida. O resto recebe o objeto.
+  Repassar o ambiente a um subprocesso: `# noqa: TID251  # motivo: <por quê>`.
 - Segredo como `SecretStr`. Nunca em log, mensagem de erro ou teste.
 - `logging.getLogger(__name__)`, nunca `print` fora da camada de interface (CLI).
 - Log com fatos nomeados: `log.info("pedido fechado", extra={"pedido_id": id, "total": t})`.
@@ -44,6 +49,7 @@ fronteiras). Curto e imperativo: cada linha é relida a cada query. Apagar o que
 - pytest. Fake de borda (relógio, rede, disco) é uma classe tipada que cumpre o `Protocol` e
   guarda o que recebeu, injetada. `Mock` reprova no portão (`reportAny`): não suprima para usar.
 - Nunca trocar por dublê o que está definido no módulo sob teste.
+- Teste pulado diz o motivo: `reason="..."` ou `# motivo: ...`.
 - Teste funcional: `@pytest.mark.e2e`, roda com `make e2e`. O da história em curso leva
   `@pytest.mark.xfail(raises=AssertionError, reason="FT em curso: <história>")`, um por vez.
 - Sem `time.sleep` em teste. Esperar com `expect` do Playwright ou um helper com prazo constante.

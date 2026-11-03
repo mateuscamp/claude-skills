@@ -12,9 +12,26 @@ a condição que inverte a decisão. Desvio sem ADR é achado de auditoria.
 | Domínio puro | Script de cola, CLI de uma função, CRUD que é quase só o framework | Teste do domínio passa a precisar de banco, rede ou relógio real | Onde fica a regra de negócio que existir, e o gatilho para extrair o domínio (ex.: segunda regra não trivial) |
 | pydantic na borda | msgspec (desempenho), attrs (sem dependência de validação) | Integração pronta com FastAPI e pydantic-settings | A biblioteca escolhida, que cumpre a mesma função de validar a borda |
 | Regra do ruff ou do basedpyright | Regra que conflita com o framework (ex.: `RUF012` em `Meta` do Django) | A proteção daquela regra no trecho excluído | O `per-file-ignores` mais estreito possível, por arquivo e não global |
-| Portão completo | Projeto legado adotando os trilhos | Os erros antigos continuam lá | A linha de base (`basedpyright --writebaseline`, `noqa` com `motivo: legado`) e o prazo para zerá-la |
+| Portão completo | Projeto legado adotando os trilhos | Os erros antigos continuam lá | A linha de base (`basedpyright --writebaseline`, `noqa` com `motivo: legado`) e o prazo para zerá-la. Chave `basedpyright.linha-de-base` |
+| `print` fora de `logging` | Módulo que é a própria interface (CLI, servidor stdio) | O `T201` naquele arquivo | O arquivo, um por chave: `ruff.per-file-ignores:<arquivo>:T201` |
 
 Desvio é sempre o mais estreito possível: um arquivo e não o projeto, uma regra e não o grupo.
+
+### Registrar o desvio
+
+O `conferir_trilho` reprova todo afrouxamento com uma chave, e só o registro o libera:
+
+```toml
+[[tool.trilhos.desvios]]
+chave = "ruff.ignore:N818"
+adr = "docs/adr/0005-trilhos-python.md"
+```
+
+- A `chave` é copiada literal do achado, um item por chave.
+- O ADR precisa existir no projeto e dizer `Status: Aceito`. Item sem achado correspondente reprova
+  também, para o registro não virar lista morta.
+- Registrar é decisão humana, porque é mudança no portão. O agente relata o achado e para.
+- Só afrouxar conta. Apertar uma regra, ou acrescentar uma fora do trilho, não precisa de registro.
 
 ## Decisões que a skill não toma
 
