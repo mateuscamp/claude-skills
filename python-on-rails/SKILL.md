@@ -54,7 +54,9 @@ de um arquivo só, não precisa do portão, e a cerimônia não se paga.
    sistema: duas máquinas rodam a mesma versão e dão o mesmo veredito.
 3. Colar `assets/pyproject-trilho.toml`, copiar `assets/Makefile`, `scripts/portao.sh` e
    `scripts/hook_portao.sh`, registrar o hook Stop (instrução no topo do hook) e colar
-   `assets/ci.yml`, com o commit do juiz. O `conferir_trilho.py` fica na skill.
+   `assets/ci.yml`, com o commit do juiz. O `conferir_trilho.py` fica na skill. Confirme com
+   `grep hook_juiz ~/.claude/settings.json` que o hook do usuário está registrado nesta máquina;
+   se não estiver, avise: sem ele, tirar a chamada do juiz do portão só reprova no CI.
 4. Colar `assets/AGENTS-python.md` no `AGENTS.md` do projeto, junto com o modelo da
    arquitetura-ai-first.
 5. Primeiro ciclo: um teste vermelho visto falhar na asserção, o verde, `make check` e commit.
@@ -62,7 +64,8 @@ de um arquivo só, não precisa do portão, e a cerimônia não se paga.
 6. FastAPI ou Django: ler a referência correspondente antes do passo 3.
 
 **Projeto existente**
-1. Medir antes de mudar: rodar cada etapa do portão e contar as reprovações por regra.
+1. Medir antes de mudar: rodar cada etapa do portão e contar as reprovações por regra. Confirmar
+   o hook do usuário como no passo 3 do projeto novo.
 2. Não corrigir tudo de uma vez. Ligar o portão com linha de base: `basedpyright
    --writebaseline` congela os erros atuais e reprova só os novos. No ruff, `ruff check
    --add-noqa` marca os existentes; depois acrescente `# motivo: legado, ver ADR-<n>` a cada

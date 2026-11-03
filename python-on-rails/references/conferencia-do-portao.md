@@ -29,7 +29,7 @@ O `make` troca qualquer falha por 2. Por isso a última linha da saída sempre d
 | GAT001 | humano | ruff afrouxado: prefixo fora de `select`, `ignore` ou `per-file-ignores` em regra do trilho, exclusão além de `.claude` e `.venv`, `include`, complexidade maior, regra de ambiente apagada, `ban-relative-imports` mudado, ou chave fora da lista das neutras, como `extend` e limites do pylint |
 | GAT002 | humano | basedpyright afrouxado: modo fora de `recommended` e `all`, `failOnWarnings` falso, `enableTypeIgnoreComments` não falso, `report*` enfraquecido, `exclude`, `ignore`, `include` que tira `src` ou `tests`, ou chave fora da lista das neutras, como `executionEnvironments` |
 | GAT003 | humano | pytest afrouxado: `xfail_strict`, `filterwarnings` (inclusive ação abreviada, como `i::`), `--strict-*`, `addopts` que esconde teste ou troca a configuração (`-W`, `-o`, `-c`), ou `norecursedirs` e `python_files` e afins |
-| GAT004 | humano | Falta uma etapa no `portao.sh`, fora de comentário, ou ela está neutralizada (`\|\| true`, `--exit-zero`, `--ignore`, config que não é o `pyproject.toml`), ou o `check` do `Makefile` não roda o `portao.sh`. Sem `portao.sh`, confere o `Makefile` |
+| GAT004 | humano | Falta uma etapa no `portao.sh`, fora de comentário, ou ela está neutralizada (`\|\| true`, `--exit-zero`, `--ignore`, config que não é o `pyproject.toml`), o juiz não é executado pelo caminho completo na própria linha, ou o `check` do `Makefile` não roda o `portao.sh`. Sem `portao.sh`, confere o `Makefile` |
 | GAT005 | humano | Não há contrato `forbidden` guardando `<pacote>.dominio` (chave `padrao.dominio-puro`), falta um módulo do asset em `forbidden_modules` (camada interna só se o projeto a tiver), ou há `ignore_imports` |
 | AMB001 | agente | `uv.lock` fora do git |
 | AMB002 | agente | `.python-version` ausente ou fora do git |
@@ -65,9 +65,10 @@ reclamar. Por isso há dois caminhos de fora:
   `portao.sh` não a desfaz. Repositório que nunca adotou não é julgado.
 - **O CI do asset**, que chama o juiz direto.
 
-O que continua passando: uma sessão de Codex ou de outra máquina não tem o hook; na segunda parada
-seguida ele libera, para não prender a sessão em laço; e quem escreve em `~/.claude/settings.json`
-o desliga. O modelo de ameaça é o agente que quer o verde, não um adversário: um ADR forjado ou um
+O que continua passando: uma sessão de Codex ou de outra máquina não tem o hook; uma sessão aberta
+fora do repositório não o julga, porque o hook olha a pasta da sessão, e só o CI cobre esse caso;
+na segunda parada seguida ele libera, para não prender a sessão em laço, e cada sessão ouve a mesma
+pendência uma vez; e quem escreve em `~/.claude/settings.json` o desliga. O modelo de ameaça é o agente que quer o verde, não um adversário: um ADR forjado ou um
 workflow editado passam. Dentro do repositório não existe âncora contra quem escreve no
 repositório, e o hook é a âncora fora dele.
 
