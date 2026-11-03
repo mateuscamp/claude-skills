@@ -233,6 +233,97 @@ class Afrouxar(Base):
         self.trocar("scripts/portao.sh", "uv run --locked basedpyright\n", "# uv run --locked basedpyright\n")
         self.exigir(3, "GAT004")
 
+    def test_tira_ruff_check_mesmo_com_ruff_check_no_makefile(self):
+        self.trocar("scripts/portao.sh", "uv run --locked ruff check .\n", "true\n")
+        self.assertIn("portao.etapa:ruff check", self.exigir(3, "GAT004"))
+
+    def test_tira_pytest_mesmo_com_pytest_no_makefile(self):
+        self.trocar("scripts/portao.sh", 'uv run --locked pytest -m "not e2e"\n', "true\n")
+        self.assertIn("portao.etapa:pytest", self.exigir(3, "GAT004"))
+
+    def test_tira_lint_imports(self):
+        self.trocar("scripts/portao.sh", "uv run --locked lint-imports\n", "true\n")
+        self.assertIn("portao.etapa:lint-imports", self.exigir(3, "GAT004"))
+
+    def test_etapa_neutralizada(self):
+        for depois in (
+            "uv run --locked ruff check . || true\n",
+            "uv run --locked ruff check --exit-zero .\n",
+            "uv run --locked ruff check --ignore T20 .\n",
+            "uv run --locked ruff check --config folga.toml .\n",
+            "RUFF_NO_CACHE=1 uv run --locked ruff check --select F .\n",
+        ):
+            with self.subTest(depois):
+                self.trocar("scripts/portao.sh", "uv run --locked ruff check .\n", depois)
+                self.assertIn("portao.etapa:ruff check", self.exigir(3, "GAT004"))
+                self.trocar("scripts/portao.sh", depois, "uv run --locked ruff check .\n")
+
+    def test_pytest_com_addopts_por_ambiente(self):
+        self.trocar(
+            "scripts/portao.sh",
+            'uv run --locked pytest -m "not e2e"\n',
+            'PYTEST_ADDOPTS=--ignore=tests uv run --locked pytest -m "not e2e"\n',
+        )
+        self.assertIn("portao.etapa:pytest", self.exigir(3, "GAT004"))
+
+    def test_make_check_esvaziado(self):
+        self.trocar("Makefile", "check:\n\tscripts/portao.sh\n", "check:\n\ttrue\n")
+        self.assertIn("portao.make-check", self.exigir(3, "GAT004"))
+
+    def test_tira_modulo_do_contrato(self):
+        self.escrever("src/demo/config.py", '"""c."""\n')
+        self.trocar("pyproject.toml", '"demo.config", "pydantic", ', "")
+        saida = self.exigir(3, "GAT005")
+        self.assertIn("importlinter.forbidden:pydantic", saida)
+        self.assertIn("importlinter.forbidden:demo.config", saida)
+
+    def test_contrato_que_nao_guarda_o_dominio(self):
+        self.trocar("pyproject.toml", 'source_modules = ["demo.dominio"]', 'source_modules = ["demo.outro"]')
+        self.assertIn("padrao.dominio-puro", self.exigir(3, "GAT005"))
+
+    def test_ignore_imports_no_contrato(self):
+        self.trocar("pyproject.toml", 'type = "forbidden"\n', 'type = "forbidden"\nignore_imports = ["demo.dominio.a -> demo.config"]\n')
+        self.assertIn("importlinter.ignore_imports", self.exigir(3, "GAT005"))
+
+    def test_extend_do_ruff(self):
+        self.trocar("pyproject.toml", "line-length = 100", 'line-length = 100\nextend = "folga.toml"')
+        self.assertIn("ruff.extend", self.exigir(3, "GAT001"))
+
+    def test_limite_do_pylint(self):
+        self.trocar("pyproject.toml", "[tool.ruff.lint.mccabe]", "[tool.ruff.lint.pylint]\nmax-args = 99\n\n[tool.ruff.lint.mccabe]")
+        self.assertIn("ruff.lint.pylint", self.exigir(3, "GAT001"))
+
+    def test_relative_imports_afrouxado(self):
+        self.trocar("pyproject.toml", 'ban-relative-imports = "all"', 'ban-relative-imports = "parents"')
+        self.assertIn("ruff.ban-relative-imports:parents", self.exigir(3, "GAT001"))
+
+    def test_execution_environments(self):
+        self.trocar("pyproject.toml", "failOnWarnings = true", 'failOnWarnings = true\nexecutionEnvironments = [{root = "src", reportAny = "none"}]')
+        self.assertIn("basedpyright.executionEnvironments", self.exigir(3, "GAT002"))
+
+    def test_w_e_o_no_addopts(self):
+        for extra in ('"-W", "ignore"', '"-Wignore"', '"-o", "xfail_strict=false"', '"--override-ini=xfail_strict=false"', '"-c", "folga.ini"'):
+            with self.subTest(extra):
+                self.trocar("pyproject.toml", 'addopts = ["--strict-markers"', f'addopts = [{extra}, "--strict-markers"')
+                self.exigir(3, "GAT003")
+                self.trocar("pyproject.toml", f'addopts = [{extra}, "--strict-markers"', 'addopts = ["--strict-markers"')
+
+    def test_addopts_com_espaco_no_item(self):
+        self.trocar("pyproject.toml", 'addopts = ["--strict-markers"', 'addopts = ["-q --ignore=tests", "--strict-markers"')
+        self.exigir(3, "GAT003")
+
+    def test_acao_abreviada_em_filterwarnings(self):
+        self.trocar("pyproject.toml", 'filterwarnings = ["error"]', 'filterwarnings = ["error", "i::UserWarning"]')
+        self.exigir(3, "GAT003")
+
+    def test_norecursedirs(self):
+        self.trocar("pyproject.toml", 'testpaths = ["tests"]', 'testpaths = ["tests"]\nnorecursedirs = ["sub"]')
+        self.assertIn("pytest.norecursedirs", self.exigir(3, "GAT003"))
+
+    def test_setup_cfg_com_importlinter(self):
+        self.escrever("setup.cfg", "[importlinter]\nroot_package = demo\n")
+        self.exigir(1, "CFG001")
+
     def test_apaga_importlinter(self):
         with open(self.caminho("pyproject.toml"), encoding="utf-8") as f:
             texto = f.read()
@@ -325,6 +416,47 @@ class Supressao(Base):
         )
         self.aprovar()
 
+    def test_mais_formas_que_calam_de_fato(self):
+        # Medido no ruff 0.17.3: calam, e `# (# noqa)` não.
+        for comentario in ("## noqa: T201", "# x## noqa: T201"):
+            with self.subTest(comentario):
+                self.escrever("src/demo/a.py", f'"""a."""\n\nprint(1)  {comentario}\n')
+                self.exigir(1, "SUP001")
+        self.escrever("src/demo/a.py", '# ruff: file-ignore[T201]\n"""a."""\n\nprint(1)\n')
+        self.exigir(1, "SUP001")
+
+    def test_sufixo_strict_nao_absolve(self):
+        self.escrever("src/demo/a.py", '"""a."""\n\nprint(1)  # noqa: T201  # pyright: strict\n')
+        self.exigir(1, "SUP001")
+
+    def test_skip_por_alias(self):
+        for corpo in (
+            "from pytest import mark\n\n\n@mark.skip\ndef test_y(): ...\n",
+            "import pytest as pt\n\n\n@pt.mark.skip\ndef test_y(): ...\n",
+            "from pytest import skip\n\n\ndef test_y():\n    skip()\n",
+            "from pytest import mark as m\n\n\n@m.skip\ndef test_y(): ...\n",
+        ):
+            with self.subTest(corpo):
+                self.escrever("tests/test_y.py", corpo)
+                self.exigir(1, "SUP002")
+
+    def test_cast_por_alias(self):
+        for corpo in (
+            'from typing import cast as c\n\nX = c("int", 1)\n',
+            'import typing as tp\n\nX = tp.cast("int", 1)\n',
+        ):
+            with self.subTest(corpo):
+                self.escrever("src/demo/a.py", corpo)
+                self.exigir(1, "SUP001")
+
+    def test_cast_que_nao_e_do_typing_passa(self):
+        self.escrever("src/demo/a.py", "def cast(x: int) -> int:\n    return x\n\n\nY = cast(1)\n")
+        self.aprovar()
+
+    def test_motivo_em_constante_passa(self):
+        self.escrever("tests/test_y.py", 'import pytest\n\nM = "sem áudio"\n\n\n@pytest.mark.skipif(1 == 1, reason=M)\ndef test_y(): ...\n')
+        self.aprovar()
+
     def test_com_motivo_passa(self):
         self.escrever("src/demo/a.py", '"""a."""\n\nprint(1)  # noqa: T201  # motivo: saída da CLI\n')
         self.aprovar()
@@ -368,7 +500,10 @@ class AdaptacaoLegitima(Base):
     """Cada caso existe em projeto real e reprovaria numa comparação ingênua."""
 
     def test_select_all(self):
-        self.trocar("pyproject.toml", "select = [\n", 'select = ["ALL"]\nselect_antigo = [\n')
+        with open(self.caminho("pyproject.toml"), encoding="utf-8") as f:
+            texto = f.read()
+        inicio, fim = texto.index("select = [\n"), texto.index("ignore = [\n")
+        self.escrever("pyproject.toml", texto[:inicio] + 'select = ["ALL"]\n' + texto[fim:])
         self.trocar("pyproject.toml", 'ignore = [\n', 'ignore = [\n  "COM812",\n  "CPY001",\n  "D203",\n')
         self.aprovar()
 
@@ -403,6 +538,42 @@ class AdaptacaoLegitima(Base):
 
     def test_exclude_de_tipos_livre(self):
         self.trocar("pyproject.toml", "failOnWarnings = true", 'failOnWarnings = true\nexclude = [".claude", ".venv"]')
+        self.aprovar()
+
+    def test_camada_que_o_projeto_nao_tem_nao_se_exige_no_contrato(self):
+        # O nome das camadas internas é layout do projeto, não trilho.
+        self.trocar("pyproject.toml", '"demo.infra", "demo.config", ', "")
+        self.aprovar()
+
+    def test_chaves_neutras(self):
+        self.trocar("pyproject.toml", "line-length = 100", 'line-length = 100\ntarget-version = "py313"')
+        self.trocar("pyproject.toml", "failOnWarnings = true", 'failOnWarnings = true\nvenvPath = "."\nvenv = ".venv"\nextraPaths = ["tests/apoio"]')
+        self.trocar("pyproject.toml", "[tool.ruff.lint.mccabe]", '[tool.ruff.lint.pydocstyle]\nconvention = "google"\n\n[tool.ruff.lint.mccabe]')
+        self.aprovar()
+
+    def test_opcoes_explicitas_no_portao(self):
+        self.trocar("scripts/portao.sh", "uv run --locked ruff check .\n", "uv run --locked ruff check --config pyproject.toml .\n")
+        self.trocar(
+            "scripts/portao.sh",
+            'uv run --locked pytest -m "not e2e"\n',
+            'env -u DISPLAY uv run --locked pytest -c pyproject.toml\n',
+        )
+        self.trocar("scripts/portao.sh", "uv run --locked basedpyright\n", "uv run --locked basedpyright -p pyproject.toml\n")
+        self.aprovar()
+
+    def test_sem_contrato_declarado_nao_exige_lint_imports(self):
+        self.escrever("docs/adr/0001-desvio.md", ADR_ACEITO)
+        with open(self.caminho("pyproject.toml"), encoding="utf-8") as f:
+            texto = f.read()
+        self.escrever("pyproject.toml", texto[: texto.index("# Domínio puro")])
+        self.declarar("padrao.dominio-puro")
+        self.trocar("scripts/portao.sh", "uv run --locked lint-imports\n", "true\n")
+        self.aprovar()
+
+    def test_pastas_que_as_ferramentas_pulam(self):
+        for pasta in ("venv", ".tox", "build", "dist"):
+            self.escrever(f"{pasta}/lib/pkg/pyproject.toml", "[tool.ruff]\nline-length = 1\n")
+            self.escrever(f"{pasta}/lib/pkg/ruff.toml", "")
         self.aprovar()
 
     def test_nao_entra_em_claude_nem_venv(self):
@@ -481,6 +652,40 @@ class Veredito(Base):
         os.remove(self.caminho("pyproject.toml"))
         self.exigir(2)
 
+    def test_arquivo_estranho_nao_vira_conserte(self):
+        casos = {
+            "requirements latin-1": lambda: self._bytes("requirements.txt", "café\n".encode("latin-1")),
+            "aspas abertas": lambda: self.trocar(
+                "pyproject.toml",
+                'addopts = ["--strict-markers", "--strict-config", "-ra"]',
+                "addopts = \"--strict-markers --strict-config -k 'x\"",
+            ),
+            "registro malformado": lambda: self.acrescentar("pyproject.toml", '\n[tool.trilhos]\ndesvios = ["x"]\n'),
+            "symlink quebrado": lambda: self._link("x/pyproject.toml"),
+        }
+        for nome, plantar in casos.items():
+            with self.subTest(nome):
+                self.git("reset", "-q", "--hard")
+                self.git("clean", "-fdq")
+                plantar()
+                self.git("add", "-A")
+                self.assertTrue(self.exigir(2).strip().splitlines()[-1].startswith("trilhos: indeterminado"))
+
+    def _bytes(self, relativo, conteudo):
+        with open(self.caminho(relativo), "wb") as f:
+            f.write(conteudo)
+
+    def _link(self, relativo):
+        os.makedirs(os.path.dirname(self.caminho(relativo)))
+        os.symlink("nada", self.caminho(relativo))
+
+    def test_humano_vem_por_ultimo_para_o_hook_nao_cortar(self):
+        # O hook devolve as últimas 60 linhas: o que para o agente não pode sair antes.
+        self.trocar("pyproject.toml", "xfail_strict = true", "xfail_strict = false")
+        for n in range(70):
+            self.escrever(f"src/demo/a{n}.py", '"""a."""\n\nprint(1)  # noqa: T201\n')
+        self.assertIn("GAT003", "\n".join(self.exigir(3).splitlines()[-60:]))
+
     def test_nao_existe_flag_que_cale(self):
         self.trocar("pyproject.toml", "xfail_strict = true", "xfail_strict = false")
         feito = subprocess.run(
@@ -527,6 +732,72 @@ class Portao(unittest.TestCase):
         self.assertEqual(feito.returncode, 2, feito.stdout + feito.stderr)
         self.assertIn("conferir_trilho", feito.stdout + feito.stderr)
         self.assertNotIn("Portão aprovado", feito.stdout)
+
+
+class Hook(unittest.TestCase):
+    """O hook só pula o portão quando nada que o portão lê mudou."""
+
+    def setUp(self):
+        self.casa = tempfile.mkdtemp(prefix="casa-")
+        self.raiz = tempfile.mkdtemp(prefix="hook-")
+        self.addCleanup(shutil.rmtree, self.casa)
+        self.addCleanup(shutil.rmtree, self.raiz)
+        scripts = os.path.join(self.raiz, "scripts")
+        os.mkdir(scripts)
+        shutil.copy(os.path.join(SKILL, "scripts", "hook_portao.sh"), scripts)
+        self.chamadas = os.path.join(self.casa, "chamadas")
+        with open(os.path.join(scripts, "portao.sh"), "w", encoding="utf-8") as f:
+            f.write(f"#!/bin/sh\necho x >> '{self.chamadas}'\n")
+        os.chmod(os.path.join(scripts, "portao.sh"), 0o755)
+        self.juiz = os.path.join(self.casa, ".claude/skills/python-on-rails/scripts/conferir_trilho.py")
+        os.makedirs(os.path.dirname(self.juiz))
+        with open(self.juiz, "w", encoding="utf-8") as f:
+            f.write("# juiz\n")
+        for comando in (["init", "-q", "."], ["add", "-A"], ["commit", "-qm", "base"]):
+            subprocess.run(["git", *comando], cwd=self.raiz, check=True, capture_output=True)
+
+    def parar(self):
+        subprocess.run(
+            ["bash", "scripts/hook_portao.sh"],
+            cwd=self.raiz,
+            input="{}",
+            text=True,
+            env={**os.environ, "HOME": self.casa},
+            capture_output=True,
+            check=True,
+        )
+
+    def chamadas_do_portao(self):
+        if not os.path.exists(self.chamadas):
+            return 0
+        with open(self.chamadas, encoding="utf-8") as f:
+            return len(f.readlines())
+
+    def test_sem_mudanca_nao_repete(self):
+        self.parar()
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 1)
+
+    def test_config_paralela_nova_refaz_o_portao(self):
+        self.parar()
+        with open(os.path.join(self.raiz, "ruff.toml"), "w", encoding="utf-8") as f:
+            f.write("[lint]\n")
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 2)
+
+    def test_portao_editado_refaz_o_portao(self):
+        self.parar()
+        with open(os.path.join(self.raiz, "scripts/portao.sh"), "a", encoding="utf-8") as f:
+            f.write("# editado\n")
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 2)
+
+    def test_juiz_novo_refaz_o_portao(self):
+        self.parar()
+        with open(self.juiz, "a", encoding="utf-8") as f:
+            f.write("# versão nova\n")
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 2)
 
 
 if __name__ == "__main__":

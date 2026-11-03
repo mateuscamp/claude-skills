@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Hook Stop do Claude Code: roda `scripts/portao.sh --rapido` quando código Python, pyproject ou
-# lock mudou desde a última aprovação, e devolve a falha ao agente (exit 2) antes de ele dizer que
-# terminou. Registro em .claude/settings.json do projeto:
+# Hook Stop do Claude Code: roda `scripts/portao.sh --rapido` quando qualquer arquivo do repositório
+# ou o juiz da skill mudou desde a última aprovação, e devolve a falha ao agente (exit 2) antes de
+# ele dizer que terminou. Registro em .claude/settings.json do projeto:
 #   {"hooks": {"Stop": [{"hooks": [{"type": "command",
 #     "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hook_portao.sh", "timeout": 300}]}]}}
 # Copiado da skill python-on-rails (adaptado do hook da ai-first-godot).
@@ -16,12 +16,14 @@ if python3 -c 'import json,sys; sys.exit(0 if json.loads(sys.argv[1]).get("stop_
 fi
 
 cd "$raiz" || exit 0
-caminhos=('*.py' 'pyproject.toml' 'uv.lock')
-# Impressão digital: commit atual, diff não commitado e arquivos novos desses tipos.
+juiz="$HOME/.claude/skills/python-on-rails"
+# Impressão digital: commit atual, diff não commitado, arquivos novos e o juiz. O portão lê mais que
+# Python: um `ruff.toml` novo ou um `portao.sh` editado também refazem a conferência.
 digital="$({
   git rev-parse HEAD 2> /dev/null
-  git diff HEAD -- "${caminhos[@]}" 2> /dev/null
-  git ls-files --others --exclude-standard -- "${caminhos[@]}" | xargs -r sha1sum
+  git diff HEAD --binary 2> /dev/null
+  git ls-files -z --others --exclude-standard | xargs -0 -r sha1sum
+  cat "$juiz/scripts/conferir_trilho.py" "$juiz/assets/pyproject-trilho.toml" 2> /dev/null
 } | sha1sum | cut -d' ' -f1)"
 projeto="$(basename "$(git rev-parse --show-toplevel 2> /dev/null || echo "$raiz")")"
 marca="$HOME/.cache/$projeto-portao/$(basename "$raiz").aprovado"

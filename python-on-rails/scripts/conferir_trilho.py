@@ -34,15 +34,44 @@ SAIDA_CONSERTE = 1
 SAIDA_INDETERMINADO = 2
 SAIDA_PARE = 3
 
-# Pastas que nenhuma ferramenta do portão deve ler; podem ser excluídas sem desvio.
-PASTAS_FORA = {".git", ".venv", ".claude", "node_modules", "__pycache__", ".ruff_cache", ".pytest_cache"}
+# As pastas que o ruff pula por padrão, mais a das worktrees de agente.
+PASTAS_FORA = {
+    ".claude", ".eggs", ".git", ".mypy_cache", ".nox", ".pytest_cache", ".ruff_cache", ".tox",
+    ".venv", "__pycache__", "__pypackages__", "_build", "build", "dist", "node_modules",
+    "site-packages", "venv",
+}
 EXCLUSOES_LIVRES = {".claude", ".venv"}
+
+# Só estas chaves passam sem achado: enumerar as perigosas deixaria passar `extend`, limites do
+# pylint e `executionEnvironments`, que levam a configuração para fora do que se confere aqui.
+RUFF_NEUTRAS = {
+    "cache-dir", "exclude", "extend-exclude", "extend-include", "fix", "force-exclude", "format",
+    "include", "indent-width", "line-length", "lint", "namespace-packages", "output-format",
+    "preview", "required-version", "respect-gitignore", "show-fixes", "src", "target-version",
+    "unsafe-fixes",
+}
+LINT_NEUTRAS = {
+    "exclude", "extend-fixable", "extend-ignore", "extend-per-file-ignores", "extend-select",
+    "fixable", "flake8-tidy-imports", "ignore", "isort", "mccabe", "per-file-ignores", "preview",
+    "pydocstyle", "select", "task-tags", "unfixable",
+}
+TIPOS_NEUTRAS = {
+    "baselineFile", "enableTypeIgnoreComments", "exclude", "extraPaths", "failOnWarnings", "ignore",
+    "include", "pythonPlatform", "pythonVersion", "strict", "typeCheckingMode", "venv", "venvPath",
+}
 
 MODOS_DE_TIPOS = {"recommended", "all"}
 NIVEIS_FRACOS = {"none", "information", "hint"}
-AVISOS_CALADOS = {"ignore", "default", "always", "module", "once"}
-ESCONDE_TESTE_EXATO = {"--co", "--collect-only", "-k", "-m"}
-ESCONDE_TESTE_PREFIXO = ("--ignore", "--deselect", "-pno:")
+# O pytest aceita a ação abreviada (`i::UserWarning`): compara-se por prefixo.
+AVISOS_CALADOS = ("ignore", "default", "always", "all", "module", "once")
+ESCONDE_TESTE_EXATO = {"--co", "--collect-only"}
+ESCONDE_TESTE_PREFIXO = (
+    "--confcutdir", "--config-file", "--deselect", "--ignore", "--override-ini", "--pythonwarnings",
+    "--rootdir", "-W", "-c", "-k", "-m", "-o", "-pno:",
+)
+ESCONDE_DA_COLETA = (
+    "collect_imported_tests", "norecursedirs", "python_classes", "python_files", "python_functions",
+)
 ETAPAS = (
     "uv lock --check",
     "ruff format --check",
@@ -62,25 +91,31 @@ CONFIG_NA_RAIZ = {
     ".pytest.toml",
     ".importlinter",
 }
-SECAO_EM_INI = {
-    "tox.ini": "[pytest]",
-    "setup.cfg": "[tool:pytest]",
+SECOES_EM_INI = {
+    "tox.ini": ("[pytest]",),
+    "setup.cfg": ("[tool:pytest]", "[importlinter]"),
 }
+# Na linha da etapa, o que a faz aprovar sem conferir. `--config pyproject.toml`, `-c` e `-p`
+# para o mesmo arquivo são legítimos: fixam a fonte da configuração.
+NEUTRALIZA = re.compile(
+    r"\|\||--exit-zero|--(?:extend-)?(?:ignore|select|exclude)\b|--isolated|--deselect|--skip"
+    r"|PYTEST_ADDOPTS=|\s-[kW]\b|(?:--config|\s-[cp])[=\s]+(?!pyproject\.toml)\S"
+)
 
 # Medido no ruff 0.17.3: a diretiva só vale com `#` no começo do comentário ou depois de espaço.
-# `# texto noqa` e `# `# noqa`` não calam nada e são prosa; `# texto # noqa` cala.
+# `# texto noqa` e `# `# noqa`` não calam nada e são prosa; `# texto # noqa` e `## noqa` calam.
 DIRETIVA = re.compile(
-    r"(?:^|\s)#\s*(?:noqa|flake8:\s*noqa|type:\s*ignore|pyright:|isort:\s*(?:skip|off)"
-    r"|ruff:\s*(?:noqa|disable|ignore))",
+    r"(?:^|[\s#])#\s*(?:noqa|flake8:\s*noqa|type:\s*ignore|pyright:|isort:\s*(?:skip|off)"
+    r"|ruff:\s*(?:noqa|disable|ignore|file-ignore))",
     re.I,
 )
-SO_STRICT = re.compile(r"#\s*pyright:\s*strict\s*$", re.I)
+SO_STRICT = re.compile(r"^#\s*pyright:\s*strict\s*$", re.I)
 MOTIVO = re.compile(r"motivo:\s*\S", re.I)
 ADR_ACEITO = re.compile(r"^\W*status\W+aceit", re.I | re.M)
 PISO_DO_PYTHON = re.compile(r">=\s*(\d+\.\d+)")
 
-CASTS = {"cast", "typing.cast", "t.cast", "typing_extensions.cast"}
-SEM_TIPO = {"no_type_check", "typing.no_type_check", "t.no_type_check"}
+CASTS = {"typing.cast", "typing_extensions.cast"}
+SEM_TIPO = {"typing.no_type_check", "typing_extensions.no_type_check"}
 PULOS = {
     "pytest.mark.skip",
     "pytest.mark.skipif",
@@ -202,9 +237,23 @@ def conferir_exclusoes_do_ruff(projeto: Projeto) -> Iterator[Achado]:
             yield afrouxou("GAT001", f"ruff.exclude:{padrao}")
 
 
+def conferir_chaves(projeto: Projeto) -> Iterator[Achado]:
+    ruff = tabela(projeto.tool, "ruff")
+    for chave in ruff.keys() - RUFF_NEUTRAS:
+        yield afrouxou("GAT001", f"ruff.{chave}")
+    for chave in tabela(ruff, "lint").keys() - LINT_NEUTRAS:
+        yield afrouxou("GAT001", f"ruff.lint.{chave}")
+    for chave in basedpyright(projeto).keys() - TIPOS_NEUTRAS:
+        if not chave.startswith("report"):
+            yield afrouxou("GAT002", f"basedpyright.{chave}")
+
+
 def conferir_limites_do_ruff(projeto: Projeto) -> Iterator[Achado]:
     lint = tabela(projeto.tool, "ruff", "lint")
     trilho = tabela(projeto.trilho, "ruff", "lint")
+    relativos = tabela(lint, "flake8-tidy-imports").get("ban-relative-imports")
+    if relativos != tabela(trilho, "flake8-tidy-imports").get("ban-relative-imports"):
+        yield afrouxou("GAT001", f"ruff.ban-relative-imports:{relativos}")
     limite = tabela(trilho, "mccabe").get("max-complexity")
     atual = tabela(lint, "mccabe").get("max-complexity")
     if not isinstance(atual, int) or not isinstance(limite, int) or atual > limite:
@@ -258,8 +307,7 @@ def conferir_linha_de_base(projeto: Projeto) -> Iterator[Achado]:
 
 
 def argumentos_do_pytest(ini: dict) -> list[str]:
-    addopts = ini.get("addopts")
-    return shlex.split(addopts) if isinstance(addopts, str) else textos(addopts)
+    return [argumento for item in textos(ini.get("addopts")) for argumento in shlex.split(item)]
 
 
 def esconde_teste(argumento: str, anterior: str) -> bool:
@@ -290,8 +338,11 @@ def conferir_pytest(projeto: Projeto) -> Iterator[Achado]:
     if "error" not in avisos:
         yield afrouxou("GAT003", "pytest.filterwarnings:error")
     for aviso in avisos:
-        if aviso.split(":")[0] in AVISOS_CALADOS:
+        if any(acao.startswith(aviso.split(":")[0].strip()) for acao in AVISOS_CALADOS):
             yield afrouxou("GAT003", f"pytest.filterwarnings:{aviso}")
+    for chave in ESCONDE_DA_COLETA:
+        if chave in ini:
+            yield afrouxou("GAT003", f"pytest.{chave}")
     pastas = textos(ini.get("testpaths"))
     if pastas and "tests" not in pastas and (projeto.raiz / "tests").is_dir():
         yield afrouxou("GAT003", "pytest.testpaths:tests")
@@ -301,23 +352,63 @@ def sem_comentario(texto: str) -> str:
     return "\n".join(re.sub(r"(^|\s)#.*$", "", linha) for linha in texto.splitlines())
 
 
+def contratos(projeto: Projeto) -> list[dict]:
+    lista = tabela(projeto.tool, "importlinter").get("contracts")
+    return [c for c in lista if isinstance(c, dict)] if isinstance(lista, list) else []
+
+
+def texto_se_existe(arquivo: Path) -> str:
+    return sem_comentario(arquivo.read_text(encoding="utf-8")) if arquivo.is_file() else ""
+
+
+def receita_de_check(makefile: str) -> str:
+    achado = re.search(r"^check:(.*\n(?:\t.*\n?)*)", makefile, re.M)
+    return achado.group(1) if achado else ""
+
+
 def conferir_etapas(projeto: Projeto) -> Iterator[Achado]:
-    arquivos = [projeto.raiz / "scripts" / "portao.sh", projeto.raiz / "Makefile"]
-    texto = "\n".join(sem_comentario(a.read_text(encoding="utf-8")) for a in arquivos if a.is_file())
-    for etapa in ETAPAS:
-        if etapa not in texto:
-            yield Achado(
-                "GAT004",
-                HUMANO,
-                "scripts/portao.sh",
-                "etapa fora do portão",
-                f"portao.etapa:{etapa}",
-            )
+    portao = projeto.raiz / "scripts" / "portao.sh"
+    makefile = texto_se_existe(projeto.raiz / "Makefile")
+    # Só o que o `make check` executa conta: `make fmt` e `make test` não são o portão.
+    linhas = (texto_se_existe(portao) if portao.is_file() else makefile).splitlines()
+    if portao.is_file() and "portao.sh" not in receita_de_check(makefile):
+        yield Achado("GAT004", HUMANO, "Makefile", "o check não roda o portão", "portao.make-check")
+    etapas = (*ETAPAS, "lint-imports") if contratos(projeto) else ETAPAS
+    for etapa in etapas:
+        if not any(etapa in linha and not NEUTRALIZA.search(linha) for linha in linhas):
+            mensagem = "etapa fora do portão ou neutralizada"
+            yield Achado("GAT004", HUMANO, portao.name, mensagem, f"portao.etapa:{etapa}")
+
+
+def existe_no_projeto(projeto: Projeto, modelo: str, modulo: str) -> bool:
+    """O nome das camadas internas é layout do projeto: só se exige a que existe."""
+    if not modelo.startswith("<pacote>."):
+        return True
+    caminho = Path(*modulo.split("."))
+    bases = (projeto.raiz / "src" / caminho, projeto.raiz / caminho)
+    return any(b.is_dir() or b.with_suffix(".py").is_file() for b in bases)
 
 
 def conferir_fronteiras(projeto: Projeto) -> Iterator[Achado]:
-    if not tabela(projeto.tool, "importlinter").get("contracts"):
-        yield afrouxou("GAT005", "padrao.dominio-puro", "sem contrato de fronteira")
+    for contrato in contratos(projeto):
+        for regra in textos(contrato.get("ignore_imports")):
+            yield afrouxou("GAT005", f"importlinter.ignore_imports:{regra}")
+    raiz = tabela(projeto.tool, "importlinter").get("root_package")
+    do_dominio = [
+        contrato
+        for contrato in contratos(projeto)
+        if contrato.get("type") == "forbidden"
+        and f"{raiz}.dominio" in textos(contrato.get("source_modules"))
+    ]
+    if not do_dominio:
+        yield afrouxou("GAT005", "padrao.dominio-puro", "sem contrato que guarde o domínio")
+        return
+    proibidos = {m for c in do_dominio for m in textos(c.get("forbidden_modules"))}
+    for contrato in tabela(projeto.trilho, "importlinter").get("contracts", []):
+        for modelo in textos(contrato.get("forbidden_modules")):
+            modulo = modelo.replace("<pacote>", str(raiz))
+            if modulo not in proibidos and existe_no_projeto(projeto, modelo, modulo):
+                yield afrouxou("GAT005", f"importlinter.forbidden:{modulo}")
 
 
 def versionado_e_presente(projeto: Projeto, caminho: str) -> bool:
@@ -364,8 +455,9 @@ def config_paralela(raiz: Path, pasta: Path, nome: str) -> bool:
         return True
     if pasta == Path() and nome in CONFIG_NA_RAIZ:
         return True
-    if pasta == Path() and nome in SECAO_EM_INI:
-        return SECAO_EM_INI[nome] in caminho.read_text(encoding="utf-8", errors="replace")
+    if pasta == Path() and nome in SECOES_EM_INI:
+        texto = caminho.read_text(encoding="utf-8", errors="replace")
+        return any(secao in texto for secao in SECOES_EM_INI[nome])
     return False
 
 
@@ -418,20 +510,32 @@ def suprime_sem_motivo(linha: int, comentarios: dict[int, str], linhas: list[str
     return not (sozinho and tem_motivo_acima(linha, comentarios, linhas))
 
 
-def nome_de(no: ast.AST) -> str | None:
+def apelidos(arvore: ast.AST) -> dict[str, str]:
+    """Mapeia o nome local para o nome real: `from pytest import mark as m` dá m -> pytest.mark."""
+    mapa: dict[str, str] = {}
+    for no in ast.walk(arvore):
+        if isinstance(no, ast.Import):
+            mapa.update({nome.asname: nome.name for nome in no.names if nome.asname})
+        elif isinstance(no, ast.ImportFrom) and no.module:
+            for nome in no.names:
+                mapa[nome.asname or nome.name] = f"{no.module}.{nome.name}"
+    return mapa
+
+
+def nome_de(no: ast.AST, mapa: dict[str, str]) -> str | None:
     partes: list[str] = []
     while isinstance(no, ast.Attribute):
         partes.append(no.attr)
         no = no.value
     if not isinstance(no, ast.Name):
         return None
-    return ".".join([no.id, *reversed(partes)])
+    return ".".join([mapa.get(no.id, no.id), *reversed(partes)])
 
 
-def regra_do_no(no: ast.AST) -> tuple[str, str] | None:
-    if isinstance(no, ast.Call) and nome_de(no.func) in CASTS:
+def regra_do_no(no: ast.AST, mapa: dict[str, str]) -> tuple[str, str] | None:
+    if isinstance(no, ast.Call) and nome_de(no.func, mapa) in CASTS:
         return "SUP001", "cast"
-    nome = nome_de(no)
+    nome = nome_de(no, mapa)
     if nome in SEM_TIPO:
         return "SUP001", "no_type_check"
     if nome in PULOS:
@@ -439,14 +543,18 @@ def regra_do_no(no: ast.AST) -> tuple[str, str] | None:
     return None
 
 
+def texto_preenchido(valor: ast.expr) -> bool:
+    if isinstance(valor, ast.Constant):
+        return isinstance(valor.value, str) and bool(valor.value.strip())
+    return isinstance(valor, ast.JoinedStr)
+
+
 def diz_o_motivo(chamada: ast.Call) -> bool:
     """O `skip` que já traz o motivo na chamada não precisa repetir em comentário."""
-    valores = [*chamada.args, *(k.value for k in chamada.keywords if k.arg == "reason")]
-    return any(
-        isinstance(v, ast.JoinedStr) or (isinstance(v, ast.Constant) and str(v.value).strip())
-        for v in valores
-        if not isinstance(v, ast.Constant) or isinstance(v.value, str)
-    )
+    motivo = next((k.value for k in chamada.keywords if k.arg == "reason"), None)
+    if motivo is not None:
+        return not isinstance(motivo, ast.Constant) or texto_preenchido(motivo)
+    return any(texto_preenchido(valor) for valor in chamada.args)
 
 
 def conferir_codigo(caminho: str, texto: str, comentarios: dict[int, str]) -> Iterator[Achado]:
@@ -457,9 +565,10 @@ def conferir_codigo(caminho: str, texto: str, comentarios: dict[int, str]) -> It
     com_motivo = {
         id(no.func) for no in ast.walk(arvore) if isinstance(no, ast.Call) and diz_o_motivo(no)
     }
+    mapa = apelidos(arvore)
     vistos: set[tuple[str, int]] = set()
     for no in ast.walk(arvore):
-        achado = regra_do_no(no)
+        achado = regra_do_no(no, mapa)
         if achado is None or (achado[0] == "SUP002" and id(no) in com_motivo):
             continue
         regra, oque = achado
@@ -487,6 +596,7 @@ def conferir_supressoes(projeto: Projeto) -> Iterator[Achado]:
 CONFERENCIAS = (
     conferir_config_paralela,
     conferir_linha_de_base,
+    conferir_chaves,
     conferir_regras_do_ruff,
     conferir_por_arquivo,
     conferir_exclusoes_do_ruff,
@@ -559,7 +669,8 @@ def git_lista(raiz: Path, *args: str) -> list[str]:
 
 
 def relatar(achados: list[Achado], declarados: int) -> int:
-    for achado in sorted(achados, key=lambda a: (a.dono != HUMANO, a.onde, a.regra)):
+    # O humano por último: o hook devolve o fim da saída, e o que para o agente não pode sair antes.
+    for achado in sorted(achados, key=lambda a: (a.dono == HUMANO, a.onde, a.regra)):
         prefixo = f"{achado.chave}: " if achado.chave else ""
         print(f"{achado.onde} {achado.regra} [{achado.dono}] {prefixo}{achado.mensagem}")
     humanos = sum(achado.dono == HUMANO for achado in achados)
@@ -582,7 +693,7 @@ def main() -> int:
         return SAIDA_INDETERMINADO
     try:
         achados, declarados = julgar(carregar(Path.cwd()))
-    except IndeterminadoError as erro:
+    except Exception as erro:  # noqa: BLE001  # motivo: o que não se leu nunca vira "conserte"
         print(f"trilhos: indeterminado ({erro})")
         return SAIDA_INDETERMINADO
     return relatar(achados, declarados)
