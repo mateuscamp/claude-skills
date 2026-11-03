@@ -79,7 +79,8 @@ ETAPAS = (
     "basedpyright",
     "pytest",
     "uv audit",
-    "conferir_trilho",
+    ".claude/skills/python-on-rails/scripts/conferir_trilho.py",
+    'python -I "$conferir"',
 )
 
 CONFIG_EM_QUALQUER_PASTA = {"ruff.toml", ".ruff.toml"}

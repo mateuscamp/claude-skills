@@ -7,6 +7,7 @@ regra e o código de saída. Adaptação legítima tem o caso contrário: nenhum
 Uso, na raiz do repositório das skills: `python3 tests/test_conferir_trilho.py`.
 """
 
+import json
 import os
 import shutil
 import subprocess
@@ -265,6 +266,15 @@ class Afrouxar(Base):
             'PYTEST_ADDOPTS=--ignore=tests uv run --locked pytest -m "not e2e"\n',
         )
         self.assertIn("portao.etapa:pytest", self.exigir(3, "GAT004"))
+
+    def test_tira_so_a_execucao_do_juiz(self):
+        # O nome do script continua na variável: procurar o nome não basta.
+        self.trocar("scripts/portao.sh", 'uv run --locked python -I "$conferir"\n', "true\n")
+        self.assertIn("portao.etapa:", self.exigir(3, "GAT004"))
+
+    def test_troca_o_caminho_do_juiz(self):
+        self.trocar("scripts/portao.sh", 'conferir="$HOME/.claude/skills/python-on-rails/scripts/conferir_trilho.py"', 'conferir="/tmp/falso.py"')
+        self.assertIn("scripts/conferir_trilho.py", self.exigir(3, "GAT004"))
 
     def test_make_check_esvaziado(self):
         self.trocar("Makefile", "check:\n\tscripts/portao.sh\n", "check:\n\ttrue\n")
@@ -798,6 +808,79 @@ class Hook(unittest.TestCase):
             f.write("# versão nova\n")
         self.parar()
         self.assertEqual(self.chamadas_do_portao(), 2)
+
+
+class HookDoUsuario(Base):
+    """O hook global roda o juiz de fora, mesmo que o portão do projeto não o chame mais."""
+
+    def parar(self, cwd=None, **campos):
+        return subprocess.run(
+            ["bash", os.path.join(SKILL, "scripts", "hook_juiz.sh")],
+            input=json.dumps({"cwd": cwd or self.raiz, **campos}),
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def sem_chamada(self):
+        self.trocar("scripts/portao.sh", 'uv run --locked python -I "$conferir"\n', "true\n")
+
+    def test_projeto_em_dia_passa_calado(self):
+        feito = self.parar()
+        self.assertEqual((feito.returncode, feito.stderr), (0, ""))
+
+    def test_chamada_tirada_sem_commit_bloqueia(self):
+        self.sem_chamada()
+        feito = self.parar()
+        self.assertEqual(feito.returncode, 2, feito.stderr)
+        self.assertIn("GAT004", feito.stderr)
+
+    def test_chamada_tirada_com_commit_bloqueia(self):
+        # A marca de adoção vem do histórico: apagar a chamada não apaga a marca.
+        self.sem_chamada()
+        self.git("commit", "-qam", "tira o juiz")
+        self.assertEqual(self.parar().returncode, 2)
+
+    def test_portao_apagado_bloqueia(self):
+        os.remove(self.caminho("scripts/portao.sh"))
+        self.git("commit", "-qam", "apaga o portão")
+        self.assertEqual(self.parar().returncode, 2)
+
+    def test_afrouxar_a_config_bloqueia_sem_depender_do_portao(self):
+        self.sem_chamada()
+        self.trocar("pyproject.toml", 'ignore = [\n', 'ignore = [\n  "T20",\n')
+        self.git("commit", "-qam", "afrouxa")
+        feito = self.parar()
+        self.assertEqual(feito.returncode, 2)
+        self.assertIn("GAT001", feito.stderr)
+
+    def test_a_partir_de_subpasta(self):
+        self.sem_chamada()
+        self.assertEqual(self.parar(cwd=self.caminho("src/demo")).returncode, 2)
+
+    def test_segunda_parada_nao_prende_a_sessao(self):
+        self.sem_chamada()
+        self.assertEqual(self.parar(stop_hook_active=True).returncode, 0)
+
+    def test_projeto_que_nunca_adotou_nao_e_julgado(self):
+        self.trocar("scripts/portao.sh", "conferir_trilho", "outro")
+        self.git("commit", "-q", "--amend", "-am", "base")
+        self.trocar("pyproject.toml", 'ignore = [\n', 'ignore = [\n  "T20",\n')
+        self.assertEqual(self.parar().returncode, 0)
+
+    def test_fora_do_git_passa(self):
+        with tempfile.TemporaryDirectory() as pasta:
+            self.assertEqual(self.parar(cwd=pasta).returncode, 0)
+
+    def test_entrada_quebrada_nao_trava_a_parada(self):
+        feito = subprocess.run(
+            ["bash", os.path.join(SKILL, "scripts", "hook_juiz.sh")],
+            input="nao e json",
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(feito.returncode, 0)
 
 
 if __name__ == "__main__":

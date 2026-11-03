@@ -22,7 +22,8 @@ Arquivos desta skill:
 - `assets/Makefile` e `scripts/portao.sh`: o portão único. `scripts/hook_portao.sh`: o hook Stop.
   `assets/ci.yml`: o CI.
 - `scripts/conferir_trilho.py`: o juiz, que reprova o afrouxamento do portão. **Não se copia**: o
-  `portao.sh` o chama nesta pasta.
+  `portao.sh` o chama nesta pasta. `scripts/hook_juiz.sh`: o hook do usuário, que o roda de fora
+  do projeto, registrado uma vez por máquina.
 - `assets/AGENTS-python.md`: a seção Python do `AGENTS.md`, com as regras que o agente relê.
 - `references/`: lidas sob demanda (tabela no fim).
 
