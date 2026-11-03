@@ -7,6 +7,7 @@ regra e o código de saída. Adaptação legítima tem o caso contrário: nenhum
 Uso, na raiz do repositório das skills: `python3 tests/test_conferir_trilho.py`.
 """
 
+import json
 import os
 import shutil
 import subprocess
@@ -265,6 +266,28 @@ class Afrouxar(Base):
             'PYTEST_ADDOPTS=--ignore=tests uv run --locked pytest -m "not e2e"\n',
         )
         self.assertIn("portao.etapa:pytest", self.exigir(3, "GAT004"))
+
+    def test_tira_so_a_execucao_do_juiz(self):
+        # O nome do script continua na conferência de que ele existe: procurar o nome não basta.
+        self.trocar("scripts/portao.sh", 'uv run --locked python -I "$HOME/.claude/skills/python-on-rails/scripts/conferir_trilho.py"\n', "true\n")
+        self.assertIn("portao.etapa:conferir_trilho", self.exigir(3, "GAT004"))
+
+    def test_juiz_por_variavel_nao_conta(self):
+        # Por variável, uma reatribuição antes da linha troca o programa sem mudar o texto.
+        self.trocar(
+            "scripts/portao.sh",
+            'uv run --locked python -I "$HOME/.claude/skills/python-on-rails/scripts/conferir_trilho.py"\n',
+            'conferir=/bin/true\nuv run --locked python -I "$conferir"\n',
+        )
+        self.assertIn("portao.etapa:conferir_trilho", self.exigir(3, "GAT004"))
+
+    def test_troca_o_caminho_do_juiz(self):
+        self.trocar("scripts/portao.sh", 'uv run --locked python -I "$HOME/.claude/skills/python-on-rails/scripts/conferir_trilho.py"\n', 'uv run --locked python -I /tmp/falso.py\n')
+        self.assertIn("portao.etapa:conferir_trilho", self.exigir(3, "GAT004"))
+
+    def test_chave_da_etapa_cabe_num_texto_toml(self):
+        self.trocar("scripts/portao.sh", 'uv run --locked python -I "$HOME/.claude/skills/python-on-rails/scripts/conferir_trilho.py"\n', "true\n")
+        self.assertNotIn('"', self.exigir(3, "GAT004").split("portao.etapa:")[1].split(":")[0])
 
     def test_make_check_esvaziado(self):
         self.trocar("Makefile", "check:\n\tscripts/portao.sh\n", "check:\n\ttrue\n")
@@ -551,6 +574,14 @@ class AdaptacaoLegitima(Base):
         self.trocar("pyproject.toml", "[tool.ruff.lint.mccabe]", '[tool.ruff.lint.pydocstyle]\nconvention = "google"\n\n[tool.ruff.lint.mccabe]')
         self.aprovar()
 
+    def test_juiz_chamado_com_python3_passa(self):
+        self.trocar(
+            "scripts/portao.sh",
+            'uv run --locked python -I "$HOME/.claude/skills/python-on-rails/scripts/conferir_trilho.py"\n',
+            'uv run --locked python3 -I "$HOME/.claude/skills/python-on-rails/scripts/conferir_trilho.py"\n',
+        )
+        self.aprovar()
+
     def test_opcoes_explicitas_no_portao(self):
         self.trocar("scripts/portao.sh", "uv run --locked ruff check .\n", "uv run --locked ruff check --config pyproject.toml .\n")
         self.trocar(
@@ -737,6 +768,12 @@ class Portao(unittest.TestCase):
 class Hook(unittest.TestCase):
     """O hook só pula o portão quando nada que o portão lê mudou."""
 
+    def test_arquivo_plantado_no_projeto_nao_pula_o_portao(self):
+        with open(os.path.join(self.raiz, "json.py"), "w", encoding="utf-8") as f:
+            f.write("import sys\n\nsys.exit(0)\n")
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 1)
+
     def setUp(self):
         self.casa = tempfile.mkdtemp(prefix="casa-")
         self.raiz = tempfile.mkdtemp(prefix="hook-")
@@ -798,6 +835,132 @@ class Hook(unittest.TestCase):
             f.write("# versão nova\n")
         self.parar()
         self.assertEqual(self.chamadas_do_portao(), 2)
+
+
+class HookDoUsuario(Base):
+    """O hook global roda o juiz de fora, mesmo que o portão do projeto não o chame mais."""
+
+    def setUp(self):
+        super().setUp()
+        self.casa = tempfile.mkdtemp(prefix="casa-")
+        self.addCleanup(shutil.rmtree, self.casa)
+
+    def parar(self, cwd=None, **campos):
+        return self.rodar_hook(json.dumps({"cwd": cwd or self.raiz, **campos}))
+
+    def rodar_hook(self, entrada, cwd=None):
+        return subprocess.run(
+            ["bash", os.path.join(SKILL, "scripts", "hook_juiz.sh")],
+            input=entrada,
+            text=True,
+            capture_output=True,
+            check=False,
+            cwd=cwd,
+            env={**os.environ, "HOME": self.casa},
+        )
+
+    def sem_chamada(self):
+        self.trocar("scripts/portao.sh", 'uv run --locked python -I "$HOME/.claude/skills/python-on-rails/scripts/conferir_trilho.py"\n', "true\n")
+
+    def sem_nenhuma_mencao(self):
+        with open(self.caminho("scripts/portao.sh"), encoding="utf-8") as f:
+            linhas = [linha for linha in f if "conferir_trilho" not in linha]
+        self.escrever("scripts/portao.sh", "".join(linhas))
+
+    def test_projeto_em_dia_passa_calado(self):
+        feito = self.parar()
+        self.assertEqual((feito.returncode, feito.stderr), (0, ""))
+
+    def test_chamada_tirada_sem_commit_bloqueia(self):
+        self.sem_chamada()
+        feito = self.parar()
+        self.assertEqual(feito.returncode, 2, feito.stderr)
+        self.assertIn("GAT004", feito.stderr)
+
+    def test_chamada_tirada_com_commit_bloqueia(self):
+        # A marca de adoção vem do histórico: apagar toda menção não apaga a marca.
+        self.sem_nenhuma_mencao()
+        self.git("commit", "-qam", "tira o juiz")
+        self.assertEqual(self.parar().returncode, 2)
+
+    def test_arquivo_plantado_no_projeto_nao_cala_o_hook(self):
+        # A pasta do processo é o projeto, como no hook de verdade: é ela que entra no sys.path.
+        self.sem_chamada()
+        for codigo in (1, 3):
+            with self.subTest(codigo):
+                self.escrever("json.py", f"raise SystemExit({codigo})\n")
+                self.git("add", "-A")
+                entrada = json.dumps({"cwd": self.raiz, "session_id": f"s{codigo}"})
+                self.assertEqual(self.rodar_hook(entrada, cwd=self.raiz).returncode, 2)
+
+    def test_mesma_pendencia_so_bloqueia_uma_vez_por_sessao(self):
+        self.sem_chamada()
+        self.assertEqual(self.parar(session_id="a").returncode, 2)
+        self.assertEqual(self.parar(session_id="a").returncode, 0)
+
+    def test_sessao_nova_ouve_a_pendencia_de_novo(self):
+        # O agente sem memória precisa saber: uma sessão não responde pela outra.
+        self.sem_chamada()
+        self.parar(session_id="a")
+        self.assertEqual(self.parar(session_id="b").returncode, 2)
+
+    def test_pendencia_nova_bloqueia_na_mesma_sessao(self):
+        self.sem_chamada()
+        self.parar(session_id="a")
+        self.trocar("pyproject.toml", 'ignore = [\n', 'ignore = [\n  "T20",\n')
+        self.assertEqual(self.parar(session_id="a").returncode, 2)
+
+    def test_resolver_e_voltar_a_quebrar_bloqueia_de_novo(self):
+        self.sem_chamada()
+        original = self.parar(session_id="a")
+        self.assertEqual(original.returncode, 2)
+        self.git("checkout", "-q", "scripts/portao.sh")
+        self.assertEqual(self.parar(session_id="a").returncode, 0)
+        self.sem_chamada()
+        self.assertEqual(self.parar(session_id="a").returncode, 2)
+
+    def test_entrada_sem_cwd_usa_a_pasta_do_processo(self):
+        self.sem_chamada()
+        self.assertEqual(self.rodar_hook("{}", cwd=self.raiz).returncode, 2)
+
+    def test_entrada_quebrada_ainda_julga_a_pasta_do_processo(self):
+        self.sem_chamada()
+        self.assertEqual(self.rodar_hook("nao e json", cwd=self.raiz).returncode, 2)
+
+    def test_portao_apagado_bloqueia(self):
+        os.remove(self.caminho("scripts/portao.sh"))
+        self.git("commit", "-qam", "apaga o portão")
+        self.assertEqual(self.parar().returncode, 2)
+
+    def test_afrouxar_a_config_bloqueia_sem_depender_do_portao(self):
+        self.sem_chamada()
+        self.trocar("pyproject.toml", 'ignore = [\n', 'ignore = [\n  "T20",\n')
+        self.git("commit", "-qam", "afrouxa")
+        feito = self.parar()
+        self.assertEqual(feito.returncode, 2)
+        self.assertIn("GAT001", feito.stderr)
+
+    def test_a_partir_de_subpasta(self):
+        self.sem_chamada()
+        self.assertEqual(self.parar(cwd=self.caminho("src/demo")).returncode, 2)
+
+    def test_segunda_parada_nao_prende_a_sessao(self):
+        self.sem_chamada()
+        self.assertEqual(self.parar(stop_hook_active=True).returncode, 0)
+
+    def test_projeto_que_nunca_adotou_nao_e_julgado(self):
+        self.trocar("scripts/portao.sh", "conferir_trilho", "outro")
+        self.git("commit", "-q", "--amend", "-am", "base")
+        self.trocar("pyproject.toml", 'ignore = [\n', 'ignore = [\n  "T20",\n')
+        self.assertEqual(self.parar().returncode, 0)
+
+    def test_fora_do_git_passa(self):
+        with tempfile.TemporaryDirectory() as pasta:
+            self.assertEqual(self.parar(cwd=pasta).returncode, 0)
+
+    def test_entrada_quebrada_fora_de_projeto_nao_trava_a_parada(self):
+        with tempfile.TemporaryDirectory() as pasta:
+            self.assertEqual(self.rodar_hook("nao e json", cwd=pasta).returncode, 0)
 
 
 if __name__ == "__main__":

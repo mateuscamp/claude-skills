@@ -29,7 +29,7 @@ O `make` troca qualquer falha por 2. Por isso a última linha da saída sempre d
 | GAT001 | humano | ruff afrouxado: prefixo fora de `select`, `ignore` ou `per-file-ignores` em regra do trilho, exclusão além de `.claude` e `.venv`, `include`, complexidade maior, regra de ambiente apagada, `ban-relative-imports` mudado, ou chave fora da lista das neutras, como `extend` e limites do pylint |
 | GAT002 | humano | basedpyright afrouxado: modo fora de `recommended` e `all`, `failOnWarnings` falso, `enableTypeIgnoreComments` não falso, `report*` enfraquecido, `exclude`, `ignore`, `include` que tira `src` ou `tests`, ou chave fora da lista das neutras, como `executionEnvironments` |
 | GAT003 | humano | pytest afrouxado: `xfail_strict`, `filterwarnings` (inclusive ação abreviada, como `i::`), `--strict-*`, `addopts` que esconde teste ou troca a configuração (`-W`, `-o`, `-c`), ou `norecursedirs` e `python_files` e afins |
-| GAT004 | humano | Falta uma etapa no `portao.sh`, fora de comentário, ou ela está neutralizada (`\|\| true`, `--exit-zero`, `--ignore`, config que não é o `pyproject.toml`), ou o `check` do `Makefile` não roda o `portao.sh`. Sem `portao.sh`, confere o `Makefile` |
+| GAT004 | humano | Falta uma etapa no `portao.sh`, fora de comentário, ou ela está neutralizada (`\|\| true`, `--exit-zero`, `--ignore`, config que não é o `pyproject.toml`), o juiz não é executado pelo caminho completo na própria linha, ou o `check` do `Makefile` não roda o `portao.sh`. Sem `portao.sh`, confere o `Makefile` |
 | GAT005 | humano | Não há contrato `forbidden` guardando `<pacote>.dominio` (chave `padrao.dominio-puro`), falta um módulo do asset em `forbidden_modules` (camada interna só se o projeto a tiver), ou há `ignore_imports` |
 | AMB001 | agente | `uv.lock` fora do git |
 | AMB002 | agente | `.python-version` ausente ou fora do git |
@@ -57,10 +57,20 @@ só conta em regra do trilho: `D` e `INP001` passam.
 ## O limite
 
 Tirar a chamada do juiz de dentro do `portao.sh` não reprova ali: quem foi removido não pode
-reclamar. O CI do asset chama o juiz direto, então o afrouxamento reaparece lá, e a mudança no
-workflow fica visível no diff. O modelo de ameaça é o agente que quer o verde, não um adversário:
-um ADR forjado ou um workflow editado passam. Dentro do repositório não existe âncora contra quem
-escreve no repositório.
+reclamar. Por isso há dois caminhos de fora:
+
+- **`scripts/hook_juiz.sh`**, hook Stop do usuário, registrado uma vez por máquina em
+  `~/.claude/settings.json` (instrução no topo dele). Roda o juiz em todo repositório que o adotou,
+  sem passar pelo portão. A adoção se lê do histórico do git, então apagar a chamada ou o
+  `portao.sh` não a desfaz. Repositório que nunca adotou não é julgado.
+- **O CI do asset**, que chama o juiz direto.
+
+O que continua passando: uma sessão de Codex ou de outra máquina não tem o hook; uma sessão aberta
+fora do repositório não o julga, porque o hook olha a pasta da sessão, e só o CI cobre esse caso;
+na segunda parada seguida ele libera, para não prender a sessão em laço, e cada sessão ouve a mesma
+pendência uma vez; e quem escreve em `~/.claude/settings.json` o desliga. O modelo de ameaça é o agente que quer o verde, não um adversário: um ADR forjado ou um
+workflow editado passam. Dentro do repositório não existe âncora contra quem escreve no
+repositório, e o hook é a âncora fora dele.
 
 ## A decisão: skill com juiz externo, sem framework e sem CLI
 
@@ -77,6 +87,7 @@ dias, a etapa de supressão tinha sido reescrita em três lugares.
 | Copier | Pede repositório próprio com tag PEP 440: num monorepo copia tudo ou não grava `_commit`. O update escreve no projeto, e aqui o caso é conferir |
 | Só regra escrita e etapa em bash | Regra se esquece. Etapa em bash no projeto o agente edita, e comparar TOML por sentido não cabe nela |
 | Script copiado em cada projeto | Melhor que nada, mas fica ao alcance do agente e o conserto volta a ser colado à mão |
+| Só o portão chamando o juiz | Não vê a própria remoção: faltava quem rodasse o juiz de fora, daí o hook do usuário |
 
 Ganha: o juiz fica fora da área que o réu edita, e o conserto chega a todos sem colar nada.
 Perde: uma mudança no script ou no asset pode reprovar vários projetos no mesmo dia, e o portão

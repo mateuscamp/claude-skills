@@ -79,7 +79,10 @@ ETAPAS = (
     "basedpyright",
     "pytest",
     "uv audit",
-    "conferir_trilho",
+)
+# O caminho inteiro na linha que executa: por variável, reatribuir troca o programa sem mudar o texto.
+JUIZ_NA_ETAPA = re.compile(
+    r"python3?\s+-I\s+\"?\S*\.claude/skills/python-on-rails/scripts/conferir_trilho\.py"
 )
 
 CONFIG_EM_QUALQUER_PASTA = {"ruff.toml", ".ruff.toml"}
@@ -373,11 +376,14 @@ def conferir_etapas(projeto: Projeto) -> Iterator[Achado]:
     linhas = (texto_se_existe(portao) if portao.is_file() else makefile).splitlines()
     if portao.is_file() and "portao.sh" not in receita_de_check(makefile):
         yield Achado("GAT004", HUMANO, "Makefile", "o check não roda o portão", "portao.make-check")
+    ativas = [linha for linha in linhas if not NEUTRALIZA.search(linha)]
     etapas = (*ETAPAS, "lint-imports") if contratos(projeto) else ETAPAS
-    for etapa in etapas:
-        if not any(etapa in linha and not NEUTRALIZA.search(linha) for linha in linhas):
-            mensagem = "etapa fora do portão ou neutralizada"
-            yield Achado("GAT004", HUMANO, portao.name, mensagem, f"portao.etapa:{etapa}")
+    faltam = [etapa for etapa in etapas if not any(etapa in linha for linha in ativas)]
+    if not any(JUIZ_NA_ETAPA.search(linha) for linha in ativas):
+        faltam.append("conferir_trilho")
+    for etapa in faltam:
+        mensagem = "etapa fora do portão ou neutralizada"
+        yield Achado("GAT004", HUMANO, portao.name, mensagem, f"portao.etapa:{etapa}")
 
 
 def existe_no_projeto(projeto: Projeto, modelo: str, modulo: str) -> bool:
