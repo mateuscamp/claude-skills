@@ -15,21 +15,22 @@ etapa() { printf '\n== %s\n' "$1"; }
 etapa "lock em dia com o pyproject"
 uv lock --check
 
+etapa "trilhos"
+# O juiz fica fora do projeto, na pasta da skill: não há cópia para editar nem etapa em bash para
+# calar. Ele confere supressões, configuração paralela e todo afrouxamento do portão. Sem ele o
+# portão não aprova. O CI baixa o mesmo script numa versão fixa (assets/ci.yml).
+conferir="$HOME/.claude/skills/python-on-rails/scripts/conferir_trilho.py"
+if [[ ! -f "$conferir" ]]; then
+  echo "Falta $conferir: instale a skill python-on-rails. O portão não aprova sem o conferir_trilho."
+  exit 2
+fi
+uv run --locked python -I "$conferir"
+
 etapa "formatação"
 uv run --locked ruff format --check .
 
 etapa "lint"
 uv run --locked ruff check .
-
-etapa "supressão sem motivo"
-# Toda supressão diz por quê na mesma linha: `# noqa: S603  # motivo: ...`.
-# Supressão de arquivo inteiro (`# ruff: noqa`, `# pyright: basic`) segue a mesma regra.
-padrao='noqa|pyright: *(ignore|basic|standard|off)|type: *ignore'
-if sem_motivo="$(git ls-files '*.py' | xargs -r grep -nE "$padrao" | grep -v 'motivo:')"; then
-  printf '%s\n' "$sem_motivo"
-  echo "Supressão sem '# motivo:' na mesma linha. Corrija o código ou escreva o motivo."
-  exit 1
-fi
 
 etapa "tipos"
 uv run --locked basedpyright

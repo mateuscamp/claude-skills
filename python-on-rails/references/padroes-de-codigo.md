@@ -103,7 +103,8 @@ class Config(BaseSettings):
 ```
 
 - Um módulo só (`config.py`) lê o ambiente. O objeto é criado no ponto de entrada e passado
-  adiante; ninguém mais importa `os.environ`.
+  adiante; ninguém mais importa `os.environ`. O ruff reprova (`TID251`). Repassar o ambiente a um
+  subprocesso não é ler config e leva `# noqa: TID251  # motivo: ...`.
 - `SecretStr` aparece como `**********` em `repr` e em log. O valor só sai com
   `.get_secret_value()`, no ponto exato de uso.
 - `model_config` precisa da anotação `ClassVar[...]`, senão o basedpyright reprova
@@ -122,8 +123,8 @@ com a saída do programa.
   f-string na mensagem (ruff `G004`), porque a mensagem fixa é o que se busca com grep.
 - `log.exception(...)` dentro do `except`, para levar o traceback.
 - Formato (JSON ou texto) é decisão do projeto: ver `desvios-e-decisoes.md`.
-- `print` só na camada de interface (CLI), com `per-file-ignores` para `T201` naquele módulo,
-  declarado.
+- `print` só na camada de interface (CLI). O `per-file-ignores` de `T201` naquele módulo é desvio
+  registrado (`desvios-e-decisoes.md`), e registrar é decisão humana. Sem ele, `sys.stdout.write`.
 
 ## Domínio puro
 
@@ -161,8 +162,19 @@ valor = lib.coisa()  # pyright: ignore[reportUnknownVariableType]  # motivo: lib
 
 - `# type: ignore` está desligado (`enableTypeIgnoreComments = false`). Só vale
   `# pyright: ignore[regra]`, que diz qual regra está calando.
-- O portão reprova qualquer `noqa`, `pyright: ignore` ou supressão de arquivo sem `motivo:` na
-  mesma linha.
+- O `conferir_trilho` reprova, sem `motivo:` na mesma linha, toda forma de calar o ruff ou o
+  basedpyright: `noqa` (`# NOQA` também cala o ruff), `# flake8: noqa`, `# ruff: noqa`,
+  `disable[...]` e `ignore[...]`, `# isort: skip`, `skip_file` e `off`, todo `# pyright:` que não
+  seja `# pyright: strict` sozinho na linha, `cast(` e `@no_type_check`. Vale para `.py` e `.pyi`,
+  inclusive arquivo novo ainda sem `git add`. Medido no ruff 0.17.3: a diretiva só vale com `#` no
+  começo do comentário ou depois de espaço, então a prosa que apenas cita `noqa` não conta.
+- A linha de base do basedpyright (`.basedpyright/baseline.json`, de `--writebaseline`) cala de
+  uma vez todo erro listado nela. Só vale registrada como desvio, com ADR e prazo.
+- Três diretivas não aceitam comentário depois delas, e com `# motivo:` na mesma linha param de
+  valer: a de arquivo do basedpyright (`basic`, `reportX=false`), que ele reprova como inválida;
+  e `# isort: skip_file` e `# isort: off`, que o ruff ignora, devolvendo o I001 (medido em
+  2026-11-01, ruff 0.17.3 e basedpyright 1.40.2). Nelas, o motivo vai na linha de cima do bloco de
+  diretivas. `# ruff: noqa: T201` e `# ruff: disable[T201]` aceitam o motivo na mesma linha.
 - Supressão desnecessária também reprova (`reportUnnecessaryTypeIgnoreComment`, ruff `RUF100`).
 
 ## O que o portão pega que o agente não espera

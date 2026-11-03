@@ -53,6 +53,10 @@ a linha deles.
   python3 tests/test_distribuir.py
   ```
 
+- Mudou o `conferir_trilho.py` da python-on-rails ou o `pyproject-trilho.toml`, que é a referência
+  dele? Rode `python3 tests/test_conferir_trilho.py`. A mudança vale no mesmo dia para todo projeto
+  desta máquina, porque o script não é copiado: confira antes o que ela reprova nos adotantes.
+
 ## Uma fonte só: o `main`
 
 - A fonte de toda skill é o `main` deste repositório. O resto é gerado dele e nunca se edita à

@@ -20,6 +20,9 @@ Arquivos desta skill:
 - `assets/pyproject-trilho.toml`: a configuração de ruff, basedpyright, pytest e import-linter,
   validada. Colar no `pyproject.toml`.
 - `assets/Makefile` e `scripts/portao.sh`: o portão único. `scripts/hook_portao.sh`: o hook Stop.
+  `assets/ci.yml`: o CI.
+- `scripts/conferir_trilho.py`: o juiz, que reprova o afrouxamento do portão. **Não se copia**: o
+  `portao.sh` o chama nesta pasta.
 - `assets/AGENTS-python.md`: a seção Python do `AGENTS.md`, com as regras que o agente relê.
 - `references/`: lidas sob demanda (tabela no fim).
 
@@ -48,8 +51,9 @@ de um arquivo só, não precisa do portão, e a cerimônia não se paga.
    Use a versão estável mais nova do Python que as dependências suportam.
 2. `uv add --dev ruff basedpyright pytest import-linter`. Ferramenta entra no lock, não no
    sistema: duas máquinas rodam a mesma versão e dão o mesmo veredito.
-3. Colar `assets/pyproject-trilho.toml`, copiar `assets/Makefile` e `scripts/` e registrar o
-   hook Stop (instrução no topo de `scripts/hook_portao.sh`).
+3. Colar `assets/pyproject-trilho.toml`, copiar `assets/Makefile`, `scripts/portao.sh` e
+   `scripts/hook_portao.sh`, registrar o hook Stop (instrução no topo do hook) e colar
+   `assets/ci.yml`, com o commit do juiz. O `conferir_trilho.py` fica na skill.
 4. Colar `assets/AGENTS-python.md` no `AGENTS.md` do projeto, junto com o modelo da
    arquitetura-ai-first.
 5. Primeiro ciclo: um teste vermelho visto falhar na asserção, o verde, `make check` e commit.
@@ -61,30 +65,40 @@ de um arquivo só, não precisa do portão, e a cerimônia não se paga.
 2. Não corrigir tudo de uma vez. Ligar o portão com linha de base: `basedpyright
    --writebaseline` congela os erros atuais e reprova só os novos. No ruff, `ruff check
    --add-noqa` marca os existentes; depois acrescente `# motivo: legado, ver ADR-<n>` a cada
-   marca, no mesmo commit. A linha de base é um desvio declarado, com ADR e prazo.
+   marca, no mesmo commit. A linha de base é um desvio declarado, com ADR, prazo e registro
+   (`references/desvios-e-decisoes.md`).
 3. A dívida baixa por arquivo que a tarefa já toca, nunca num commit de "limpeza geral".
 
-**Auditoria**: conferir o projeto contra os trilhos abaixo, um a um, e listar o que falta. Os
-desvios não declarados entram como achado, e os declarados se conferem contra o ADR.
+**Auditoria**: rodar `scripts/conferir_trilho.py` na raiz do projeto, depois conferir contra os
+trilhos abaixo, um a um, e listar o que falta. Os desvios não declarados entram como achado, e os
+declarados se conferem contra o ADR.
 
 ## Trilhos: sempre, em todo projeto
 
 | Trilho | Quem reprova |
 |---|---|
-| uv, `pyproject.toml`, `uv.lock` versionado e `.python-version`. Nada de `pip install` solto nem `requirements.txt` à mão | `uv lock --check` no portão |
+| uv, `pyproject.toml`, `uv.lock` versionado e `.python-version`. Nada de `pip install` solto nem `requirements.txt` à mão | `uv lock --check` no portão e `conferir_trilho` |
 | ruff format e ruff check, com a lista de regras do asset | portão |
 | basedpyright no modo `recommended`, com `failOnWarnings`. Sem `Any`, sem `dict`/`list` sem parâmetro de tipo | portão |
-| Supressão só com regra nomeada e motivo na mesma linha: `# pyright: ignore[regra]  # motivo: ...` | ruff `PGH`, basedpyright e grep do portão |
-| pytest com TDD visto falhar, xfail estrito e warning virando erro. O ciclo está na arquitetura-ai-first | portão, code-audit |
-| Portão único: `make check` no agente, no hook Stop e no CI, o mesmo comando. Os testes funcionais (`e2e`) ficam no `make e2e`, obrigatório no CI | hook Stop, CI |
-| Dados tipados: nenhum `dict` solto atravessando funções. Borda com validação, miolo com `dataclass(frozen=True, slots=True)` | basedpyright (`reportAny`, `reportUnknown*`) |
+| Supressão só com regra nomeada e motivo na mesma linha: `# pyright: ignore[regra]  # motivo: ...` | ruff `PGH`, basedpyright e `conferir_trilho` |
+| pytest com TDD visto falhar, xfail estrito e warning virando erro. Teste pulado diz o motivo. O ciclo está na arquitetura-ai-first | portão, `conferir_trilho`, code-audit |
+| Portão único: `make check` no agente, no hook Stop e no CI, o mesmo comando. Os testes funcionais (`e2e`) ficam no `make e2e`, obrigatório no CI | hook Stop, `assets/ci.yml` |
+| Dados tipados: nenhum `dict` solto atravessando funções. Borda com validação, miolo com `dataclass(frozen=True, slots=True)` | basedpyright (`reportAny`, `reportUnknown*`) pega `dict` sem tipo. `dict[str, str]` atravessando funções e `dataclass` sem `frozen` passam: code-audit |
 | Erros explícitos: exceção de domínio própria, sem `except` amplo, `raise from`, `match` exaustivo com `assert_never` | ruff `BLE`, `S110`, `TRY` e basedpyright |
-| Config lida num lugar, na partida, validada num objeto tipado. Segredo como `SecretStr`, nunca no log | revisão: só um módulo lê o ambiente |
+| Config lida num lugar, na partida, validada num objeto tipado. Segredo como `SecretStr`, nunca no log | ruff `TID251`: só o `config.py` lê o ambiente. `SecretStr`: code-audit |
 | `logging` no lugar de `print` fora da camada de interface | ruff `T20`, `LOG`, `G` |
 | Dependência com vulnerabilidade conhecida reprova. Sem `eval`/`pickle` em dado externo. Dependência nova só com justificativa | `uv audit` no portão, ruff `S` |
-| O agente nunca afrouxa o portão para passar | code-audit, `AGENTS.md` |
+| O agente nunca afrouxa o portão para passar | `conferir_trilho`, de fora do projeto; code-audit |
 
 Os exemplos de código de cada trilho estão em `references/padroes-de-codigo.md`.
+
+## O juiz fica fora do projeto
+
+Regra escrita se esquece, e etapa dentro do projeto o agente edita. Por isso quem julga mora aqui:
+o `conferir_trilho.py` compara o projeto com o asset e reprova o que afrouxa, e o `portao.sh` só o
+chama. Saída 1: o agente conserta. Saída 3: decisão humana, ele relata e para. Sair de um trilho só
+vale registrado em `[[tool.trilhos.desvios]]`, com ADR aceito. Regras, saídas e limites estão em
+`references/conferencia-do-portao.md`.
 
 ## Padrão com desvio declarado
 
@@ -94,7 +108,7 @@ Vale por omissão. Sair dele é legítimo, mas exige ADR com o motivo e o que se
   Desvio típico: framework com layout próprio (Django).
 - **Domínio puro**: a regra de negócio não importa infra, config nem biblioteca de borda, e
   relógio, rede e disco entram injetados por `typing.Protocol`. O contrato do import-linter no
-  asset reprova a violação. Desvio típico: script de cola, CLI de uma função, CRUD que é quase
+  asset reprova a violação, inclusive a stdlib que faz E/S. Desvio típico: script de cola, CLI de uma função, CRUD que é quase
   só o framework.
 - **pydantic na borda e dataclass no miolo**: a biblioteca da borda (pydantic, msgspec, attrs)
   pode mudar; o que não muda é ter validação na borda.
@@ -123,9 +137,11 @@ primeiro se *preserva* o que o basedpyright pega e depois se *acrescenta* algo.
 
 1. **Não declarar pronto sem `make check` verde**, e mostrar a saída dele no relatório.
 2. **Nunca afrouxar o portão para passar**: não editar `[tool.ruff]`, `[tool.basedpyright]`,
-   `[tool.pytest]` nem `[tool.importlinter]`, e não acrescentar `ignore`, `per-file-ignores`,
-   `exclude` ou linha de base. Se a regra parece errada, dizer no relatório e parar. Mudança no
-   portão é decisão humana, com ADR.
+   `[tool.pytest]`, `[tool.importlinter]`, `[tool.trilhos]`, `scripts/portao.sh`, o `Makefile`, o
+   hook nem o workflow de CI; não criar `ruff.toml`, `pyrightconfig.json` ou `pytest.ini`; e não
+   acrescentar `ignore`, `per-file-ignores`, `exclude` ou linha de base. Se a regra parece errada,
+   dizer no relatório e parar. Mudança no portão é decisão humana, com ADR. Saída 3 do
+   `conferir_trilho` é parada: não conserte, não crie ADR e não edite o registro de desvios.
 3. **Supressão é a última saída**: antes, tentar corrigir o tipo. Se suprimir, nomear a regra e
    escrever o motivo. `cast` também é supressão e segue a mesma regra.
 4. **`Any` vindo de biblioteca para na borda**: validar (`TypeAdapter`, modelo pydantic) ou
@@ -143,7 +159,8 @@ Ler sob demanda, nunca todas de uma vez:
 | Arquivo | Ler quando |
 |---|---|
 | `references/padroes-de-codigo.md` | Escrever ou revisar código: dados tipados, erros, config, logging, domínio puro |
-| `references/desvios-e-decisoes.md` | Sair de um padrão ou tomar uma decisão de projeto |
+| `references/desvios-e-decisoes.md` | Sair de um padrão, registrar um desvio ou tomar uma decisão de projeto |
+| `references/conferencia-do-portao.md` | O `conferir_trilho` reprovou, adoção dos trilhos, ou proposta de framework, CLI ou pacote |
 | `references/testes.md` | Teste funcional, marcador `e2e`, dublê, `Mock`, Playwright, teste sumido da coleta |
 | `references/concorrencia.md` | O projeto usa ou vai usar asyncio, threads ou processos |
 | `references/fastapi.md` | Projeto FastAPI |
