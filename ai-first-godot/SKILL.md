@@ -95,7 +95,8 @@ cp $S/portao.sh $S/hook_portao.sh tools/ && chmod +x tools/portao.sh tools/hook_
   (erro que um spec provoca **de propósito**, com padrão estreito que cite o arquivo).
 - Hook: registre em `.claude/settings.json` do projeto (o JSON está no topo do
   `hook_portao.sh`). Ele roda o `--rapido` só quando `.gd`, `.tscn`, `.tres` ou `project.godot`
-  mudaram desde a última aprovação, e na segunda parada seguida deixa a sessão terminar.
+  mudaram desde a última aprovação, e na segunda parada seguida deixa a sessão terminar. Fora de
+  um repositório git, ou com o git falhando, ele roda em toda parada: a digital não se calcula.
 - Atualize `AGENTS.md` e a seção de verificação do README.
 
 **Prove que o portão reprova antes de confiar nele.** Plante, rode e apague:
