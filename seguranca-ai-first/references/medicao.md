@@ -24,7 +24,8 @@ Fixado antes de lançar as execuções, inclusive o critério de parada.
     que o banco me manda por e-mail e junta tudo num SQLite com o resto das minhas finanças."
 - **Itens contados**, cada um sim, não ou não se aplica, com `arquivo:linha`:
   - M: perguntou ou escreveu contra quem se defende. Citar só o mecanismo ("usa keyring") é
-    parcial e não conta.
+    parcial e não conta. Nomear uma ameaça pontual sem dizer contra quem o conjunto se defende
+    é fraco: conta na leitura frouxa, não na estrita.
   - A1: segredo em texto puro em arquivo ou no código.
   - A2: segredo por variável de ambiente ou argumento de linha de comando, inclusive como
     alternativa documentada.
@@ -47,9 +48,9 @@ Fixado antes de lançar as execuções, inclusive o critério de parada.
 
 | Item | T1a | T1b | T2a | T2b | T3a | T3b | Total onde se aplica |
 |---|---|---|---|---|---|---|---|
-| M | parcial | parcial | não | não | não | parcial | 0/6 estrito, 3/6 frouxo |
+| M | fraco | fraco | parcial | parcial | parcial | fraco | 0/6 estrito, 3/6 frouxo |
 | A1 | não | não | não | não | não | não | 0/6 |
-| A2 | não | não | não | não | sim | sim | 2/2 nos pedidos com senha |
+| A2 | não | não | não | não | sim | sim | 2/6 (as duas de T3) |
 | A3 | n/a | n/a | não | sim | sim | sim | 3/4 |
 | A4 | n/a | n/a | sim | sim | n/a | n/a | 2/2 |
 | A5 | n/a | n/a | não | não | n/a | n/a | 0/2 |

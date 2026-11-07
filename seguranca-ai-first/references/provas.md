@@ -16,7 +16,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
 TETO_ENTRADA = 20 * 1024 * 1024
 TETO_SAIDA = 5 * 1024 * 1024
@@ -48,7 +48,10 @@ def ler_de_fora(arquivo: Path) -> list[Lancamento]:
         dados = saida.read(TETO_SAIDA + 1)
     if len(dados) > TETO_SAIDA:
         raise ParserEstourou(arquivo, "saída grande demais")
-    return LANCAMENTOS.validate_json(dados)
+    try:
+        return LANCAMENTOS.validate_json(dados)
+    except ValidationError as erro:
+        raise ParserEstourou(arquivo, "saída fora do esquema") from erro
 ```
 
 ```python
@@ -70,7 +73,7 @@ TETOS = (
 def main() -> None:
     for recurso, teto in TETOS:
         resource.setrlimit(recurso, (teto, teto))  # soft e hard: o filho não sobe de volta
-    from financas.leitura import ler_arquivo  # a biblioteca de parse entra depois do teto
+    from financas.leitura import ler_arquivo  # noqa: PLC0415  # motivo: carregar depois do teto
 
     lancamentos = ler_arquivo(Path(sys.argv[1]))
     json.dump([lancamento.para_dict() for lancamento in lancamentos], sys.stdout)
@@ -125,29 +128,40 @@ def main() -> None:
     ...
 
 
-def abrir_banco(caminho: Path) -> sqlite3.Connection:
-    caminho.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    if caminho.exists():
-        for arquivo in (caminho, *(caminho.with_name(caminho.name + s) for s in ("-wal", "-shm", "-journal"))):
-            if arquivo.exists() and stat.S_IMODE(arquivo.stat().st_mode) & 0o077:
-                arquivo.chmod(0o600)  # ou recusar, se a pessoa preferir saber
-    else:
-        caminho.touch(mode=0o600, exist_ok=False)
+def abrir_banco(pasta_de_dados: Path) -> sqlite3.Connection:
+    """A pasta é só do app (por exemplo ~/.local/share/financas), nunca a pasta corrente."""
+    pasta_de_dados.mkdir(mode=0o700, parents=True, exist_ok=True)
+    pasta_de_dados.chmod(0o700)  # o mkdir não corrige a pasta que já existia aberta
+    caminho = pasta_de_dados / "financas.db"
+    if not caminho.exists():
+        caminho.touch(mode=0o600)
+    for sufixo in ("", "-wal", "-shm", "-journal"):
+        arquivo = caminho.with_name(caminho.name + sufixo)
+        if arquivo.exists() and stat.S_IMODE(arquivo.stat().st_mode) & 0o077:
+            arquivo.chmod(0o600)  # ou recusar, se a pessoa preferir saber
     return sqlite3.connect(caminho)
 ```
 
+O `chmod` da pasta só vale porque ela é do app. Numa pasta compartilhada (a corrente, a
+`$HOME`), ele mudaria a permissão de coisa alheia.
+
 ```python
 def test_banco_novo_so_do_dono(tmp_path: Path) -> None:
-    abrir_banco(tmp_path / "financas.db").close()
-    assert stat.S_IMODE((tmp_path / "financas.db").stat().st_mode) == 0o600
+    dados = tmp_path / "dados"
+    abrir_banco(dados).close()
+    assert stat.S_IMODE((dados / "financas.db").stat().st_mode) == 0o600
+    assert stat.S_IMODE(dados.stat().st_mode) == 0o700
 
 
 def test_banco_aberto_e_corrigido(tmp_path: Path) -> None:
-    caminho = tmp_path / "financas.db"
-    caminho.touch()
-    caminho.chmod(0o644)
-    abrir_banco(caminho).close()
-    assert stat.S_IMODE(caminho.stat().st_mode) == 0o600
+    dados = tmp_path / "dados"
+    dados.mkdir()
+    dados.chmod(0o755)
+    (dados / "financas.db").touch()
+    (dados / "financas.db").chmod(0o644)
+    abrir_banco(dados).close()
+    assert stat.S_IMODE((dados / "financas.db").stat().st_mode) == 0o600
+    assert stat.S_IMODE(dados.stat().st_mode) == 0o700
 ```
 
 A prova que pega o resto (cópia bruta, download, exportação): rodar o programa de ponta a ponta
@@ -238,15 +252,23 @@ def ler_token(servico: str, usuario: str) -> str:
 Falha de acesso ao cofre (sessão sem Secret Service, cofre trancado) vira erro com a instrução
 para a pessoa, nunca a troca silenciosa por arquivo.
 
-Conferências, no portão ou no teste:
+Conferências, no portão ou no teste. O `rg` sai com 1 quando não acha nada, 0 quando acha e 2
+em erro; por isso cada linha termina em `test $? -eq 1`, que só aprova o "não achou". Os `-g`
+procuram nas pastas que existirem, sem erro quando falta uma.
 
 ```sh
+S='(senha|password|passwd|token|secret|segredo|api_?key|chave)'
 # exemplo de comando com segredo na documentação
-rg -n -i '\b[A-Z0-9_]*(SENHA|PASSWORD|PASSWD|TOKEN|SECRET|SEGREDO|API_?KEY|CHAVE)[A-Z0-9_]*=[^ $]' README.md docs/
-# segredo lido do ambiente, ou chaveiro sem backend escolhido
-rg -n -i 'environ.*(senha|password|token|secret|chave)' src/
-rg -n 'keyring\.(get|set)_password' src/
+rg -n -i -g 'README*' -g 'docs/**' "\b[a-z0-9_]*${S}[a-z0-9_]*=[^ \$]" . ; test $? -eq 1
+# segredo lido do ambiente: os.environ, ou campo de BaseSettings (pydantic-settings)
+rg -n -i -g '*.py' "environ.*${S}" . ; test $? -eq 1
+rg -n -i -g '*.py' "^\s+\w*${S}\w*\s*:\s*SecretStr" . ; test $? -eq 1
+# chaveiro sem backend escolhido no código
+rg -n -g '*.py' 'keyring\.(get|set)_password' . ; test $? -eq 1
 ```
+
+O campo `SecretStr` só vem do ambiente numa classe `BaseSettings`; num modelo comum ele é
+falso positivo, e a linha leva o motivo.
 
 ```python
 def test_cli_nao_recebe_segredo() -> None:

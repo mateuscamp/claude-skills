@@ -13,8 +13,8 @@ três pedidos assim, `references/medicao.md`) achou o padrão:
 - **O agente já acerta sozinho**: não grava token em arquivo, não guarda a sessão do navegador
   entre execuções, não põe segredo em log, não desliga o TLS. Esta skill não repete isso.
 - **O agente erra sem ver**: os quatro atalhos da tabela abaixo apareceram em duas ou mais
-  execuções em que se aplicavam. Todos passaram por quatro rodadas de `/code-review` e
-  `/code-audit`, porque a revisão procura defeito, não contra quem o programa se defende.
+  execuções em que se aplicavam. Todos passaram pelo `/code-review` e pelo
+  `/code-audit` (de uma a quatro rodadas por execução), porque a revisão procura defeito, não contra quem o programa se defende.
 - **Nenhuma execução declarou modelo de ameaça.** Medidas certas aparecem soltas (chaveiro,
   https, recusa de redirect), sem dizer contra quem servem nem o que fica de fora.
 
@@ -39,9 +39,9 @@ escreva no `AGENTS.md` do projeto, ou no ADR quando houver decisão com custo:
 
 | Degrau | Atacante | O que fecha | Custo |
 |---|---|---|---|
-| 1 | Quem copia arquivo: ladrão de dados que varre a `$HOME`, backup vazado, disco levado, outro usuário da máquina | Nada sensível em claro no disco; permissão só do dono; criptografia em repouso quando o arquivo sai da máquina | Baixo |
+| 1 | Quem lê o arquivo sem ser o seu usuário: outro usuário da máquina, backup ou sincronização que vaza, disco levado | Permissão só do dono; criptografia em repouso no que sai da máquina | Baixo |
 | 2 | Entrada hostil: anexo, PDF, planilha, página web que o programa abre | Parser em processo separado, sem o segredo, com limite de recurso; navegador com sandbox | Médio |
-| 3 | Processo ativo com o mesmo UID, enquanto o programa roda | Chave fora do processo da interface, segredo por descritor e não por ambiente, processo não inspecionável. Só encarece: quem tem o UID lê a tela e pode capturar a senha de login | Alto |
+| 3 | Código rodando com o seu UID: ladrão de dados que varre a `$HOME`, pacote malicioso, processo ativo enquanto o programa roda | Contra quem só copia arquivo: criptografia com a chave fora do alcance do UID (cofre trancado, TPM); permissão `0600` não o detém. Contra quem age enquanto o programa roda: chave fora do processo da interface, segredo por descritor e não por ambiente, processo não inspecionável. Só encarece: quem tem o UID lê a tela e pode capturar a senha de login | Alto |
 | 4 | Root ou acesso físico à máquina ligada | Nada que o app faça sozinho | Fora do alcance |
 
 **O piso não se pergunta.** Os degraus 1 e 2 cobrem os quatro atalhos medidos e custam pouco:
@@ -84,8 +84,8 @@ conectar, e nenhuma corrigiu um arquivo que já existia aberto.
 **Faça**: `os.umask(0o077)` no ponto de entrada, antes de criar qualquer arquivo; o banco e a
 pasta de dados criados só para o dono (`0600`, `0700`); arquivo que já existe com permissão
 aberta é corrigido ou recusado, nunca usado em silêncio. O SQLite cria o `-wal` e o `-journal`
-com a permissão do banco. Permissão fecha o degrau 1 contra outro usuário, não contra o mesmo
-UID; para o arquivo que sai da máquina (backup, sincronização), criptografia em repouso.
+com a permissão do banco. Permissão fecha o degrau 1, não o ladrão de dados que roda com o seu
+UID (degrau 3); para o arquivo que sai da máquina (backup, sincronização), criptografia em repouso.
 
 **Prova**: teste que cria o banco num diretório temporário e confere `stat` igual a `0600`, e
 outro que parte de um arquivo `0644` e espera a correção ou a recusa.
@@ -106,7 +106,7 @@ pergunte: desligar é decisão da pessoa, com o risco no ADR.
 não o código**: o padrão da biblioteca liga o atalho sem estar escrito. Vale para qualquer
 biblioteca que sobe outro programa.
 
-### 4. Senha por variável de ambiente, ensinada no README (2 de 2 onde havia senha)
+### 4. Senha por variável de ambiente, ensinada no README (2 de 6: as duas que tinham senha de PDF)
 
 A senha do PDF chega por `os.environ`, e o README ensina `APP_SENHA=... comando`, que grava a
 senha no histórico do shell e a deixa em `/proc/<pid>/environ` para todo processo do mesmo
