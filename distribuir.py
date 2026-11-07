@@ -2,7 +2,7 @@
 """Distribui as skills a partir de uma fonte só: o ref (por padrão `main`) deste repositório.
 
 Skill é toda pasta de primeiro nível do ref que tem `SKILL.md`. Sem opção, gera em
-`--destino` (por padrão `~/Documentos/Skills`), para cada skill:
+`--destino` (por padrão `~/Projetos/Skills`), para cada skill:
 
 - `<skill>.zip`, de `git archive --format=zip --prefix=<skill>/ <ref>:<skill>`;
 - `<skill>.skill/<skill>/`, de `git archive --prefix=<skill>/ <ref>:<skill> | tar -x`.
@@ -731,7 +731,7 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--repo", default="~/.claude/skills", help="repositório das skills")
     parser.add_argument("--ref", help="ref que é a fonte (padrão: main; com --check-gerais, HEAD)")
-    parser.add_argument("--destino", default="~/Documentos/Skills", help="pasta dos zips e cópias")
+    parser.add_argument("--destino", default="~/Projetos/Skills", help="pasta dos zips e cópias")
     parser.add_argument("--links", default="~/.agents/skills", help="pasta dos symlinks do Codex")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true", help="só confere; sai com 1 se houver problema")

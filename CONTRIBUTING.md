@@ -63,7 +63,7 @@ a linha deles.
 ## Uma fonte só: o `main`
 
 - A fonte de toda skill é o `main` deste repositório. O resto é gerado dele e nunca se edita à
-  mão: as cópias de `~/Documentos/Skills` e o que sobe delas para o claude.ai.
+  mão: as cópias de `~/Projetos/Skills` e o que sobe delas para o claude.ai.
 - Nenhum projeto guarda cópia de skill: o projeto cita a skill pelo nome ou pelo caminho em
   `~/.claude/skills/`.
 
@@ -88,13 +88,13 @@ a linha deles.
 
 ## `distribuir.py`
 
-Gera as cópias de `~/Documentos/Skills` a partir do `main`, só com a biblioteca padrão do Python:
+Gera as cópias de `~/Projetos/Skills` a partir do `main`, só com a biblioteca padrão do Python:
 
 - `<skill>.zip` e `<skill>.skill/<skill>/` para cada pasta com `SKILL.md`;
 - o que difere é sobrescrito, sem guardar o anterior: toda versão está no histórico do git. O que
   versões anteriores do script geravam e ele não gera mais (`<nome>.antigo` e o
   `code-audit-skill.md`, a cópia solta do `SKILL.md` da code-audit) sai; nenhuma outra entrada de
-  Documentos é tocada.
+  Projetos/Skills é tocada.
 - se as Gerais de jogo ou de Lua do `main` têm problema (seção acima), lista e recusa sem
   escrever nada.
 
@@ -105,7 +105,7 @@ Gera as cópias de `~/Documentos/Skills` a partir do `main`, só com a bibliotec
 
 O `--check` só lê e sai com 1 listando cada problema:
 
-- cópia de Documentos diferente do `main`, ou ausente;
+- cópia em Projetos/Skills diferente do `main`, ou ausente;
 - as Gerais de jogo e de Lua no `main`, como o `--check-gerais` (seção "Gerais de jogo e de
   Lua", acima);
 - `~/.claude/skills` fora do `main` ou com mudança local;
