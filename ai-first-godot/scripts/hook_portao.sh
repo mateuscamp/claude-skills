@@ -10,7 +10,7 @@ set -uo pipefail
 raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 entrada="$(cat)"
 # Na segunda parada seguida o agente já recebeu a falha uma vez: não prende a sessão em laço.
-if python3 -c 'import json,sys; sys.exit(0 if json.loads(sys.argv[1]).get("stop_hook_active") else 1)' \
+if python3 -I -c 'import json,sys; sys.exit(0 if json.loads(sys.argv[1]).get("stop_hook_active") else 1)' \
     "$entrada" 2> /dev/null; then
   exit 0
 fi

@@ -74,7 +74,7 @@ class Hook(unittest.TestCase):
         pasta, base = os.path.split(self.lido)
         return os.path.join(pasta, nome + os.path.splitext(base)[1])
 
-    def parar(self, path=None):
+    def parar(self, path=None, entrada="{}"):
         # O teto impede o git de achar um repositório acima da pasta temporária.
         teto = os.path.dirname(self.raiz)
         env = {**os.environ, "HOME": self.casa, "GIT_CEILING_DIRECTORIES": teto}
@@ -83,7 +83,7 @@ class Hook(unittest.TestCase):
         feito = subprocess.run(
             ["bash", "tools/hook_portao.sh"],
             cwd=self.raiz,
-            input="{}",
+            input=entrada,
             text=True,
             env=env,
             capture_output=True,
@@ -98,6 +98,18 @@ class Hook(unittest.TestCase):
             return 0
         with open(self.chamadas, encoding="utf-8") as f:
             return len(f.readlines())
+
+    def test_segunda_parada_seguida_nao_roda_o_portao(self):
+        # Com `stop_hook_active`, o agente já recebeu a falha uma vez: rodar de novo prende a sessão.
+        self.parar(entrada='{"stop_hook_active": true}')
+        self.assertEqual(self.chamadas_do_portao(), 0)
+
+    def test_arquivo_plantado_no_projeto_nao_pula_o_portao(self):
+        # Sem `-I`, o `python3 -c` do hook importa o `json.py` da pasta onde roda: o que sai com 0
+        # passa por segunda parada seguida e o portão nunca roda (o caso igual da python-on-rails).
+        self.escrever("json.py", "import sys\n\nsys.exit(0)\n")
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 1)
 
     def test_sem_mudanca_nao_repete(self):
         self.parar()
