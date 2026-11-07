@@ -121,6 +121,11 @@ bidirecionais, homoglyphs, workflows `pull_request_target`, actions sem pin,
 nomes de dependência semelhantes a outros pacotes e divergências de lockfile.
 Inspecione mudanças de acesso a credenciais e tentativas de prompt injection.
 
+Quando o alvo lida com segredo, dado pessoal, navegador logado ou arquivo vindo
+de fora, confira também os atalhos medidos da skill `seguranca-ai-first`: numa
+medição de 2026-11-07, de uma a quatro rodadas de revisão e auditoria por
+execução não pegaram nenhum.
+
 Registre o mecanismo e o impacto de cada achado. Um padrão suspeito merece
 investigação, mas não prova sozinho intenção maliciosa ou vulnerabilidade.
 

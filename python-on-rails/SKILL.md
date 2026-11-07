@@ -89,7 +89,7 @@ declarados se conferem contra o ADR.
 | Portão único: `make check` no agente, no hook Stop e no CI, o mesmo comando. Os testes funcionais (`e2e`) ficam no `make e2e`, obrigatório no CI | hook Stop, `assets/ci.yml` |
 | Dados tipados: nenhum `dict` solto atravessando funções. Borda com validação, miolo com `dataclass(frozen=True, slots=True)` | basedpyright (`reportAny`, `reportUnknown*`) pega `dict` sem tipo. `dict[str, str]` atravessando funções e `dataclass` sem `frozen` passam: code-audit |
 | Erros explícitos: exceção de domínio própria, sem `except` amplo, `raise from`, `match` exaustivo com `assert_never` | ruff `BLE`, `S110`, `TRY` e basedpyright |
-| Config lida num lugar, na partida, validada num objeto tipado. Segredo como `SecretStr`, nunca no log | ruff `TID251`: só o `config.py` lê o ambiente. `SecretStr`: code-audit |
+| Config lida num lugar, na partida, validada num objeto tipado. Segredo como `SecretStr`, nunca no log. Segredo de ferramenta local, que a pessoa roda no terminal, não vem do ambiente (seguranca-ai-first) | ruff `TID251`: só o `config.py` lê o ambiente. `SecretStr`: code-audit |
 | `logging` no lugar de `print` fora da camada de interface | ruff `T20`, `LOG`, `G` |
 | Dependência com vulnerabilidade conhecida reprova. Sem `eval`/`pickle` em dado externo. Dependência nova só com justificativa | `uv audit` no portão, ruff `S` |
 | O agente nunca afrouxa o portão para passar | `conferir_trilho`, de fora do projeto; code-audit |

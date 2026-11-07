@@ -107,6 +107,10 @@ class Config(BaseSettings):
   subprocesso não é ler config e leva `# noqa: TID251  # motivo: ...`.
 - `SecretStr` aparece como `**********` em `repr` e em log. O valor só sai com
   `.get_secret_value()`, no ponto exato de uso.
+- Segredo pelo ambiente é para serviço em que a plataforma o injeta. Em ferramenta local, que a
+  pessoa roda no terminal, o exemplo `APP_SENHA=... comando` vai para o histórico do shell e o
+  valor fica em `/proc/<pid>/environ`: lá o segredo vem do chaveiro, de pergunta sem eco ou de
+  arquivo `0600` (skill seguranca-ai-first).
 - `model_config` precisa da anotação `ClassVar[...]`, senão o basedpyright reprova
   (`reportUnannotatedClassAttribute`).
 - Sem pydantic, uma `dataclass` com uma função `carregar_config() -> Config` cumpre o trilho. O
