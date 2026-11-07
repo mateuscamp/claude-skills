@@ -59,6 +59,10 @@ característica traduzida e confirmar. "Você disse que a janela de submissão �
 duas horas no dia da prova — leio isso como elasticidade, não escalabilidade.
 Confere?" Se ele corrigir, a correção dele vale mais que o mapeamento acima.
 
+Segurança só vira driver com o atacante nomeado: o ativo (o segredo ou o dado), quem ataca e
+com que acesso. "Não pode vazar" sem isso não decide nada. A escada de atacantes, o piso que
+vale sem perguntar e o risco que sobra por atacante estão na skill **seguranca-ai-first**.
+
 ## As implícitas (que ninguém escreve no ticket)
 
 Ninguém pede disponibilidade, segurança ou viabilidade explicitamente — e as
