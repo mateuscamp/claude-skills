@@ -768,6 +768,10 @@ class Portao(unittest.TestCase):
 class Hook(unittest.TestCase):
     """O hook só pula o portão quando nada que o portão lê mudou."""
 
+    # O projeto chega à parada com commit. As subclasses cobrem o projeto novo antes do primeiro.
+    commit = True
+    formato = "sha1"
+
     def test_arquivo_plantado_no_projeto_nao_pula_o_portao(self):
         with open(os.path.join(self.raiz, "json.py"), "w", encoding="utf-8") as f:
             f.write("import sys\n\nsys.exit(0)\n")
@@ -790,16 +794,23 @@ class Hook(unittest.TestCase):
         os.makedirs(os.path.dirname(self.juiz))
         with open(self.juiz, "w", encoding="utf-8") as f:
             f.write("# juiz\n")
-        for comando in (["init", "-q", "."], ["add", "-A"], ["commit", "-qm", "base"]):
-            subprocess.run(["git", *comando], cwd=self.raiz, check=True, capture_output=True)
+        self.git("init", "-q", f"--object-format={self.formato}", ".")
+        self.git("add", "-A")
+        if self.commit:
+            self.git("commit", "-qm", "base")
+
+    def git(self, *args):
+        subprocess.run(["git", *args], cwd=self.raiz, check=True, capture_output=True)
 
     def parar(self):
-        subprocess.run(
+        # O teto impede o git de achar um repositório acima da pasta temporária.
+        teto = os.path.dirname(self.raiz)
+        return subprocess.run(
             ["bash", "scripts/hook_portao.sh"],
             cwd=self.raiz,
             input="{}",
             text=True,
-            env={**os.environ, "HOME": self.casa},
+            env={**os.environ, "HOME": self.casa, "GIT_CEILING_DIRECTORIES": teto},
             capture_output=True,
             check=True,
         )
@@ -835,6 +846,51 @@ class Hook(unittest.TestCase):
             f.write("# versão nova\n")
         self.parar()
         self.assertEqual(self.chamadas_do_portao(), 2)
+
+    def test_arquivo_em_stage_editado_refaz_o_portao(self):
+        caminho = os.path.join(self.raiz, "modulo.py")
+        with open(caminho, "w", encoding="utf-8") as f:
+            f.write("x = 1\n")
+        self.git("add", "modulo.py")
+        self.parar()
+        with open(caminho, "a", encoding="utf-8") as f:
+            f.write("y = 2\n")
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 2)
+
+    def test_sem_git_roda_o_portao_em_toda_parada(self):
+        # Sem repositório a digital não se calcula, e a digital que não se calcula não pula nada.
+        shutil.rmtree(os.path.join(self.raiz, ".git"))
+        self.assertEqual(self.parar().stderr, "")
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 2)
+
+    def test_symlink_quebrado_nao_desliga_o_cache(self):
+        # O arquivo que o sha1sum não lê entra na digital pelo nome, sem zerar a digital inteira.
+        os.symlink("/nao/existe", os.path.join(self.raiz, "dados"))
+        self.assertEqual(self.parar().stderr, "")
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 1)
+        os.remove(os.path.join(self.raiz, "dados"))
+        os.symlink(self.juiz, os.path.join(self.raiz, "dados"))
+        self.parar()
+        self.assertEqual(self.chamadas_do_portao(), 2)
+
+
+class HookSemCommit(Hook):
+    """Projeto novo pela skill: `git init`, tudo em stage e o primeiro commit só no fim do ciclo.
+
+    Sem HEAD, o diff contra o commit falhava calado e a digital só via os arquivos não rastreados:
+    o arquivo em stage editado depois não refazia o portão (medição de 2026-11-07).
+    """
+
+    commit = False
+
+
+class HookSemCommitSha256(HookSemCommit):
+    """A árvore vazia do repositório sha256 tem outro hash: o hook pede ao git, não usa constante."""
+
+    formato = "sha256"
 
 
 class HookDoUsuario(Base):
