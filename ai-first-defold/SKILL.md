@@ -131,7 +131,8 @@ chmod +x tools/*.sh
   robô que perde de propósito voltava à mina marcada, recusado 28 vezes (D60).
 - Hook: registre em `.claude/settings.json` do projeto (o JSON está no topo do
   `hook_portao.sh`). Ele roda o `--rapido` só quando Lua, script ou recurso mudou desde a última
-  aprovação, e na segunda parada seguida deixa a sessão terminar.
+  aprovação, e na segunda parada seguida deixa a sessão terminar. Fora de um repositório git, ou
+  com o git falhando, ele roda em toda parada: a digital não se calcula.
 - `BOB_JAR` e `PATH` com o java do editor (`/opt/Defold/packages/jdk-*/bin`) no `AGENTS.md`.
 
 **Prove que o portão reprova antes de confiar nele.** Plante, rode e restaure:

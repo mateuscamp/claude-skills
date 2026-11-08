@@ -56,6 +56,9 @@ a linha deles.
 - Mudou o `conferir_trilho.py` da python-on-rails ou o `pyproject-trilho.toml`, que é a referência
   dele? Rode `python3 tests/test_conferir_trilho.py`. A mudança vale no mesmo dia para todo projeto
   desta máquina, porque o script não é copiado: confira antes o que ela reprova nos adotantes.
+- Mudou o `hook_portao.sh` da ai-first-godot ou da ai-first-defold? Rode
+  `python3 tests/test_hook_portao.py`, que monta um projeto temporário com o hook e um portão falso.
+  O hook da python-on-rails tem os casos dele no `test_conferir_trilho.py`.
 
 ## Uma fonte só: o `main`
 
