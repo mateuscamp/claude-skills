@@ -437,5 +437,13 @@ class Generate(Fixture):
                          ["ai-first-defold.skill", "ai-first-defold.zip", "code-audit.skill", "code-audit.zip"])
 
 
+class Defaults(unittest.TestCase):
+    def test_destino_padrao_e_projetos(self):
+        # Em 2026-11-07 o autor moveu a pasta gerada de ~/Documentos/Skills para ~/Projetos/Skills:
+        # o padrão antigo recriaria a pasta velha e o --check a daria por ausente.
+        esperado = os.path.expanduser("~/Projetos/Skills")
+        self.assertEqual(distribuir.parse_args([]).destino, esperado)
+
+
 if __name__ == "__main__":
     unittest.main()
