@@ -47,6 +47,12 @@ each skill and checks for drift, with its own test suite in [`tests/`](tests/).
 | [`revisao-de-capitulo`](revisao-de-capitulo/SKILL.md) | Structural diagnosis of a finished chapter: open scaffolding notes, real-world fact checks, scene-by-scene function in the arc, and a keep / rewrite / cut decision. Never rewrites the author's prose. |
 | [`revisao-de-livro`](revisao-de-livro/SKILL.md) | Second pass over a whole book's chapter reviews, looking for what only exists *between* chapters: unpaid promises, shifting internal rules, characters who vanish, the reader's engagement curve. |
 
+### Clinical study
+
+| Skill | What it does |
+|---|---|
+| [`casos-ai-first`](casos-ai-first/SKILL.md) | Simulated patient built from a real, openly licensed case report in PubMed Central: the agent plays the patient without leaking the diagnosis (answers that carry no signal when the report is silent, preparation in a subagent, spoilers at the end of the case file), the user leads as the physician, and the correction grades against diagnostic criteria applied to the facts, not the authors' label, and against the guidelines the project has annotated. One method, one reference file per specialty: psychiatry today; pain and anesthesiology are stubs. Study material, not clinical advice. |
+
 ## Using them
 
 Each folder with a `SKILL.md` is a self-contained skill. To use one in Claude Code, put the folder
@@ -84,7 +90,8 @@ How the repository itself is maintained (branches, generated copies, the Codex l
 
 Skills próprias do Claude Code, escritas em português e usadas no dia a dia. Quatro são de jogo
 feito por agente (`jogos-ai-first`, que é o método, e uma por motor: Godot, Defold e LÖVE), quatro
-de engenharia (`arquitetura-ai-first`, `code-audit`, `python-on-rails` e `seguranca-ai-first`) e duas de revisão de ficção
-(`revisao-de-capitulo` e `revisao-de-livro`). A ideia comum é fazer o agente provar sozinho o que
+de engenharia (`arquitetura-ai-first`, `code-audit`, `python-on-rails` e `seguranca-ai-first`), duas de revisão de ficção
+(`revisao-de-capitulo` e `revisao-de-livro`) e uma de estudo clínico (`casos-ai-first`, paciente
+simulado a partir de relato de caso real, com psiquiatria preenchida e dor e anestesiologia em esqueleto). A ideia comum é fazer o agente provar sozinho o que
 hoje só uma pessoa consegue verificar. Cada lição traz a data e o projeto em que foi medida. A
 operação do repositório está no [`CONTRIBUTING.md`](CONTRIBUTING.md).
