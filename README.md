@@ -40,6 +40,12 @@ each skill and checks for drift, with its own test suite in [`tests/`](tests/).
 | [`python-on-rails`](python-on-rails/SKILL.md) | Rails for agent-written Python: what holds in every project (uv with a lockfile, a fixed ruff rule set, strict basedpyright that fails on warnings, pytest with tests seen failing first, a single `make check` gate shared by the agent, the Stop hook and CI, typed data, explicit errors, config validated at startup, dependency audit, suppressions only with a written reason), what is a default with a declared exit (`src/` layout, a pure domain enforced by import-linter), what each project decides, and FastAPI and Django references, all measured on throwaway projects. |
 | [`seguranca-ai-first`](seguranca-ai-first/SKILL.md) | Security for agent-built apps that hold secrets or personal data, drive a logged-in browser or parse files from outside: name the attacker before choosing a defense, then close the four shortcuts measured on throwaway apps that survived one to four rounds of code review and audit (outside files parsed in the process that holds the secret, world-readable databases, a browser without sandbox because of a library default, passwords taught on the command line), each with a fix and a test the agent runs by itself. |
 
+### Working with other models
+
+| Skill | What it does |
+|---|---|
+| [`delegar`](delegar/SKILL.md) | Keeps Claude Code as the only harness and stretches a short Claude plan by handing heavy, checkable work (tests, refactors, boilerplate, sweeping a large repo, a second opinion) to GPT through the Codex CLI and to Gemini, or Claude, through the Antigravity CLI, each billed to its own subscription. Claude writes a self-contained brief, runs the other agent non-interactively, reads only its final message and the diff, and verifies with tests before reporting who did what. Includes the measured trap where `agy -p` silently denies every shell command unless the settings carry an allow-list. |
+
 ### Fiction editing
 
 | Skill | What it does |
@@ -90,7 +96,8 @@ How the repository itself is maintained (branches, generated copies, the Codex l
 
 Skills próprias do Claude Code, escritas em português e usadas no dia a dia. Quatro são de jogo
 feito por agente (`jogos-ai-first`, que é o método, e uma por motor: Godot, Defold e LÖVE), quatro
-de engenharia (`arquitetura-ai-first`, `code-audit`, `python-on-rails` e `seguranca-ai-first`), duas de revisão de ficção
+de engenharia (`arquitetura-ai-first`, `code-audit`, `python-on-rails` e `seguranca-ai-first`), uma de trabalho com outros modelos (`delegar`, que
+passa tarefa pesada ao GPT e ao Gemini para poupar a cota do Claude), duas de revisão de ficção
 (`revisao-de-capitulo` e `revisao-de-livro`) e uma de estudo clínico (`casos-ai-first`, paciente
 simulado a partir de relato de caso real, com psiquiatria preenchida e dor e anestesiologia em esqueleto). A ideia comum é fazer o agente provar sozinho o que
 hoje só uma pessoa consegue verificar. Cada lição traz a data e o projeto em que foi medida. A
