@@ -17,6 +17,11 @@ decidir se entra.
   promessa.
 - Ferramenta nova em beta muda regra e saída entre versões; portão precisa de veredito estável.
 
+Em 2026-11-16 caiu um obstáculo: o ty 0.0.93 (2026-10-28) trouxe linha de base de diagnósticos,
+em prévia, e o 0.0.92 trouxe saída SARIF. Sem linha de base, projeto existente não adotava. Segue
+na faixa 0.0, sem paridade declarada com o basedpyright, então o procedimento abaixo vale como
+está; a próxima rodada inclui a linha de base do ty contra a `--writebaseline` do basedpyright.
+
 ## Procedimento
 
 Avaliar ferramenta são duas perguntas, em sequência, e parar na primeira é como ela entra sem

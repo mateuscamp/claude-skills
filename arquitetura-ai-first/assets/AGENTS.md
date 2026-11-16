@@ -105,9 +105,10 @@ Rodar `<make check>` antes de declarar qualquer tarefa concluída.
 - Diff que toca <`dominio/`, fronteira de ADR, dono de dado>: antes dela, a
   `/code-review` no nível de esforço desta sessão, nunca abaixo de high, com o
   nível sempre explícito na chamada (sem ele, ela reaproveita o último
-  digitado). Não vê o nível da sessão? Pergunte; não chute. `ultra` só o humano
-  dispara. A code-audit confere cada achado dela; achado sem evidência não entra
-  no relatório.
+  digitado). Não vê o nível da sessão? Pergunte; não chute. Sessão em max chama
+  `/code-review max`: esta linha é o pedido explícito que o max exige. `ultra`
+  só o humano dispara. A code-audit confere cada achado dela; achado sem
+  evidência não entra no relatório.
 - Sem a `/code-review` no ambiente (ela é do Claude Code), a code-audit sozinha.
 - Revisão em contexto separado (subagente ou outra sessão): o diff, a
   especificação e os ADRs, nunca o raciocínio de quem implementou.

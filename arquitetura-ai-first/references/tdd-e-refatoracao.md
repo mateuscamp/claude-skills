@@ -233,8 +233,11 @@ herda o raciocínio que produziu o erro.
   explícito na chamada, porque a `/code-review` sem nível reaproveita o último
   digitado, e é assim que uma sessão em max acaba revisada em high sem ninguém
   decidir. O agente que não vê o nível da própria sessão pergunta ao humano; não
-  chuta. O `ultra` fica fora do espelho: roda na nuvem, é cobrado à parte e só o
-  humano o dispara.
+  chuta. Desde a 2.1.311 do Claude Code, a `/code-review` só roda em max quando
+  o humano ou uma instrução (CLAUDE.md, AGENTS.md, skill) pede de forma
+  explícita; esta regra é esse pedido, e sessão em max chama `/code-review max`
+  sem perguntar de novo. O `ultra` fica fora do espelho: roda na nuvem, é
+  cobrado à parte e só o humano o dispara.
 - **O piso e o escopo se medem antes de virar regra.** O espelho segue uma
   decisão que o humano já tomou para aquela tarefa; o piso vale para toda
   tarefa, por isso se mede. A `/code-review` custa o que o par custa, e só entra

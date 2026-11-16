@@ -81,7 +81,7 @@ declarados se conferem contra o ADR.
 
 | Trilho | Quem reprova |
 |---|---|
-| uv, `pyproject.toml`, `uv.lock` versionado e `.python-version`. Nada de `pip install` solto nem `requirements.txt` à mão | `uv lock --check` no portão e `conferir_trilho` |
+| uv 0.13.4 ou mais novo (correção de segurança), `pyproject.toml`, `uv.lock` versionado e `.python-version`. Nada de `pip install` solto nem `requirements.txt` à mão | `required-version` do asset, `uv lock --check` no portão e `conferir_trilho` |
 | ruff format e ruff check, com a lista de regras do asset | portão |
 | basedpyright no modo `recommended`, com `failOnWarnings`. Sem `Any`, sem `dict`/`list` sem parâmetro de tipo | portão |
 | Supressão só com regra nomeada e motivo na mesma linha: `# pyright: ignore[regra]  # motivo: ...` | ruff `PGH`, basedpyright e `conferir_trilho` |
