@@ -14,7 +14,7 @@ a linha deles.
 
 - Lição de jogo que vale em qualquer engine se edita só em `gerais-de-jogo.md`, na raiz; diferença
   da linguagem entre o LuaJIT do jogo e o Lua 5.x da suíte, comum às skills de motor em Lua, só
-  em `gerais-de-lua.md`, também na raiz. Cada skill sai num zip próprio, então carrega a cópia
+  em `gerais-de-lua.md`, também na raiz. Cada skill sai num `.skill` (um zip) próprio, então carrega a cópia
   dentro dela, em `<skill>/references/gerais-de-jogo.md` e `<skill>/references/gerais-de-lua.md`;
   a cópia nunca se edita à mão.
 - As skills que recebem cada cópia são constantes do `distribuir.py`: `GENERAL_LESSONS_SKILLS`
@@ -90,22 +90,25 @@ a linha deles.
 
 Gera as cópias de `~/Projetos/Skills` a partir do `main`, só com a biblioteca padrão do Python:
 
-- `<skill>.zip` e `<skill>.skill/<skill>/` para cada pasta com `SKILL.md`;
+- `<skill>.skill` para cada pasta com `SKILL.md`: um zip com a pasta da skill na raiz, o formato que
+  o claude.ai aceita em Plugins > a skill > ⋯ > Enviar nova versão (o diálogo recusa `.zip`);
 - o que difere é sobrescrito, sem guardar o anterior: toda versão está no histórico do git. O que
-  versões anteriores do script geravam e ele não gera mais (`<nome>.antigo` e o
-  `code-audit-skill.md`, a cópia solta do `SKILL.md` da code-audit) sai; nenhuma outra entrada de
+  versões anteriores do script geravam e ele não gera mais (`<nome>.antigo`, o
+  `code-audit-skill.md`, a cópia solta do `SKILL.md` da code-audit, e, até 2026-11-17, o
+  `<skill>.zip` e a pasta `<skill>.skill/<skill>/`) sai; nenhuma outra entrada de
   Projetos/Skills é tocada.
 - se as Gerais de jogo ou de Lua do `main` têm problema (seção acima), lista e recusa sem
   escrever nada.
 
 ```sh
 ~/.claude/skills/distribuir.py           # depois de cada merge no main
-~/.claude/skills/distribuir.py --check   # antes de subir um zip no claude.ai
+~/.claude/skills/distribuir.py --check   # antes de subir um .skill no claude.ai
 ```
 
 O `--check` só lê e sai com 1 listando cada problema:
 
-- cópia em Projetos/Skills diferente do `main`, ou ausente;
+- `.skill` em Projetos/Skills diferente do `main`, ausente ou ainda pasta, e `<skill>.zip` que
+  sobrou da versão anterior;
 - as Gerais de jogo e de Lua no `main`, como o `--check-gerais` (seção "Gerais de jogo e de
   Lua", acima);
 - `~/.claude/skills` fora do `main` ou com mudança local;

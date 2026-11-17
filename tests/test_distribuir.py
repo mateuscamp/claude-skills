@@ -378,9 +378,14 @@ class Generate(Fixture):
     def test_generates_base(self):
         destination, result = self.generate()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        with zipfile.ZipFile(os.path.join(destination, "ai-first-defold.zip")) as archive:
+        # O claude.ai só aceita .skill (ou SKILL.md) em "Enviar nova versão": o .skill é o zip.
+        skill_file = os.path.join(destination, "ai-first-defold.skill")
+        self.assertTrue(os.path.isfile(skill_file))
+        with zipfile.ZipFile(skill_file) as archive:
+            self.assertIn("ai-first-defold/SKILL.md", archive.namelist())
             self.assertIn("ai-first-defold/references/gerais-de-jogo.md", archive.namelist())
             self.assertIn("ai-first-defold/references/gerais-de-lua.md", archive.namelist())
+        self.assertEqual(sorted(os.listdir(destination)), ["ai-first-defold.skill"])
 
     def test_refuses_divergent_copy_before_writing(self):
         self.write(self.copy_path("ai-first-defold"), b"velha\n")
@@ -388,8 +393,8 @@ class Generate(Fixture):
         destination, result = self.generate()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("ai-first-defold/references/gerais-de-jogo.md", result.stdout)
-        zips = [n for n in os.listdir(destination) if n.endswith(".zip")] if os.path.isdir(destination) else []
-        self.assertEqual(zips, [])
+        written = os.listdir(destination) if os.path.isdir(destination) else []
+        self.assertEqual(written, [])
 
     def test_refuses_divergent_lua_copy_before_writing(self):
         self.write(self.lua_copy_path("ai-first-love"), b"velha\n")
@@ -397,8 +402,8 @@ class Generate(Fixture):
         destination, result = self.generate()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("ai-first-love/references/gerais-de-lua.md", result.stdout)
-        zips = [n for n in os.listdir(destination) if n.endswith(".zip")] if os.path.isdir(destination) else []
-        self.assertEqual(zips, [])
+        written = os.listdir(destination) if os.path.isdir(destination) else []
+        self.assertEqual(written, [])
 
     def test_regenerating_overwrites_without_keeping_previous(self):
         self.generate()
@@ -406,12 +411,9 @@ class Generate(Fixture):
         self.commit("defold muda")
         destination, result = self.generate()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(sorted(os.listdir(destination)), ["ai-first-defold.skill", "ai-first-defold.zip"])
-        with zipfile.ZipFile(os.path.join(destination, "ai-first-defold.zip")) as archive:
+        self.assertEqual(sorted(os.listdir(destination)), ["ai-first-defold.skill"])
+        with zipfile.ZipFile(os.path.join(destination, "ai-first-defold.skill")) as archive:
             self.assertIn(b"linha nova", archive.read("ai-first-defold/SKILL.md"))
-        folder_copy = os.path.join(destination, "ai-first-defold.skill", "ai-first-defold", "SKILL.md")
-        with open(folder_copy, "rb") as handle:
-            self.assertIn(b"linha nova", handle.read())
 
     def test_removes_previous_copy_left_by_old_versions(self):
         destination = os.path.join(self.tmp, "destino")
@@ -421,8 +423,34 @@ class Generate(Fixture):
                 handle.write(b"x")
         _, result = self.generate()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(sorted(os.listdir(destination)),
-                         ["ai-first-defold.skill", "ai-first-defold.zip", "alheio.antigo"])
+        self.assertEqual(sorted(os.listdir(destination)), ["ai-first-defold.skill", "alheio.antigo"])
+
+    def test_replaces_zip_and_folder_copy_of_previous_version(self):
+        # Até 2026-11-17 saíam <skill>.zip e a pasta <skill>.skill/<skill>/: o zip sai, e o arquivo
+        # .skill toma o lugar da pasta.
+        destination = os.path.join(self.tmp, "destino")
+        os.makedirs(os.path.join(destination, "ai-first-defold.skill", "ai-first-defold"))
+        with open(os.path.join(destination, "ai-first-defold.zip"), "wb") as handle:
+            handle.write(b"zip velho")
+        _, result = self.generate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(sorted(os.listdir(destination)), ["ai-first-defold.skill"])
+        self.assertTrue(os.path.isfile(os.path.join(destination, "ai-first-defold.skill")))
+
+    def test_check_flags_folder_copy_and_leftover_zip(self):
+        destination, _ = self.generate()
+        self.assertEqual(distribuir.check_copies(self.repo, "main", ["ai-first-defold"], destination), [])
+        with open(os.path.join(destination, "ai-first-defold.zip"), "wb") as handle:
+            handle.write(b"zip velho")
+        problems = distribuir.check_copies(self.repo, "main", ["ai-first-defold"], destination)
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn("ai-first-defold.zip", problems[0])
+        os.remove(os.path.join(destination, "ai-first-defold.zip"))
+        os.remove(os.path.join(destination, "ai-first-defold.skill"))
+        os.makedirs(os.path.join(destination, "ai-first-defold.skill", "ai-first-defold"))
+        problems = distribuir.check_copies(self.repo, "main", ["ai-first-defold"], destination)
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn("ai-first-defold.skill", problems[0])
 
     def test_code_audit_has_no_loose_markdown_and_leftover_goes(self):
         self.write("code-audit/SKILL.md", SKILL_MD.replace(b"ai-first-defold", b"code-audit"))
@@ -433,8 +461,7 @@ class Generate(Fixture):
             handle.write(b"sobra\n")
         _, result = self.generate()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(sorted(os.listdir(destination)),
-                         ["ai-first-defold.skill", "ai-first-defold.zip", "code-audit.skill", "code-audit.zip"])
+        self.assertEqual(sorted(os.listdir(destination)), ["ai-first-defold.skill", "code-audit.skill"])
 
 
 class Defaults(unittest.TestCase):
