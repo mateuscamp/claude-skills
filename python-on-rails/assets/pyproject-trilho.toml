@@ -51,6 +51,9 @@ ban-relative-imports = "all"
 "os.getenv".msg = "Só o config.py lê o ambiente; o resto recebe o objeto de config."
 "os.getenvb".msg = "Só o config.py lê o ambiente; o resto recebe o objeto de config."
 
+[tool.uv]
+required-version = ">=0.13.4"  # piso de segurança: a 0.13.4 corrige a falha dos certificados raiz comprometidos
+
 [tool.basedpyright]
 typeCheckingMode = "recommended"  # o modo mais estrito pensado para uso diário
 pythonVersion = "3.13"            # igual ao .python-version
