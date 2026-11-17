@@ -4,12 +4,13 @@
 Skill é toda pasta de primeiro nível do ref que tem `SKILL.md`. Sem opção, gera em
 `--destino` (por padrão `~/Projetos/Skills`), para cada skill:
 
-- `<skill>.zip`, de `git archive --format=zip --prefix=<skill>/ <ref>:<skill>`;
-- `<skill>.skill/<skill>/`, de `git archive --prefix=<skill>/ <ref>:<skill> | tar -x`.
+- `<skill>.skill`, um zip de `git archive --format=zip --prefix=<skill>/ <ref>:<skill>`: é o
+  arquivo que o claude.ai aceita em "Enviar nova versão" (Plugins > a skill > ⋯), que recusa `.zip`.
 
 O que difere é sobrescrito, sem guardar o anterior: toda versão está no histórico do git. O que
 versões anteriores deste script geravam e ele não gera mais (`<nome>.antigo`,
-`code-audit-skill.md`) sai. Não toca em nenhuma outra entrada do destino.
+`code-audit-skill.md`, `<skill>.zip` e a pasta `<skill>.skill/<skill>/`) sai. Não toca em nenhuma
+outra entrada do destino.
 
 As Gerais são lições com uma fonte na raiz e uma cópia igual em cada skill que as usa (cada skill
 sai num zip próprio, então a cópia mora dentro dela), uma linha de SHARED_LESSONS para cada:
@@ -30,8 +31,8 @@ geração confere o mesmo antes de escrever qualquer coisa e recusa se houver pr
 
 `--check` só lê e sai com 1 listando cada problema:
 
-- cópia do destino diferente do ref (zip por conteúdo dos membros, pasta pela árvore, `.md` pelo
-  conteúdo), ou ausente;
+- `<skill>.skill` diferente do ref (pelo conteúdo dos membros do zip), ausente ou ainda pasta, e
+  `<skill>.zip` que sobrou de versão anterior deste script;
 - Gerais de jogo e de Lua, lidas no ref: cópia ausente, diferente da fonte ou symlink; cópia fora
   das skills da lista dela; linha de lição na seção velha de um `.md` dessas skills ("## Gerais de
   jogo"; "## Gerais de Lua" ou "## Lua:"), que ficou só com o ponteiro, e item da fonte repetido
@@ -65,6 +66,9 @@ LEGACY_BACKUP_SUFFIX = ".antigo"
 # Cópia solta do SKILL.md da code-audit, no caminho onde ela nasceu (22/09/2026), gerada até
 # 2026-11-01: ninguém mais lia o caminho, e o mesmo conteúdo está no zip e na pasta.
 LEGACY_LOOSE_FILES = ("code-audit-skill.md",)
+# Até 2026-11-17 cada skill saía também como <skill>.zip e como a pasta <skill>.skill/<skill>/. O
+# claude.ai passou a pedir .skill no upload, e o .skill virou o próprio zip; a pasta não tinha uso.
+LEGACY_SKILL_ZIP = "{skill}.zip"
 # Lições de jogo que valem em qualquer engine: uma fonte na raiz e uma cópia igual em cada skill
 # de motor. A lista é explícita: skill de motor nova entra acrescentando o nome aqui.
 GENERAL_LESSONS_SOURCE = "gerais-de-jogo.md"
@@ -139,21 +143,6 @@ def expected_tree(repo, ref, skill):
     return tree
 
 
-def folder_tree(root):
-    """Mesma forma de expected_tree para uma pasta do disco, com caminhos relativos a root."""
-    tree = {}
-    for current, dirs, files in os.walk(root):
-        for name in files + [d for d in dirs if os.path.islink(os.path.join(current, d))]:
-            path = os.path.join(current, name)
-            relative = os.path.relpath(path, root).replace(os.sep, "/")
-            if os.path.islink(path):
-                tree[relative] = (os.readlink(path).encode(), False)
-                continue
-            with open(path, "rb") as handle:
-                tree[relative] = (handle.read(), bool(os.stat(path).st_mode & 0o100))
-    return tree
-
-
 def zip_members(path):
     """{nome do membro: conteúdo} de um zip, sem as entradas de pasta."""
     with zipfile.ZipFile(path) as archive:
@@ -181,13 +170,6 @@ def compare_zip(path, tree):
     expected = {name: content for name, (content, _) in tree.items()}
     diff = differing_paths(expected, actual)
     return f"{len(diff)} membro(s) diferente(s): {describe_paths(diff)}" if diff else None
-
-
-def compare_folder(path, tree):
-    if not os.path.isdir(path):
-        return "ausente"
-    diff = differing_paths(tree, folder_tree(path))
-    return f"{len(diff)} arquivo(s) diferente(s): {describe_paths(diff)}" if diff else None
 
 
 def compare_file(path, content):
@@ -364,11 +346,13 @@ def check_copies(repo, ref, skills, destination):
     problems = []
     for skill in skills:
         tree = expected_tree(repo, ref, skill)
-        targets = [
-            (f"{skill}.zip", compare_zip(os.path.join(destination, f"{skill}.zip"), tree)),
-            (f"{skill}.skill/", compare_folder(os.path.join(destination, f"{skill}.skill"), tree)),
-        ]
-        problems += [f"{os.path.join(destination, n)} difere do {ref}: {why}" for n, why in targets if why]
+        final = os.path.join(destination, f"{skill}.skill")
+        why = "é pasta, da versão anterior do distribuir.py" if os.path.isdir(final) else compare_zip(final, tree)
+        if why:
+            problems.append(f"{final} difere do {ref}: {why}")
+        leftover = os.path.join(destination, LEGACY_SKILL_ZIP.format(skill=skill))
+        if os.path.lexists(leftover):
+            problems.append(f"{leftover} sobrou da versão anterior do distribuir.py: rode a geração")
     return problems
 
 
@@ -593,35 +577,27 @@ def install(new_path, final, workdir):
     print(f"escrito: {final}")
 
 
-def generate_zip(args, skill, tree, workdir):
-    final = os.path.join(args.destino, f"{skill}.zip")
-    if compare_zip(final, tree) is None:
-        remove_legacy_backup(final)
-        print(f"igual: {final}")
-        return
-    new_path = os.path.join(workdir, f"{skill}.zip")
-    content = git(args.repo, "archive", "--format=zip", f"--prefix={skill}/", f"{args.ref}:{skill}").stdout
-    with open(new_path, "wb") as handle:
-        handle.write(content)
-    install(new_path, final, workdir)
-
-
-def generate_folder(args, skill, tree, workdir):
+def generate_skill_file(args, skill, tree, workdir):
     final = os.path.join(args.destino, f"{skill}.skill")
-    if compare_folder(final, tree) is None:
+    if not os.path.isdir(final) and compare_zip(final, tree) is None:
         remove_legacy_backup(final)
         print(f"igual: {final}")
         return
     new_path = os.path.join(workdir, f"{skill}.skill")
-    os.mkdir(new_path)
-    command = ["git", "--no-optional-locks", "-C", args.repo, "archive",
-               f"--prefix={skill}/", f"{args.ref}:{skill}"]
-    archive = subprocess.Popen(command, stdout=subprocess.PIPE)
-    extract = subprocess.run(["tar", "-x", "-f", "-", "-C", new_path], stdin=archive.stdout)
-    archive.stdout.close()
-    if archive.wait() != 0 or extract.returncode != 0:
-        sys.exit(f"erro: git archive | tar -x da skill {skill} falhou")
+    content = git(args.repo, "archive", "--format=zip", f"--prefix={skill}/", f"{args.ref}:{skill}").stdout
+    with open(new_path, "wb") as handle:
+        handle.write(content)
+    # install() tira a pasta da versão anterior do caminho antes de pôr o arquivo.
     install(new_path, final, workdir)
+
+
+def remove_legacy_skill_zip(destination, skill):
+    """Apaga o <skill>.zip (e o .zip.antigo) que versões anteriores deste script geravam."""
+    final = os.path.join(destination, LEGACY_SKILL_ZIP.format(skill=skill))
+    for path in (final, final + LEGACY_BACKUP_SUFFIX):
+        if os.path.lexists(path):
+            remove_entry(path)
+            print(f"apagado: {path}")
 
 
 def remove_legacy_loose_files(destination):
@@ -646,8 +622,8 @@ def run_generate(args, skills):
     try:
         for skill in skills:
             tree = expected_tree(args.repo, args.ref, skill)
-            generate_zip(args, skill, tree, workdir)
-            generate_folder(args, skill, tree, workdir)
+            generate_skill_file(args, skill, tree, workdir)
+            remove_legacy_skill_zip(args.destino, skill)
     finally:
         shutil.rmtree(workdir)
     remove_legacy_loose_files(args.destino)
