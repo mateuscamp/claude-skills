@@ -52,6 +52,7 @@ each skill and checks for drift, with its own test suite in [`tests/`](tests/).
 |---|---|
 | [`revisao-de-capitulo`](revisao-de-capitulo/SKILL.md) | Structural diagnosis of a finished chapter: open scaffolding notes, real-world fact checks, scene-by-scene function in the arc, and a keep / rewrite / cut decision. Never rewrites the author's prose. |
 | [`revisao-de-livro`](revisao-de-livro/SKILL.md) | Second pass over a whole book's chapter reviews, looking for what only exists *between* chapters: unpaid promises, shifting internal rules, characters who vanish, the reader's engagement curve. |
+| [`pega-mania`](pega-mania/SKILL.md) | Hunts the agent's writing tics that the author rejects in text he will narrate or publish (stating and denying in the same breath, suspense that only announces, questions the text answers itself, punchline fragments, closers that repeat), using one living list shared by every project, a grep pass and the `/humanizer` skill, and records each new tic he confirms with the real sentence and its rewrite. |
 
 ### Clinical study
 
