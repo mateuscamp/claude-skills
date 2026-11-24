@@ -104,6 +104,25 @@ e que para o agente é mais difícil perceber. Por isso, na entrega de qualquer 
 listar à parte as frases suspeitas de clichê que ficaram no texto, para ele julgar ouvindo.
 Cada uma que ele confirmar entra aqui. Na dúvida entre clichê e coloquial, perguntar.
 
+## 5. Enfileirar números na fala (confirmada pelo Mateus, 24/11/2026)
+
+Narrar uma série de valores, um depois do outro. Nas palavras dele: "Isso é monótono. Não
+precisa falar exatamente todos os números." A fala diz o primeiro número e o último, ou só a
+direção ("houve uma queda"), e a série vai escrita na tela, com uma nota de imagem no roteiro.
+
+| Saiu assim | Reescrito |
+|---|---|
+| Desde então estacionou, com 9,1 no dia 13, 8,9 no dia 19 e 8,8 agora. | De lá para cá ficou praticamente parado. + `[CARTELA: curva com o valor de cada dia na tela]` |
+| ...vem perdendo um décimo de cada vez, 9,6, depois 9,5, agora 9,4. | ...vem caindo devagar, até os 9,4 de hoje. |
+| O Priest tinha 9,5 no primeiro censo, chegou a 9,9 no dia 9 e está parado em 9,7 desde o dia 13. | O Priest começou com 9,5 e está parado em 9,7 desde o dia 13. |
+
+O que ele quer no lugar da série é o **porquê do salto**, quando existe: "quando passou de 200 mil
+para 1 milhão mudou tudo, mas tem algum motivo? É porque foi o lançamento? Essas coisas são
+importantes." No caso, o salto cobria o primeiro fim de semana do jogo. Diante de um número que
+pula, procurar a causa (calendário, lançamento, patch) antes de narrar os valores.
+
+Não é mania: dois números que são o próprio ponto da frase ("tinha 13% naquele dia e 13,2 no seguinte").
+
 ## Caça rápida
 
 Depois de escrever, rode no texto da narração e leia cada linha que aparecer:
@@ -111,6 +130,7 @@ Depois de escrever, rode no texto da narração e leia cada linha que aparecer:
 ```bash
 grep -nE ', não |, sem |não (é|foi|são|era) [^.]*[,;.] (é|foi|são|era) |\? |: por qu|olha que|Ou seja|deixa de ser|deixou de ser|(aposta|hipótese):|tem um dado|Primeiro, |outra história' <arquivo>.md
 grep -oE '(^|[.?!] )(E|Minha hipótese) ' <arquivo>.md | sort | uniq -c   # aberturas repetidas
+grep -nE '([0-9]+,[0-9]+[^.?!]*){3,}' <arquivo>.md   # três ou mais números numa frase só
 ```
 
 A busca só aponta suspeitos. Quem decide é a leitura.

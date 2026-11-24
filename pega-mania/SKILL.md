@@ -1,6 +1,6 @@
 ---
 name: pega-mania
-description: Caça os cacoetes de escrita do agente que o Mateus rejeita, antes que o texto chegue a ele - afirmar e negar em seguida ("X, não Y", "não é X, é Y"), suspense que só anuncia o que vem, pergunta que o próprio texto responde, frase solta de efeito, fecho que repete ou explica o dado, aberturas repetidas, conclusão dita como fato, clichê - pela lista viva em references/manias.md, uma busca por grep e a skill /humanizer:humanizer, e registra mania nova que ele apontar. Use sempre que o agente escrever ou revisar texto que o Mateus vai narrar, ler em voz alta ou publicar (roteiro de vídeo, texto de leitura, descrição, título, post, legenda), em qualquer projeto, e quando ele disser "cacoete", "mania", "tique de escrita", "isso soa como IA", "texto de robô", "clichê", "frase feita", "pega-mania" ou apontar uma frase que não gostou.
+description: Caça os cacoetes de escrita do agente que o Mateus rejeita, antes que o texto chegue a ele - afirmar e negar em seguida ("X, não Y", "não é X, é Y"), suspense que só anuncia o que vem, pergunta que o próprio texto responde, frase solta de efeito, fecho que repete ou explica o dado, aberturas repetidas, conclusão dita como fato, clichê, números enfileirados na fala - pela lista viva em references/manias.md, uma busca por grep e a skill /humanizer:humanizer, e registra mania nova que ele apontar. Use sempre que o agente escrever ou revisar texto que o Mateus vai narrar, ler em voz alta ou publicar (roteiro de vídeo, texto de leitura, descrição, título, post, legenda), em qualquer projeto, e quando ele disser "cacoete", "mania", "tique de escrita", "isso soa como IA", "texto de robô", "clichê", "frase feita", "pega-mania" ou apontar uma frase que não gostou.
 ---
 
 # Pega-mania
@@ -15,7 +15,7 @@ e afirmativa, e cada frase mantida traz algo que o ouvinte ainda não tinha.
 
 ## Depois de escrever, em ordem
 
-1. **Caça rápida.** Rode os dois `grep` do fim de `references/manias.md` sobre o texto que vai ser
+1. **Caça rápida.** Rode os `grep` do fim de `references/manias.md` sobre o texto que vai ser
    narrado ou publicado (só a narração, sem notas internas nem fontes). A busca aponta suspeitos;
    leia cada linha e decida pela leitura.
 2. **Leitura inteira contra a lista.** Várias manias escapam do grep: frase solta de efeito, fecho
