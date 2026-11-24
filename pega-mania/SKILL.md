@@ -1,6 +1,6 @@
 ---
 name: pega-mania
-description: Caça os cacoetes de escrita do agente que o Mateus rejeita, antes que o texto chegue a ele - afirmar e negar em seguida ("X, não Y", "não é X, é Y"), suspense que só anuncia o que vem, pergunta que o próprio texto responde, frase solta de efeito, fecho que repete ou explica o dado, aberturas repetidas, conclusão dita como fato - pela lista viva em references/manias.md, uma busca por grep e a skill /humanizer:humanizer, e registra mania nova que ele apontar. Use sempre que o agente escrever ou revisar texto que o Mateus vai narrar, ler em voz alta ou publicar (roteiro de vídeo, texto de leitura, descrição, título, post, legenda), em qualquer projeto, e quando ele disser "cacoete", "mania", "tique de escrita", "isso soa como IA", "texto de robô", "pega-mania" ou apontar uma frase que não gostou.
+description: Caça os cacoetes de escrita do agente que o Mateus rejeita, antes que o texto chegue a ele - afirmar e negar em seguida ("X, não Y", "não é X, é Y"), suspense que só anuncia o que vem, pergunta que o próprio texto responde, frase solta de efeito, fecho que repete ou explica o dado, aberturas repetidas, conclusão dita como fato, clichê - pela lista viva em references/manias.md, uma busca por grep e a skill /humanizer:humanizer, e registra mania nova que ele apontar. Use sempre que o agente escrever ou revisar texto que o Mateus vai narrar, ler em voz alta ou publicar (roteiro de vídeo, texto de leitura, descrição, título, post, legenda), em qualquer projeto, e quando ele disser "cacoete", "mania", "tique de escrita", "isso soa como IA", "texto de robô", "clichê", "frase feita", "pega-mania" ou apontar uma frase que não gostou.
 ---
 
 # Pega-mania
@@ -28,7 +28,9 @@ e afirmativa, e cada frase mantida traz algo que o ouvinte ainda não tinha.
 5. **Derivados.** Se o projeto gera um texto a partir de outro (por exemplo, `leitura.md` a partir
    do `roteiro.md`), regere o derivado depois da revisão, nunca o edite sozinho.
 
-Ao entregar, diga em uma linha quantos trechos mudaram e qual mania mais apareceu.
+Ao entregar, diga em uma linha quantos trechos mudaram e qual mania mais apareceu, e liste à
+parte as frases suspeitas de clichê que ficaram no texto (mania 4), para o Mateus julgar ouvindo:
+o agente não tem ouvido para clichê. Na dúvida entre clichê e coloquial, pergunte.
 
 ## O que não é mania
 
@@ -36,6 +38,7 @@ Ao entregar, diga em uma linha quantos trechos mudaram e qual mania mais aparece
 - Gancho de abertura e estrutura de suspense que o Mateus escolheu (contagem regressiva de ranking).
 - Dois-pontos antes de uma lista.
 - Frase curta que traz dado novo.
+- Expressão coloquial ("levou um corte", "mexeu pesado"): é bem-vinda; clichê é a fórmula gasta.
 
 ## Mania nova
 

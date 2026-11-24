@@ -62,6 +62,48 @@ não tinha**.
 
 Frase curta pode ficar quando traz dado novo ("No PvE chega a 15%").
 
+## 4. Clichês (confirmada e detalhada pelo Mateus, 24/11/2026)
+
+O que o Mateus chama de clichê, nas palavras dele:
+
+- **Par de palavras que só existe daquela forma**: "redondamente enganado", "chuva torrencial".
+- **Frase feita**: "ficou de fora da festa", "com todas as letras", "cresceu apanhando".
+- **Clichê de situação**: a leitura pronta de uma situação, a que todo mundo faria.
+- **Clichê de conceito**: a ideia pronta, antes de qualquer palavra.
+
+**Expressão coloquial não é clichê e é bem-vinda**: "levou um corte", "mexeu pesado",
+"upar", "tankar". Ele quer a fala solta; o que ele rejeita é a fórmula gasta.
+
+Como trocar: **ser mais criativo, e não mais seco**. A saída que funciona é a imagem ou o
+dado que só cabe neste assunto. Achatar a frase num relato neutro resolve o clichê e mata o texto.
+
+| Clichê | Troca seca (evitar) | Troca com o próprio assunto |
+|---|---|---|
+| O Rogue ficou de fora da festa. | A Blizzard deu pouca atenção a ele. | Em três semanas de hotfixes, a Blizzard só lembrou do Rogue para corrigir bug. |
+| No PvP ele continua muito vivo. | ...continua entre as cinco classes mais jogadas. | No PvP, um em cada nove personagens ainda é Rogue. |
+| O Hunter cresceu apanhando. | ...cresceu depois de ser enfraquecido. | ...cresceu nas mesmas semanas em que a Blizzard tirou vida do pet e encareceu o tiro dele. |
+| Isso é uma foto, e ela tem data de validade. | Esse ranking vale para hoje e deve mudar. | Esse é o ranking de 23 de novembro. No dia 9 de dezembro as raids abrem. |
+
+Teste: se a frase serviria igual em qualquer outro vídeo sobre qualquer outro assunto, é clichê.
+
+Suspeitas que o agente listou e o Mateus mandou trocar (24/11/2026):
+
+| Saiu assim | Trocado por |
+|---|---|
+| quem é Rogue está jogando de verdade | quem já tinha um continuou upando |
+| a classe mais tranquila de levar sozinho, com um pet que segura o inimigo enquanto você atira | a classe que manda o pet apanhar no lugar dela |
+| continua sendo a novidade mais forte do jogo | está a menos de meio ponto do primeiro lugar |
+| o alt mais útil que existe | o alt que trabalha para os outros personagens da conta |
+| Se inscreve para não perder. | Se inscreve no canal para ele aparecer para você. |
+
+Padrões que saem daí: muleta de intensidade ("de verdade"), superlativo genérico ("o mais X que
+existe", "a mais forte do jogo"), explicação que todo mundo dá, fórmula de fechamento de YouTube.
+
+**O agente não tem ouvido para isso.** O Mateus disse que tem clichê que "até dói o ouvido",
+e que para o agente é mais difícil perceber. Por isso, na entrega de qualquer roteiro:
+listar à parte as frases suspeitas de clichê que ficaram no texto, para ele julgar ouvindo.
+Cada uma que ele confirmar entra aqui. Na dúvida entre clichê e coloquial, perguntar.
+
 ## Caça rápida
 
 Depois de escrever, rode no texto da narração e leia cada linha que aparecer:
