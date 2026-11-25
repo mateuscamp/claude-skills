@@ -1,6 +1,6 @@
 ---
 name: pega-mania
-description: Caça os cacoetes de escrita do agente que o Mateus rejeita, antes que o texto chegue a ele - afirmar e negar em seguida ("X, não Y", "não é X, é Y"), suspense que só anuncia o que vem, pergunta que o próprio texto responde, frase solta de efeito, fecho que repete ou explica o dado, aberturas repetidas, conclusão dita como fato, clichê, números enfileirados na fala - pela lista viva em references/manias.md, uma busca por grep e a skill /humanizer:humanizer, e registra mania nova que ele apontar. Use sempre que o agente escrever ou revisar texto que o Mateus vai narrar, ler em voz alta ou publicar (roteiro de vídeo, texto de leitura, descrição, título, post, legenda), em qualquer projeto, e quando ele disser "cacoete", "mania", "tique de escrita", "isso soa como IA", "texto de robô", "clichê", "frase feita", "pega-mania" ou apontar uma frase que não gostou.
+description: Caça os cacoetes de escrita do agente que o Mateus rejeita, antes que o texto chegue a ele - afirmar e negar em seguida ("X, não Y", "não é X, é Y"), suspense que só anuncia o que vem, pergunta que o próprio texto responde, frase solta de efeito, fecho que repete ou explica o dado, aberturas repetidas, conclusão dita como fato, clichê, números enfileirados na fala - pela lista viva em references/manias.md, uma busca por grep e a skill /humanizer:humanizer; diz quando reescrever do zero em vez de remendar, e registra mania nova que ele apontar. Use sempre que o agente escrever ou revisar texto que o Mateus vai narrar, ler em voz alta ou publicar (roteiro de vídeo, texto de leitura, descrição, título, post, legenda), em qualquer projeto, e quando ele disser "cacoete", "mania", "tique de escrita", "isso soa como IA", "texto de robô", "clichê", "frase feita", "pega-mania" ou apontar uma frase que não gostou.
 ---
 
 # Pega-mania
@@ -31,6 +31,27 @@ e afirmativa, e cada frase mantida traz algo que o ouvinte ainda não tinha.
 Ao entregar, diga em uma linha quantos trechos mudaram e qual mania mais apareceu, e liste à
 parte as frases suspeitas de clichê que ficaram no texto (mania 4), para o Mateus julgar ouvindo:
 o agente não tem ouvido para clichê. Na dúvida entre clichê e coloquial, pergunte.
+
+## Quando remendar não basta
+
+Remendo frase a frase serve para texto que nasceu bom e tem deslizes. Reescreva do zero, sem
+partir do rascunho, quando:
+
+- duas passadas da lista ainda deixam mania nova aparecendo, ou a correção de uma cria outra;
+- o esqueleto é o que todo texto sobre o assunto usa (a abertura de sempre, o exemplo de sempre);
+- o texto sustenta opinião, motivo ou experiência que ninguém forneceu.
+
+A versão nova parte de material novo, e não das frases antigas: fonte aberta na página, dado que
+só existe neste assunto, eixo escolhido pelo Mateus. Pergunte a ele o eixo antes de escrever. O
+rascunho antigo vai para uma pasta de arquivo, não é apagado, e o que saiu dele fica anotado com
+o motivo.
+
+O agente não escreve em primeira pessoa experiência, opinião nem motivação do Mateus. Onde o
+texto pede isso, fica uma lacuna marcada (`[SUA VOZ: ...]`) e uma lista no fim com cada uma.
+
+Origem (24/11/2026): o ep. 1 do mmorpg-news chegou ao sexto rascunho remendado antes de o Mateus
+mandar reescrever inteiro; no compositando-yt o ep. 1 de física tinha o mesmo defeito, com uma
+comparação clínica e uma dúvida "dele" que o agente tinha inventado.
 
 ## O que não é mania
 
